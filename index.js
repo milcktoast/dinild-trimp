@@ -1,5 +1,7 @@
 import {
+  Color,
   Group,
+  HemisphereLight,
   Mesh,
   MeshPhongMaterial,
   PerspectiveCamera,
@@ -9,39 +11,38 @@ import {
   TextureLoader,
   WebGLRenderer
 } from 'three'
-import {
-  annotate as ouiAnnotate,
-  controls as ouiControls,
-  oui
-} from 'ouioui'
 import { TrackballControls } from './vendor/three/TrackballControls'
 // import { TransformControls } from './vendor/three/TransformControls'
 import { parseModel } from './utils/model'
+import { createStateControls } from './utils/oui'
 import dinildJSON from './assets/models/dinild.json'
 
 function createVector (x, y, z) {
   return { x, y, z }
 }
 
-function createColor (r, g, b) {
-  return { r, g, b }
+function createColor (...args) {
+  return new Color(...args)
 }
 
 const state = {
-  lightA: annotateLight({
-    // position: createVector(6, 18, 16),
+  lightA: {
     position: createVector(-10, 13, 10),
-    color: createColor(1, 1, 1),
+    color: createColor(0x3F49FF),
     intensity: 2.3,
-    distance: 20
-  }),
-  lightB: annotateLight({
-    // position: createVector(10, -8, 22),
+    distance: 25.5
+  },
+  lightB: {
     position: createVector(7.5, -6.5, 26),
-    color: createColor(1, 1, 1),
-    intensity: 2,
-    distance: 50
-  })
+    color: createColor(0xBB97FF),
+    intensity: 2.4,
+    distance: 27
+  },
+  lightHemi: {
+    skyColor: createColor(0x5549FF),
+    groundColor: createColor(0x162DFF),
+    intensity: 1.3
+  }
 }
 
 const container = document.createElement('div')
@@ -64,7 +65,8 @@ controls.dynamicDampingFactor = 0.3
 
 const lightA = new PointLight()
 const lightB = new PointLight()
-scene.add(lightA, lightB)
+const lightHemi = new HemisphereLight()
+scene.add(lightA, lightB, lightHemi)
 sceneHelpers.add(
   new PointLightHelper(lightA, 1),
   new PointLightHelper(lightB, 1))
@@ -84,7 +86,7 @@ resize()
 animate()
 
 updateState(state)
-createStateControls()
+createStateControls(state, updateState)
 
 function createDinild () {
   const { geometry } = parseModel(dinildJSON)
@@ -99,46 +101,23 @@ function createDinild () {
   return new Mesh(geometry, material)
 }
 
-function createStateControls () {
-  oui(state, updateState)
-}
-
 function updateState (nextState) {
-  updateLight(lightA, nextState.lightA)
-  updateLight(lightB, nextState.lightB)
+  updatePointLight(lightA, nextState.lightA)
+  updatePointLight(lightB, nextState.lightB)
+  updateHemiLight(lightHemi, nextState.lightHemi)
 }
 
-function annotateLight ({ position, color, intensity, distance }) {
-  const annotateLightPosition = annotatePosition(16, 16, 16)
-  return {
-    position: annotateLightPosition(position),
-    @ouiAnnotate({ control: ouiControls.ColorPicker })
-    color,
-    @ouiAnnotate({ min: 1, max: 4, step: 0.1 })
-    intensity,
-    @ouiAnnotate({ min: distance - 40, max: distance + 40, step: 0.5 })
-    distance
-  }
-}
-
-function annotatePosition (rangeX, rangeY, rangeZ) {
-  return ({ x, y, z }) => {
-    return {
-      @ouiAnnotate({ min: x - rangeX, max: x + rangeX, step: 0.5 })
-      x,
-      @ouiAnnotate({ min: y - rangeY, max: y + rangeY, step: 0.5 })
-      y,
-      @ouiAnnotate({ min: z - rangeZ, max: z + rangeZ, step: 0.5 })
-      z
-    }
-  }
-}
-
-function updateLight (light, state) {
+function updatePointLight (light, state) {
   light.color.copy(state.color)
   light.position.copy(state.position)
   light.intensity = state.intensity
   light.distance = state.distance
+}
+
+function updateHemiLight (light, state) {
+  light.color.copy(state.skyColor)
+  light.groundColor.copy(state.groundColor)
+  light.intensity = state.intensity
 }
 
 function resize () {
