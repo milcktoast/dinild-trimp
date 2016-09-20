@@ -47,9 +47,12 @@ function isBitSet (value, position) {
   return value & (1 << position)
 }
 
-// NOTE: Does not support geometry with quads
+// NOTE:
+// - Only triangles (no quads)
+// - Only single UV layer
 function parseBufferAttributes (props) {
   const { faces, normals, uvs, vertices } = props
+  const uvLayer = uvs[0]
 
   if (!faces.length) {
     return {
@@ -98,27 +101,28 @@ function parseBufferAttributes (props) {
       vertC = 2 * faces[fOffset++]
 
       uv.push(
-        uvs[vertA],
-        uvs[vertA + 1],
+        uvLayer[vertA],
+        uvLayer[vertA + 1],
 
-        uvs[vertB],
-        uvs[vertB + 1],
+        uvLayer[vertB],
+        uvLayer[vertB + 1],
 
-        uvs[vertC],
-        uvs[vertC + 1])
+        uvLayer[vertC],
+        uvLayer[vertC + 1])
     }
 
     if (hasFaceNormal) {
       fOffset++
     }
 
+    // FIXME: Not sure why normals are weird
     if (hasFaceVertexNormal) {
       for (let i = 0; i < 3; i++) {
         const normalIndex = faces[fOffset++] * 3
         normal.push(
-          normals[normalIndex],
-          normals[normalIndex + 1],
-          normals[normalIndex + 2])
+          normals[normalIndex + 2],
+          normals[normalIndex + 0],
+          normals[normalIndex + 1])
       }
     }
   }
