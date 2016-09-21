@@ -1,11 +1,46 @@
 import {
   annotate,
   controls,
-  oui
+  panel
 } from 'ouioui'
 
-export function createStateControls (state, update) {
-  return oui(annotateState(state), update)
+export function createStateControls (config) {
+  return panel(config)
+}
+
+const ANNOTATORS = []
+function addAnnotator (fn, ...keys) {
+  ANNOTATORS.push({
+    keys, fn
+  })
+}
+
+function setupAnnotators () {
+  addAnnotator(annotateHemiLight, 'skyColor', 'groundColor')
+  addAnnotator(annotateSpotLight, 'angle', 'penumbra')
+  addAnnotator(annotatePointLight, 'intensity', 'distance')
+  addAnnotator(annotateCamera, 'position', 'target', 'up')
+  addAnnotator(annotateVector, 'x', 'y', 'z')
+}
+
+export function annotateState (state) {
+  if (!ANNOTATORS.length) setupAnnotators()
+  Object.keys(state).forEach((key) => {
+    const value = state[key]
+    const annotator = ANNOTATORS.find((item) => (
+      hasProps(value, item.keys)
+    ))
+    if (annotator) {
+      state[key] = annotator.fn(value)
+    }
+  })
+  return state
+}
+
+function hasProps (state, keys) {
+  return keys.reduce((prev, key) => (
+    prev && state[key] != null
+  ))
 }
 
 const colorPicker = annotate({
@@ -17,59 +52,37 @@ const lightIntensity = annotate({
   step: 0.1
 })
 
-const ANNOTATORS = []
-function addAnnotator (fn, ...keys) {
-  ANNOTATORS.push({
-    keys, fn
-  })
-}
-
-addAnnotator(annotateHemiLight, 'skyColor', 'groundColor')
-addAnnotator(annotateSpotLight, 'angle', 'penumbra')
-addAnnotator(annotatePointLight, 'intensity', 'distance')
-
-function annotateState (state) {
-  return Object.keys(state)
-    .reduce((annotatedState, key) => {
-      const value = state[key]
-      const annotator = ANNOTATORS.find((item) => (
-        hasProps(value, item.keys)
-      ))
-      annotateState[key] = annotator
-        ? annotator.fn(value)
-        : value
-      return annotateState
-    }, {})
-}
-
-function hasProps (state, keys) {
-  return keys.reduce((prev, key) => (
-    prev && state[key] != null
-  ))
-}
-
-function annotatePosition (range, { x, y, z }) {
+function annotateVector ({ x, y, z }, range = 40) {
+  const rangeX = annotate({ min: x - range, max: x + range, step: 0.5 })
+  const rangeY = annotate({ min: y - range, max: y + range, step: 0.5 })
+  const rangeZ = annotate({ min: z - range, max: z + range, step: 0.5 })
   return {
-    @annotate({ min: x - range, max: x + range, step: 0.5 })
-    x,
-    @annotate({ min: y - range, max: y + range, step: 0.5 })
-    y,
-    @annotate({ min: z - range, max: z + range, step: 0.5 })
-    z
+    @rangeX x,
+    @rangeY y,
+    @rangeZ z
+  }
+}
+
+function annotateCamera ({
+  position, target, up, reset
+}) {
+  return {
+    position: annotateVector(position),
+    target: annotateVector(target),
+    up: annotateVector(up),
+    reset
   }
 }
 
 function annotatePointLight ({
   position, color, intensity, distance
 }) {
+  const distanceRange = annotate({ min: distance - 40, max: distance + 40, step: 0.5 })
   return {
-    position: annotatePosition(20, position),
-    @colorPicker
-    color,
-    @lightIntensity
-    intensity,
-    @annotate({ min: distance - 40, max: distance + 40, step: 0.5 })
-    distance
+    position: annotateVector(position),
+    @colorPicker color,
+    @lightIntensity intensity,
+    @distanceRange distance
   }
 }
 
@@ -78,33 +91,28 @@ function annotateSpotLight ({
   color, intensity, distance,
   angle, penumbra, decay
 }) {
+  const distanceRange = annotate({ min: distance - 40, max: distance + 40, step: 0.5 })
+  const angleRange = annotate({ min: 0, max: Math.PI, step: Math.PI / 180 })
+  const penumbraRange = annotate({ min: 0, max: 1, step: 0.05 })
+  const decayRange = annotate({ min: 0, max: 3, step: 0.05 })
   return {
-    position: annotatePosition(20, position),
-    target: annotatePosition(20, target),
+    position: annotateVector(position),
+    target: annotateVector(target),
     helper: helper || false,
     castShadow: castShadow || false,
-    @colorPicker
-    color,
-    @lightIntensity
-    intensity,
-    @annotate({ min: distance - 40, max: distance + 40, step: 0.5 })
-    distance,
-    @annotate({ min: 0, max: Math.PI, step: Math.PI / 180 })
-    angle,
-    @annotate({ min: 0, max: 1, step: 0.05 })
-    penumbra,
-    @annotate({ min: 0, max: 3, step: 0.05 })
-    decay
+    @colorPicker color,
+    @lightIntensity intensity,
+    @distanceRange distance,
+    @angleRange angle,
+    @penumbraRange penumbra,
+    @decayRange decay
   }
 }
 
 function annotateHemiLight ({ skyColor, groundColor, intensity }) {
   return {
-    @colorPicker
-    skyColor,
-    @colorPicker
-    groundColor,
-    @lightIntensity
-    intensity
+    @colorPicker skyColor,
+    @colorPicker groundColor,
+    @lightIntensity intensity
   }
 }
