@@ -1,10 +1,12 @@
 import {
   Color,
+  Fog,
   Group,
   HemisphereLight,
   Mesh,
   MeshPhongMaterial,
   PerspectiveCamera,
+  RGBFormat,
   Scene,
   SpotLight,
   SpotLightHelper,
@@ -37,40 +39,64 @@ function createColor (...args) {
   return new Color(...args)
 }
 
-const cameraStart = {
-  position: createVector(6, 0, 32),
-  target: createVector(-1, 1.5, 0),
-  up: createVector(0, 1, 0)
-}
+const cameraOptions = [{
+  position: createVector(6, -1, 22),
+  target: createVector(-1.5, 0.5, 0),
+  up: createVector(0, 1, 0),
+  fov: 92
+}, {
+  position: createVector(-5, 0, 22),
+  target: createVector(3, 0, 1),
+  up: createVector(0, 1, 0),
+  fov: 92
+}, {
+  position: createVector(-4, 3.5, 25.5),
+  target: createVector(2, 0, 1),
+  up: createVector(0, 1, 0),
+  fov: 80.5
+}]
+const cameraStart = cameraOptions[1]
 
 const state = {
   camera: {
     position: createVector(cameraStart.position),
     target: createVector(cameraStart.target),
     up: createVector(cameraStart.up),
+    fov: cameraStart.fov,
     reset: () => {
       copyVector(state.camera.position, cameraStart.position)
       copyVector(state.camera.target, cameraStart.target)
       copyVector(state.camera.up, cameraStart.up)
+      state.camera.fov = cameraStart.fov
       updateState(state)
     }
   },
+  fog: {
+    color: createColor(0x222222),
+    near: 10.6,
+    far: 17.2
+  },
+  skin: {
+    shininess: 30,
+    normalScale: 1.35,
+    textureAnisotropy: 4
+  },
   lightTop: {
-    position: createVector(-5.5, 21.5, 12.5),
+    position: createVector(-2.5, 18.5, 15.5),
     target: createVector(0, 0, 0),
     color: createColor(0x3F49FF),
-    intensity: 2.8,
-    distance: 27,
-    angle: Math.PI / 4,
-    penumbra: 0,
+    intensity: 2.3,
+    distance: 22,
+    angle: 0.62,
+    penumbra: 0.2,
     decay: 2
   },
   lightBottom: {
     position: createVector(8.5, -6.5, 26),
     target: createVector(0, 0, 0),
     color: createColor(0xBB97FF),
-    intensity: 3.2,
-    distance: 26,
+    intensity: 4,
+    distance: 42,
     angle: Math.PI / 4,
     penumbra: 0,
     decay: 2
@@ -78,14 +104,14 @@ const state = {
   lightAmbient: {
     skyColor: createColor(0x5549FF),
     groundColor: createColor(0x162DFF),
-    intensity: 1.3
+    intensity: 2.7
   }
 }
 
 const container = document.createElement('div')
 const renderer = new WebGLRenderer()
-
 const scene = new Scene()
+scene.fog = new Fog()
 const sceneHelpers = new Group()
 scene.add(sceneHelpers)
 
@@ -96,7 +122,7 @@ function addSpotlightHelper (light) {
   sceneHelpers.add(helper)
 }
 
-const camera = new PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000)
+const camera = new PerspectiveCamera(1, 1, 0.1, 100)
 const cameraControls = new TrackballControls(camera, container)
 cameraControls.rotateSpeed = 1
 cameraControls.zoomSpeed = 0.02
@@ -135,16 +161,20 @@ cameraControls.addEventListener('change', () => {
   oui(state, updateState)
 })
 
+let textureLoader
+function loadTexture (src) {
+  if (!textureLoader) textureLoader = new TextureLoader()
+  const texture = textureLoader.load(src)
+  texture.format = RGBFormat
+  return texture
+}
+
 function createDinild () {
   const dinildJSON = require('./assets/models/dinild.json')
   const { geometry } = parseModel(dinildJSON)
-  const loader = new TextureLoader()
-  const map = loader.load('./assets/textures/dinild/diffuse.jpg')
-  const normalMap = loader.load('./assets/textures/dinild/normal.jpg')
   const material = new MeshPhongMaterial({
-    shininess: 20,
-    map,
-    normalMap
+    map: loadTexture('./assets/textures/dinild/diffuse.jpg'),
+    normalMap: loadTexture('./assets/textures/dinild/normal.jpg')
   })
   const mesh = new Mesh(geometry, material)
   // Object.assign(mesh, {
@@ -156,6 +186,8 @@ function createDinild () {
 
 function updateState (nextState) {
   updateCamera(nextState.camera)
+  updateFog(nextState.fog)
+  updateSkinMaterial(dinild.material, nextState.skin)
   updateSpotLight(lightTop, nextState.lightTop)
   updateSpotLight(lightBottom, nextState.lightBottom)
   updateHemiLight(lightAmbient, nextState.lightAmbient)
@@ -163,8 +195,29 @@ function updateState (nextState) {
 
 function updateCamera (state) {
   camera.position.copy(state.position)
-  camera.up.copy(state.up)
+  camera.up.copy(state.up).normalize()
+  camera.fov = state.fov
   cameraControls.target.copy(state.target)
+  camera.updateProjectionMatrix()
+}
+
+function updateFog (state) {
+  renderer.setClearColor(state.color)
+  scene.fog.color.copy(state.color)
+  scene.fog.near = state.near
+  scene.fog.far = state.far
+}
+
+function updateSkinMaterial (material, state) {
+  const { map, normalMap } = material
+  material.shininess = state.shininess
+  material.normalScale.set(state.normalScale, state.normalScale)
+  if (map.anisotropy !== state.textureAnisotropy) {
+    map.anisotropy = state.textureAnisotropy
+    normalMap.anisotropy = state.textureAnisotropy
+    if (map.image) map.needsUpdate = true
+    if (normalMap.image) normalMap.needsUpdate = true
+  }
 }
 
 function updateLight (light, state) {

@@ -20,6 +20,8 @@ function setupAnnotators () {
   addAnnotator(annotateSpotLight, 'angle', 'penumbra')
   addAnnotator(annotatePointLight, 'intensity', 'distance')
   addAnnotator(annotateCamera, 'position', 'target', 'up')
+  addAnnotator(annotateFog, 'color', 'near', 'far')
+  addAnnotator(annotateSkinMaterial, 'shininess')
   addAnnotator(annotateVector, 'x', 'y', 'z')
 }
 
@@ -48,14 +50,14 @@ const colorPicker = annotate({
 })
 const lightIntensity = annotate({
   min: 0,
-  max: 4,
+  max: 6,
   step: 0.1
 })
 
-function annotateVector ({ x, y, z }, range = 40) {
-  const rangeX = annotate({ min: x - range, max: x + range, step: 0.5 })
-  const rangeY = annotate({ min: y - range, max: y + range, step: 0.5 })
-  const rangeZ = annotate({ min: z - range, max: z + range, step: 0.5 })
+function annotateVector ({ x, y, z }, range = 40, step = 0.5) {
+  const rangeX = annotate({ min: x - range, max: x + range, step })
+  const rangeY = annotate({ min: y - range, max: y + range, step })
+  const rangeZ = annotate({ min: z - range, max: z + range, step })
   return {
     @rangeX x,
     @rangeY y,
@@ -64,13 +66,40 @@ function annotateVector ({ x, y, z }, range = 40) {
 }
 
 function annotateCamera ({
-  position, target, up, reset
+  position, target, up, fov, reset
 }) {
+  const rangeFov = annotate({ min: 20, max: 120, step: 0.5 })
   return {
     position: annotateVector(position),
     target: annotateVector(target),
-    up: annotateVector(up),
+    up: annotateVector(up, 1, 0.05),
+    @rangeFov fov,
     reset
+  }
+}
+
+function annotateFog ({
+  color, near, far
+}) {
+  const range = annotate({ min: 1, max: 50, step: 0.1 })
+  return {
+    @colorPicker color,
+    @range near,
+    @range far
+  }
+}
+
+function annotateSkinMaterial ({
+  shininess,
+  normalScale, textureAnisotropy
+}) {
+  const shininessRange = annotate({ min: 10, max: 80, step: 0.1 })
+  const normalScaleRange = annotate({ min: 0, max: 2, step: 0.05 })
+  const textureAnisotropyRange = annotate({ min: 1, max: 8, step: 1 })
+  return {
+    @shininessRange shininess,
+    @normalScaleRange normalScale,
+    @textureAnisotropyRange textureAnisotropy
   }
 }
 
