@@ -24,6 +24,10 @@ function addAnnotator (fn, ...keys) {
   })
 }
 
+addAnnotator(annotateHemiLight, 'skyColor', 'groundColor')
+addAnnotator(annotateSpotLight, 'angle', 'penumbra')
+addAnnotator(annotatePointLight, 'intensity', 'distance')
+
 function annotateState (state) {
   return Object.keys(state)
     .reduce((annotatedState, key) => {
@@ -40,15 +44,26 @@ function annotateState (state) {
 
 function hasProps (state, keys) {
   return keys.reduce((prev, key) => (
-    prev && state[key]
+    prev && state[key] != null
   ))
 }
 
-addAnnotator(annotatePointLight, 'intensity', 'distance')
-const annotatePointLightPosition = annotatePosition(16, 16, 16)
-function annotatePointLight ({ position, color, intensity, distance }) {
+function annotatePosition (range, { x, y, z }) {
   return {
-    position: annotatePointLightPosition(position),
+    @annotate({ min: x - range, max: x + range, step: 0.5 })
+    x,
+    @annotate({ min: y - range, max: y + range, step: 0.5 })
+    y,
+    @annotate({ min: z - range, max: z + range, step: 0.5 })
+    z
+  }
+}
+
+function annotatePointLight ({
+  position, color, intensity, distance
+}) {
+  return {
+    position: annotatePosition(20, position),
     @colorPicker
     color,
     @lightIntensity
@@ -58,7 +73,31 @@ function annotatePointLight ({ position, color, intensity, distance }) {
   }
 }
 
-addAnnotator(annotateHemiLight, 'skyColor', 'groundColor')
+function annotateSpotLight ({
+  position, target, helper, castShadow,
+  color, intensity, distance,
+  angle, penumbra, decay
+}) {
+  return {
+    position: annotatePosition(20, position),
+    target: annotatePosition(20, target),
+    helper: helper || false,
+    castShadow: castShadow || false,
+    @colorPicker
+    color,
+    @lightIntensity
+    intensity,
+    @annotate({ min: distance - 40, max: distance + 40, step: 0.5 })
+    distance,
+    @annotate({ min: 0, max: Math.PI, step: Math.PI / 180 })
+    angle,
+    @annotate({ min: 0, max: 1, step: 0.05 })
+    penumbra,
+    @annotate({ min: 0, max: 3, step: 0.05 })
+    decay
+  }
+}
+
 function annotateHemiLight ({ skyColor, groundColor, intensity }) {
   return {
     @colorPicker
@@ -67,18 +106,5 @@ function annotateHemiLight ({ skyColor, groundColor, intensity }) {
     groundColor,
     @lightIntensity
     intensity
-  }
-}
-
-function annotatePosition (rangeX, rangeY, rangeZ) {
-  return ({ x, y, z }) => {
-    return {
-      @annotate({ min: x - rangeX, max: x + rangeX, step: 0.5 })
-      x,
-      @annotate({ min: y - rangeY, max: y + rangeY, step: 0.5 })
-      y,
-      @annotate({ min: z - rangeZ, max: z + rangeZ, step: 0.5 })
-      z
-    }
   }
 }
