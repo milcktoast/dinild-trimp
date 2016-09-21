@@ -10,15 +10,6 @@
   "standard": {
     "parser": "babel-eslint"
   },
-  "babel": {
-    "presets": [
-      "es2015"
-    ],
-    "plugins": [
-      "transform-decorators-legacy",
-      "transform-object-rest-spread"
-    ]
-  },
   "author": "Jay Weeks <jay.patrick.weeks@gmail.com> (http://jayweeks.com)",
   "license": "Artistic-2.0",
   "devDependencies": {
