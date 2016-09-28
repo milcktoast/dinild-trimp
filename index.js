@@ -45,7 +45,7 @@ const cameraOptions = [{
   up: createVector(0, 1, 0),
   fov: 92
 }, {
-  position: createVector(-5, 0, 22),
+  position: createVector(-5.5, 1, 22),
   target: createVector(3, 0, 1),
   up: createVector(0, 1, 0),
   fov: 92
@@ -96,9 +96,9 @@ const state = {
     target: createVector(0, 0, 0),
     color: createColor(0xBB97FF),
     intensity: 4,
-    distance: 42,
-    angle: Math.PI / 4,
-    penumbra: 0,
+    distance: 36,
+    angle: 0.61,
+    penumbra: 0.2,
     decay: 2
   },
   lightAmbient: {
@@ -131,10 +131,14 @@ cameraControls.noZoom = false
 cameraControls.noPan = false
 cameraControls.dynamicDampingFactor = 0.3
 
-const lightTop = new SpotLight()
-const lightBottom = new SpotLight()
-const lightAmbient = new HemisphereLight()
-scene.add(lightTop, lightBottom, lightAmbient)
+const lights = {
+  top: new SpotLight(),
+  bottom: new SpotLight(),
+  ambient: new HemisphereLight()
+}
+Object.keys(lights).forEach((key) => {
+  scene.add(lights[key])
+})
 
 const dinild = createDinild()
 scene.add(dinild)
@@ -188,9 +192,9 @@ function updateState (nextState) {
   updateCamera(nextState.camera)
   updateFog(nextState.fog)
   updateSkinMaterial(dinild.material, nextState.skin)
-  updateSpotLight(lightTop, nextState.lightTop)
-  updateSpotLight(lightBottom, nextState.lightBottom)
-  updateHemiLight(lightAmbient, nextState.lightAmbient)
+  updateSpotLight(lights.top, nextState.lightTop)
+  updateSpotLight(lights.bottom, nextState.lightBottom)
+  updateHemiLight(lights.ambient, nextState.lightAmbient)
 }
 
 function updateCamera (state) {
@@ -272,11 +276,11 @@ function modulateIntensity (intensity, scaleMin, t) {
 
 let frame = 0
 function animate () {
-  lightTop.intensity = modulateIntensity(state.lightTop.intensity,
+  lights.top.intensity = modulateIntensity(state.lightTop.intensity,
     0.65, frame * 0.0031)
-  lightBottom.intensity = modulateIntensity(state.lightBottom.intensity,
+  lights.bottom.intensity = modulateIntensity(state.lightBottom.intensity,
     0.75, frame * 0.0032)
-  lightAmbient.intensity = modulateIntensity(state.lightAmbient.intensity,
+  lights.ambient.intensity = modulateIntensity(state.lightAmbient.intensity,
     0.85, frame * 0.0030)
 
   sceneHelpers.children.forEach((child) => {
