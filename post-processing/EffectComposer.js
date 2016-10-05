@@ -55,6 +55,10 @@ Object.assign(EffectComposer.prototype, {
     pass.setSize(size.width, size.height)
   },
 
+  addPasses (...passes) {
+    passes.forEach((pass) => this.addPass(pass))
+  },
+
   insertPass (pass, index) {
     this.passes.splice(index, 0, pass)
   },

@@ -4,7 +4,7 @@ import {
   Group,
   HemisphereLight,
   Mesh,
-  MeshPhongMaterial,
+  // MeshPhongMaterial,
   PCFSoftShadowMap,
   PerspectiveCamera,
   RGBFormat,
@@ -14,7 +14,9 @@ import {
   TextureLoader,
   WebGLRenderer
 } from 'three'
-import { TrackballControls } from './vendor/three/TrackballControls'
+
+import { TrackballControls } from './controls/TrackballControls'
+import { SkinMaterial } from './materials/SkinMaterial'
 import { mapLinear } from './utils/math'
 import { parseModel } from './utils/model'
 import {
@@ -153,7 +155,6 @@ function addSpotlightHelper (light) {
   scene.helpers.add(helper)
 }
 
-
 const lights = {
   top: new SpotLight(),
   bottom: new SpotLight(),
@@ -203,8 +204,8 @@ function loadTexture (src) {
 function createDinild () {
   const dinildJSON = require('./assets/models/dinild.json')
   const { geometry } = parseModel(dinildJSON)
-  const material = new MeshPhongMaterial({
-    map: loadTexture('./assets/textures/dinild/diffuse.jpg'),
+  const material = new SkinMaterial({
+    diffuseMap: loadTexture('./assets/textures/dinild/diffuse.jpg'),
     normalMap: loadTexture('./assets/textures/dinild/normal.jpg')
   })
   const mesh = new Mesh(geometry, material)
@@ -212,6 +213,9 @@ function createDinild () {
     castShadow: true,
     receiveShadow: true
   })
+  mesh.render = (renderer, scene, camera) => {
+    material.render(renderer, scene, camera)
+  }
   return mesh
 }
 
@@ -240,15 +244,15 @@ function updateFog (state) {
 }
 
 function updateSkinMaterial (material, state) {
-  const { map, normalMap } = material
-  material.shininess = state.shininess
-  material.normalScale.set(state.normalScale, state.normalScale)
-  if (map.anisotropy !== state.textureAnisotropy) {
-    map.anisotropy = state.textureAnisotropy
-    normalMap.anisotropy = state.textureAnisotropy
-    if (map.image) map.needsUpdate = true
-    if (normalMap.image) normalMap.needsUpdate = true
-  }
+  // const { map, normalMap } = material
+  // material.shininess = state.shininess
+  // material.normalScale.set(state.normalScale, state.normalScale)
+  // if (map.anisotropy !== state.textureAnisotropy) {
+  //   map.anisotropy = state.textureAnisotropy
+  //   normalMap.anisotropy = state.textureAnisotropy
+  //   if (map.image) map.needsUpdate = true
+  //   if (normalMap.image) normalMap.needsUpdate = true
+  // }
 }
 
 function updateLight (light, state) {
@@ -326,5 +330,8 @@ function animate () {
 
 function render () {
   renderer.clear()
+  scene.children.forEach((child) => {
+    if (child.render) child.render(renderer, scene, camera)
+  })
   renderer.render(scene, camera)
 }

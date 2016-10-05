@@ -18,6 +18,9 @@
 //     http://http.developer.nvidia.com/GPUGems3/gpugems3_ch14.html
 // ------------------------------------------------------------------------------------------ */
 
+// TODO: Integrate new lighting system, fix SpotLight calculations
+// TODO: Add shadow map support
+
 import {
   Color,
   ShaderChunk,
@@ -88,6 +91,7 @@ export const SkinShader = {
     'varying vec3 vViewPosition;',
 
     ShaderChunk[ 'common' ],
+    ShaderChunk[ 'bsdfs' ],
     ShaderChunk[ 'lights_pars' ],
     ShaderChunk[ 'fog_pars_fragment' ],
 
@@ -143,7 +147,7 @@ export const SkinShader = {
 
     'diffuseColor *= colDiffuse;',
 
-      // normal mapping
+    // normal mapping
 
     'vec4 posAndU = vec4( -vViewPosition, vUv.x );',
     'vec4 posAndU_dx = dFdx( posAndU ),  posAndU_dy = dFdy( posAndU );',
@@ -162,7 +166,7 @@ export const SkinShader = {
 
     'vec3 viewerDirection = normalize( vViewPosition );',
 
-      // point lights
+    // point lights
 
     'vec3 totalDiffuseLight = vec3( 0.0 );',
     'vec3 totalSpecularLight = vec3( 0.0 );',
@@ -190,7 +194,7 @@ export const SkinShader = {
 
     '#endif',
 
-      // directional lights
+    // directional lights
 
     '#if NUM_DIR_LIGHTS > 0',
 
@@ -214,6 +218,32 @@ export const SkinShader = {
 
     '#endif',
 
+    // spot lights
+
+    '#if NUM_SPOT_LIGHTS > 0',
+
+    'for( int i = 0; i < NUM_SPOT_LIGHTS; i++ ) {',
+
+    'vec3 dirVector = spotLights[ i ].direction;',
+
+    'float dirDiffuseWeight = max( dot( normal, dirVector ), 0.0 );',
+
+    'totalDiffuseLight += spotLights[ i ].color * dirDiffuseWeight;',
+
+    'if ( passID == 1 ) {',
+
+    'float dirSpecularWeight = KS_Skin_Specular( normal, dirVector, viewerDirection, uRoughness, uSpecularBrightness );',
+
+    'totalSpecularLight += spotLights[ i ].color * mSpecular.xyz * dirSpecularWeight;',
+
+    '}',
+
+    '}',
+
+    '#endif',
+
+    // accumulate lighting
+
     'outgoingLight += diffuseColor.rgb * ( totalDiffuseLight + totalSpecularLight );',
 
     'if ( passID == 0 ) {',
@@ -222,7 +252,7 @@ export const SkinShader = {
 
     '} else if ( passID == 1 ) {',
 
-        // "#define VERSION1",
+      // "#define VERSION1",
 
     '#ifdef VERSION1',
 
@@ -239,11 +269,9 @@ export const SkinShader = {
     'vec3 blur3Color = texture2D( tBlur3, vUv ).xyz;',
     'vec3 blur4Color = texture2D( tBlur4, vUv ).xyz;',
 
-        // "gl_FragColor = vec4( blur1Color, gl_FragColor.w );",
-
-        // "gl_FragColor = vec4( vec3( 0.22, 0.5, 0.7 ) * nonblurColor + vec3( 0.2, 0.5, 0.3 ) * blur1Color + vec3( 0.58, 0.0, 0.0 ) * blur2Color, gl_FragColor.w );",
-
-        // "gl_FragColor = vec4( vec3( 0.25, 0.6, 0.8 ) * nonblurColor + vec3( 0.15, 0.25, 0.2 ) * blur1Color + vec3( 0.15, 0.15, 0.0 ) * blur2Color + vec3( 0.45, 0.0, 0.0 ) * blur3Color, gl_FragColor.w );",
+      // "gl_FragColor = vec4( blur1Color, gl_FragColor.w );",
+      // "gl_FragColor = vec4( vec3( 0.22, 0.5, 0.7 ) * nonblurColor + vec3( 0.2, 0.5, 0.3 ) * blur1Color + vec3( 0.58, 0.0, 0.0 ) * blur2Color, gl_FragColor.w );",
+      // "gl_FragColor = vec4( vec3( 0.25, 0.6, 0.8 ) * nonblurColor + vec3( 0.15, 0.25, 0.2 ) * blur1Color + vec3( 0.15, 0.15, 0.0 ) * blur2Color + vec3( 0.45, 0.0, 0.0 ) * blur3Color, gl_FragColor.w );",
 
     'outgoingLight = vec3( vec3( 0.22,  0.437, 0.635 ) * nonblurColor + ',
     'vec3( 0.101, 0.355, 0.365 ) * blur1Color + ',
@@ -300,7 +328,7 @@ export const SkinShader = {
 
     'vUv = uv;',
 
-      // displacement mapping
+    // displacement mapping
 
     '#ifdef VERTEX_TEXTURES',
 
@@ -389,7 +417,7 @@ export const BeckmannShader = {
 
     'float KSTextureCompute( vec2 tex ) {',
 
-      // Scale the value to fit within [0,1]  invert upon lookup.
+    // Scale the value to fit within [0,1]  invert upon lookup.
 
     'return 0.5 * pow( PHBeckmann( tex.x, tex.y ), 0.1 );',
 
