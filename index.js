@@ -46,7 +46,7 @@ const cameraOptions = [{
   up: createVector(0, 1, 0),
   fov: 92
 }, {
-  position: createVector(-4.5, 1.5, 22.5),
+  position: createVector(-4.5, 2.5, 22.5),
   target: createVector(3, 0, 1),
   up: createVector(0, 1, 0),
   fov: 92
@@ -111,33 +111,48 @@ const state = {
   }
 }
 
-const renderer = new WebGLRenderer()
-Object.assign(renderer.shadowMap, {
-  enabled: true,
-  type: PCFSoftShadowMap
-})
-
 const container = document.createElement('div')
-const scene = new Scene()
-scene.fog = new Fog()
-const sceneHelpers = new Group()
-scene.add(sceneHelpers)
+const renderer = createRenderer()
+const scene = createScene()
+const camera = createCamera()
+
+function createRenderer () {
+  const renderer = new WebGLRenderer()
+  renderer.autoClear = false
+  renderer.shadowMap.enabled = true
+  renderer.shadowMap.type = PCFSoftShadowMap
+  return renderer
+}
+
+function createScene () {
+  const scene = new Scene()
+  scene.fog = new Fog()
+  scene.helpers = new Group()
+  scene.add(scene.helpers)
+  return scene
+}
+
+function createCamera () {
+  const camera = new PerspectiveCamera(1, 1, 0.1, 100)
+  camera.controls = new TrackballControls(camera, container)
+  Object.assign(camera.controls, {
+    rotateSpeed: 1,
+    zoomSpeed: 0.02,
+    panSpeed: 0.1,
+    noZoom: false,
+    noPan: false,
+    dynamicDampingFactor: 0.3
+  })
+  return camera
+}
 
 // TODO: Cleanup
 function addSpotlightHelper (light) {
   const helper = new SpotLightHelper(light)
   light.helper = helper
-  sceneHelpers.add(helper)
+  scene.helpers.add(helper)
 }
 
-const camera = new PerspectiveCamera(1, 1, 0.1, 100)
-const cameraControls = new TrackballControls(camera, container)
-cameraControls.rotateSpeed = 1
-cameraControls.zoomSpeed = 0.02
-cameraControls.panSpeed = 0.1
-cameraControls.noZoom = false
-cameraControls.noPan = false
-cameraControls.dynamicDampingFactor = 0.3
 
 const lights = {
   top: new SpotLight(),
@@ -154,7 +169,6 @@ Object.keys(lights).forEach((key) => {
 
 const dinild = createDinild()
 scene.add(dinild)
-console.log(dinild)
 
 Object.assign(container.style, {
   position: 'absolute',
@@ -171,10 +185,10 @@ animate()
 const oui = createStateControls({label: 'Settings'})
 annotateState(state)
 oui(state, updateState)
-cameraControls.addEventListener('change', () => {
+camera.controls.addEventListener('change', () => {
   copyVector(state.camera.position, camera.position)
   copyVector(state.camera.up, camera.up)
-  copyVector(state.camera.target, cameraControls.target)
+  copyVector(state.camera.target, camera.controls.target)
   oui(state, updateState)
 })
 
@@ -214,7 +228,7 @@ function updateCamera (state) {
   camera.position.copy(state.position)
   camera.up.copy(state.up).normalize()
   camera.fov = state.fov
-  cameraControls.target.copy(state.target)
+  camera.controls.target.copy(state.target)
   camera.updateProjectionMatrix()
 }
 
@@ -266,7 +280,7 @@ function resize () {
   camera.aspect = window.innerWidth / window.innerHeight
   camera.updateProjectionMatrix()
   renderer.setSize(window.innerWidth, window.innerHeight)
-  cameraControls.handleResize()
+  camera.controls.handleResize()
   render()
 }
 
@@ -287,25 +301,30 @@ function modulateIntensity (intensity, scaleMin, t) {
     modulateSinPrime(t))
 }
 
-let frame = 0
-function animate () {
+function animateLights (frame) {
   lights.top.intensity = modulateIntensity(state.lightTop.intensity,
     0.65, frame * 0.0021)
   lights.bottom.intensity = modulateIntensity(state.lightBottom.intensity,
     0.75, frame * 0.0022)
   lights.ambient.intensity = modulateIntensity(state.lightAmbient.intensity,
     0.85, frame * 0.0020)
+}
 
-  sceneHelpers.children.forEach((child) => {
-    child.update && child.update()
+let animationFrame = 0
+function animate () {
+  const frame = animationFrame++
+  animateLights(frame)
+
+  scene.helpers.children.forEach((child) => {
+    if (child.update) child.update()
   })
-  cameraControls.update()
+  camera.controls.update()
 
-  window.requestAnimationFrame(animate)
   render()
-  frame++
+  window.requestAnimationFrame(animate)
 }
 
 function render () {
+  renderer.clear()
   renderer.render(scene, camera)
 }

@@ -29,6 +29,7 @@ export function annotateState (state) {
   if (!ANNOTATORS.length) setupAnnotators()
   Object.keys(state).forEach((key) => {
     const value = state[key]
+    if (typeof value !== 'object') return
     const annotator = ANNOTATORS.find((item) => (
       hasProps(value, item.keys)
     ))
