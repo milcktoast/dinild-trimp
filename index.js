@@ -5,6 +5,7 @@ import {
   HemisphereLight,
   Mesh,
   MeshPhongMaterial,
+  PCFSoftShadowMap,
   PerspectiveCamera,
   RGBFormat,
   Scene,
@@ -45,7 +46,7 @@ const cameraOptions = [{
   up: createVector(0, 1, 0),
   fov: 92
 }, {
-  position: createVector(-5.5, 1, 22),
+  position: createVector(-4.5, 1.5, 22.5),
   target: createVector(3, 0, 1),
   up: createVector(0, 1, 0),
   fov: 92
@@ -72,44 +73,51 @@ const state = {
     }
   },
   fog: {
-    color: createColor(0x222222),
-    near: 10.6,
-    far: 17.2
+    color: createColor(0x11001D),
+    near: 11.2,
+    far: 15.6
   },
   skin: {
     shininess: 30,
-    normalScale: 1.35,
+    normalScale: 1,
     textureAnisotropy: 4
   },
   lightTop: {
-    position: createVector(-2.5, 18.5, 15.5),
-    target: createVector(0, 0, 0),
-    color: createColor(0x3F49FF),
+    position: createVector(-10, 24, 14.5),
+    target: createVector(0, 0, 10.5),
+    color: createColor(0xCAFF7C),
     intensity: 2.3,
-    distance: 22,
+    distance: 45,
     angle: 0.62,
     penumbra: 0.2,
-    decay: 2
+    decay: 0.9,
+    castShadow: false
   },
   lightBottom: {
-    position: createVector(8.5, -6.5, 26),
-    target: createVector(0, 0, 0),
-    color: createColor(0xBB97FF),
-    intensity: 4,
-    distance: 36,
-    angle: 0.61,
+    position: createVector(2, -14, 24.5),
+    target: createVector(0, 5.5, 1),
+    color: createColor(0xD2BAFF),
+    intensity: 1.3,
+    distance: 40,
+    angle: 0.59,
     penumbra: 0.2,
-    decay: 2
+    decay: 0.75,
+    castShadow: true
   },
   lightAmbient: {
-    skyColor: createColor(0x5549FF),
-    groundColor: createColor(0x162DFF),
-    intensity: 2.7
+    skyColor: createColor(0xBCADFF),
+    groundColor: createColor(0xDBFFF4),
+    intensity: 1.4
   }
 }
 
-const container = document.createElement('div')
 const renderer = new WebGLRenderer()
+Object.assign(renderer.shadowMap, {
+  enabled: true,
+  type: PCFSoftShadowMap
+})
+
+const container = document.createElement('div')
 const scene = new Scene()
 scene.fog = new Fog()
 const sceneHelpers = new Group()
@@ -137,11 +145,16 @@ const lights = {
   ambient: new HemisphereLight()
 }
 Object.keys(lights).forEach((key) => {
-  scene.add(lights[key])
+  const light = lights[key]
+  if (light.shadow) {
+    light.shadow.mapSize.setScalar(1024)
+  }
+  scene.add(light)
 })
 
 const dinild = createDinild()
 scene.add(dinild)
+console.log(dinild)
 
 Object.assign(container.style, {
   position: 'absolute',
@@ -181,10 +194,10 @@ function createDinild () {
     normalMap: loadTexture('./assets/textures/dinild/normal.jpg')
   })
   const mesh = new Mesh(geometry, material)
-  // Object.assign(mesh, {
-  //   castShadow: true,
-  //   receiveShadow: true
-  // })
+  Object.assign(mesh, {
+    castShadow: true,
+    receiveShadow: true
+  })
   return mesh
 }
 
@@ -277,11 +290,11 @@ function modulateIntensity (intensity, scaleMin, t) {
 let frame = 0
 function animate () {
   lights.top.intensity = modulateIntensity(state.lightTop.intensity,
-    0.65, frame * 0.0031)
+    0.65, frame * 0.0021)
   lights.bottom.intensity = modulateIntensity(state.lightBottom.intensity,
-    0.75, frame * 0.0032)
+    0.75, frame * 0.0022)
   lights.ambient.intensity = modulateIntensity(state.lightAmbient.intensity,
-    0.85, frame * 0.0030)
+    0.85, frame * 0.0020)
 
   sceneHelpers.children.forEach((child) => {
     child.update && child.update()
