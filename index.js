@@ -17,6 +17,7 @@ import {
 
 import { TrackballControls } from './controls/TrackballControls'
 import { SkinMaterial } from './materials/SkinMaterial'
+import { createTaskManager } from './utils/task'
 import { mapLinear } from './utils/math'
 import { parseModel } from './utils/model'
 import {
@@ -118,24 +119,10 @@ const state = {
 }
 
 const container = document.createElement('div')
-const tasks = createTaskManager()
+const tasks = createTaskManager('update', 'render')
 const renderer = createRenderer()
 const scene = createScene()
 const camera = createCamera()
-
-function createTaskManager () {
-  const tasks = {
-    update: [],
-    render: []
-  }
-  tasks.add = (context, queueName, name_) => {
-    const name = name_ || queueName
-    const queue = tasks[queueName]
-    const fn = context[name] || context
-    queue.push(fn.bind(context))
-  }
-  return tasks
-}
 
 function createRenderer () {
   const renderer = new WebGLRenderer()
@@ -345,16 +332,13 @@ tasks.add(animateLights, 'update')
 
 let animationFrame = 0
 function animate () {
-  const frame = animationFrame++
-  tasks.update.forEach((task) => task(frame))
+  tasks.run('update', animationFrame++)
   render()
   window.requestAnimationFrame(animate)
 }
 
 function render () {
   renderer.clear()
-  tasks.render.forEach((task) => {
-    task(renderer, scene, camera)
-  })
+  tasks.run('render', renderer, scene, camera)
   renderer.render(scene, camera)
 }
