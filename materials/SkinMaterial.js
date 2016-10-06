@@ -11,6 +11,7 @@ import {
   BeckmannShader,
   SkinShader
 } from '../shaders/SkinShader'
+import { extendShaderMaterial } from '../utils/material'
 import { BloomPass } from '../post-processing/BloomPass'
 import { EffectComposer } from '../post-processing/EffectComposer'
 import { RenderPass } from '../post-processing/RenderPass'
@@ -74,18 +75,18 @@ extendShaderMaterial(SkinMaterial, {
     }
 
     renderTargets.material.addPass(passes.writeTexture)
-    passes.readTexture = new TexturePass(getReadTexture(renderTargets.material))
+    passes.readTexture = new TexturePass(renderTargets.material.getReadTexture())
 
     renderTargets.blur2.addPasses(passes.readTexture, passes.bloom1)
     renderTargets.blur3.addPasses(passes.readTexture, passes.bloom2)
     renderTargets.blur4.addPasses(passes.readTexture, passes.bloom3)
     renderTargets.beckmann.addPasses(passes.beckmann)
 
-    this.uniforms.tBeckmann.value = getWriteTexture(renderTargets.beckmann)
-    this.uniforms.tBlur1.value = getReadTexture(renderTargets.material)
-    this.uniforms.tBlur2.value = getReadTexture(renderTargets.blur2)
-    this.uniforms.tBlur3.value = getReadTexture(renderTargets.blur3)
-    this.uniforms.tBlur4.value = getReadTexture(renderTargets.blur4)
+    this.uniforms.tBeckmann.value = renderTargets.beckmann.getWriteTexture()
+    this.uniforms.tBlur1.value = renderTargets.material.getReadTexture()
+    this.uniforms.tBlur2.value = renderTargets.blur2.getReadTexture()
+    this.uniforms.tBlur3.value = renderTargets.blur3.getReadTexture()
+    this.uniforms.tBlur4.value = renderTargets.blur4.getReadTexture()
 
     return renderTargets
   },
@@ -122,36 +123,21 @@ extendShaderMaterial(SkinMaterialUV)
 
 function createSkinUniforms (passID, {
   diffuse = 0xffffff,
-  diffuseMap,
+  map,
   normalMap,
-  normalScale = 1.5,
-  roughness = 0.185,
+  normalScale = 1,
+  roughness = 0.45,
   specular = 0xffffff,
-  specularBrightness = 1
+  specularBrightness = 0.7
 }) {
   const uniforms = UniformsUtils.clone(SkinShader.uniforms)
   uniforms.passID.value = passID
   uniforms.diffuse.value.setHex(diffuse)
-  uniforms.tDiffuse.value = diffuseMap
+  uniforms.tDiffuse.value = map
   uniforms.tNormal.value = normalMap
   uniforms.uNormalScale.value = normalScale
   uniforms.uRoughness.value = roughness
   uniforms.specular.value.setHex(specular)
   uniforms.uSpecularBrightness.value = specularBrightness
   return uniforms
-}
-
-function extendShaderMaterial (Ctor, proto = {}) {
-  Ctor.prototype = Object.create(ShaderMaterial.prototype)
-  Ctor.prototype.constructor = Ctor
-  Ctor.prototype.isShaderMaterial = true
-  Object.assign(Ctor.prototype, proto)
-}
-
-function getReadTexture (composer) {
-  return composer.readBuffer.texture
-}
-
-function getWriteTexture (composer) {
-  return composer.writeBuffer.texture
 }

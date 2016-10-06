@@ -53,6 +53,14 @@ Object.assign(EffectComposer.prototype, {
     this.passes.splice(index, 0, pass)
   },
 
+  getReadTexture () {
+    return this.readBuffer.texture
+  },
+
+  getWriteTexture () {
+    return this.writeBuffer.texture
+  },
+
   render (delta = 0) {
     const { copyPass, passes, renderer, writeBuffer, readBuffer } = this
     let maskActive = false
