@@ -8,23 +8,20 @@ import {
   WebGLRenderTarget
 } from 'three'
 import { CopyShader } from '../shaders/CopyShader'
-import { ClearMaskPass, MaskPass } from './MaskPass'
 import { ShaderPass } from './ShaderPass'
 
 export function EffectComposer (renderer, renderTarget) {
-  this.renderer = renderer
-
   if (renderTarget === undefined) {
-    var parameters = {
+    const size = renderer.getSize()
+    renderTarget = new WebGLRenderTarget(size.width, size.height, {
       minFilter: LinearFilter,
       magFilter: LinearFilter,
       format: RGBAFormat,
       stencilBuffer: false
-    }
-    var size = renderer.getSize()
-    renderTarget = new WebGLRenderTarget(size.width, size.height, parameters)
+    })
   }
 
+  this.renderer = renderer
   this.renderTarget1 = renderTarget
   this.renderTarget2 = renderTarget.clone()
 
@@ -32,27 +29,20 @@ export function EffectComposer (renderer, renderTarget) {
   this.readBuffer = this.renderTarget2
 
   this.passes = []
-
-  if (CopyShader === undefined) {
-    console.error('EffectComposer relies on CopyShader')
-  }
-
   this.copyPass = new ShaderPass(CopyShader)
-};
+}
 
 Object.assign(EffectComposer.prototype, {
-
   swapBuffers () {
-    var tmp = this.readBuffer
+    const tmp = this.readBuffer
     this.readBuffer = this.writeBuffer
     this.writeBuffer = tmp
   },
 
   addPass (pass) {
-    this.passes.push(pass)
-
-    var size = this.renderer.getSize()
+    const size = this.renderer.getSize()
     pass.setSize(size.width, size.height)
+    this.passes.push(pass)
   },
 
   addPasses (...passes) {
@@ -63,45 +53,37 @@ Object.assign(EffectComposer.prototype, {
     this.passes.splice(index, 0, pass)
   },
 
-  render (delta) {
-    var maskActive = false
-    var pass
+  render (delta = 0) {
+    const { copyPass, passes, renderer, writeBuffer, readBuffer } = this
+    let maskActive = false
+    let pass
 
-    for (var i = 0, il = this.passes.length; i < il; i++) {
-      pass = this.passes[ i ]
-
+    for (let i = 0, il = passes.length; i < il; i++) {
+      pass = passes[i]
       if (pass.enabled === false) continue
-
-      pass.render(this.renderer, this.writeBuffer, this.readBuffer, delta, maskActive)
+      pass.render(renderer, writeBuffer, readBuffer, delta, maskActive)
 
       if (pass.needsSwap) {
         if (maskActive) {
-          var context = this.renderer.context
-
+          const context = renderer.context
           context.stencilFunc(context.NOTEQUAL, 1, 0xffffffff)
-
-          this.copyPass.render(this.renderer, this.writeBuffer, this.readBuffer, delta)
-
+          copyPass.render(renderer, writeBuffer, readBuffer, delta)
           context.stencilFunc(context.EQUAL, 1, 0xffffffff)
         }
-
         this.swapBuffers()
       }
 
-      if (MaskPass !== undefined) {
-        if (pass instanceof MaskPass) {
-          maskActive = true
-        } else if (pass instanceof ClearMaskPass) {
-          maskActive = false
-        }
+      if (pass.isMaskPass) {
+        maskActive = true
+      } else if (pass.isClearMaskPass) {
+        maskActive = false
       }
     }
   },
 
   reset (renderTarget) {
     if (renderTarget === undefined) {
-      var size = this.renderer.getSize()
-
+      const size = this.renderer.getSize()
       renderTarget = this.renderTarget1.clone()
       renderTarget.setSize(size.width, size.height)
     }
@@ -118,12 +100,10 @@ Object.assign(EffectComposer.prototype, {
   setSize (width, height) {
     this.renderTarget1.setSize(width, height)
     this.renderTarget2.setSize(width, height)
-
-    for (var i = 0; i < this.passes.length; i++) {
-      this.passes[i].setSize(width, height)
-    }
+    this.passes.forEach((pass) => {
+      pass.setSize(width, height)
+    })
   }
-
 })
 
 export function Pass () {
@@ -141,11 +121,9 @@ export function Pass () {
 };
 
 Object.assign(Pass.prototype, {
-
   setSize (width, height) {},
 
   render (renderer, writeBuffer, readBuffer, delta, maskActive) {
     console.error('Pass: .render() must be implemented in derived pass.')
   }
-
 })

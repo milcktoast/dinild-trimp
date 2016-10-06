@@ -14,11 +14,11 @@ export function MaskPass (scene, camera) {
   this.needsSwap = false
 
   this.inverse = false
-};
+}
 
 MaskPass.prototype = Object.assign(Object.create(Pass.prototype), {
-
   constructor: MaskPass,
+  isMaskPass: true,
 
   render (renderer, writeBuffer, readBuffer, delta, maskActive) {
     var context = renderer.context
@@ -71,16 +71,15 @@ MaskPass.prototype = Object.assign(Object.create(Pass.prototype), {
 
 export function ClearMaskPass () {
   Pass.call(this)
-
   this.needsSwap = false
-};
+}
 
 ClearMaskPass.prototype = Object.create(Pass.prototype)
 
 Object.assign(ClearMaskPass.prototype, {
+  isClearMaskPass: true,
 
   render (renderer, writeBuffer, readBuffer, delta, maskActive) {
     renderer.state.buffers.stencil.setTest(false)
   }
-
 })
