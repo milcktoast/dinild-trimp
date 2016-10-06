@@ -4,7 +4,7 @@
   "description": "Dinild Trimp",
   "main": "index.js",
   "scripts": {
-    "start": "budo index.js --live -- -t babelify -t glslify",
+    "start": "sh ./scripts/start.sh",
     "test": "standard"
   },
   "standard": {
