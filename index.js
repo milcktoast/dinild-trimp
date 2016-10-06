@@ -4,7 +4,7 @@ import {
   Group,
   HemisphereLight,
   Mesh,
-  // MeshPhongMaterial,
+  MeshPhongMaterial,
   PCFSoftShadowMap,
   PerspectiveCamera,
   RGBFormat,
@@ -40,6 +40,10 @@ function copyVector (a, b) {
 
 function createColor (...args) {
   return new Color(...args)
+}
+
+const renderSettings = {
+  skinSubsurface: false
 }
 
 const cameraOptions = [{
@@ -114,9 +118,24 @@ const state = {
 }
 
 const container = document.createElement('div')
+const tasks = createTaskManager()
 const renderer = createRenderer()
 const scene = createScene()
 const camera = createCamera()
+
+function createTaskManager () {
+  const tasks = {
+    update: [],
+    render: []
+  }
+  tasks.add = (context, queueName, name_) => {
+    const name = name_ || queueName
+    const queue = tasks[queueName]
+    const fn = context[name] || context
+    queue.push(fn.bind(context))
+  }
+  return tasks
+}
 
 function createRenderer () {
   const renderer = new WebGLRenderer()
@@ -145,6 +164,7 @@ function createCamera () {
     noPan: false,
     dynamicDampingFactor: 0.3
   })
+  tasks.add(camera.controls, 'update')
   return camera
 }
 
@@ -153,19 +173,26 @@ function addSpotlightHelper (light) {
   const helper = new SpotLightHelper(light)
   light.helper = helper
   scene.helpers.add(helper)
+  tasks.add(helper, 'update')
+}
+
+function createSpotLight () {
+  const light = new SpotLight()
+  light.shadow.mapSize.set(1024, 1024)
+  return light
+}
+
+function createHemiLight () {
+  return new HemisphereLight()
 }
 
 const lights = {
-  top: new SpotLight(),
-  bottom: new SpotLight(),
-  ambient: new HemisphereLight()
+  top: createSpotLight(),
+  bottom: createSpotLight(),
+  ambient: createHemiLight()
 }
 Object.keys(lights).forEach((key) => {
-  const light = lights[key]
-  if (light.shadow) {
-    light.shadow.mapSize.setScalar(1024)
-  }
-  scene.add(light)
+  scene.add(lights[key])
 })
 
 const dinild = createDinild()
@@ -204,8 +231,11 @@ function loadTexture (src) {
 function createDinild () {
   const dinildJSON = require('./assets/models/dinild.json')
   const { geometry } = parseModel(dinildJSON)
-  const material = new SkinMaterial({
-    diffuseMap: loadTexture('./assets/textures/dinild/diffuse.jpg'),
+  const MaterialCtor = renderSettings.skinSubsurface
+    ? SkinMaterial
+    : MeshPhongMaterial
+  const material = new MaterialCtor({
+    map: loadTexture('./assets/textures/dinild/diffuse.jpg'),
     normalMap: loadTexture('./assets/textures/dinild/normal.jpg')
   })
   const mesh = new Mesh(geometry, material)
@@ -213,9 +243,7 @@ function createDinild () {
     castShadow: true,
     receiveShadow: true
   })
-  mesh.render = (renderer, scene, camera) => {
-    material.render(renderer, scene, camera)
-  }
+  if (material.render) tasks.add(material, 'render')
   return mesh
 }
 
@@ -313,25 +341,20 @@ function animateLights (frame) {
   lights.ambient.intensity = modulateIntensity(state.lightAmbient.intensity,
     0.85, frame * 0.0020)
 }
+tasks.add(animateLights, 'update')
 
 let animationFrame = 0
 function animate () {
   const frame = animationFrame++
-  animateLights(frame)
-
-  scene.helpers.children.forEach((child) => {
-    if (child.update) child.update()
-  })
-  camera.controls.update()
-
+  tasks.update.forEach((task) => task(frame))
   render()
   window.requestAnimationFrame(animate)
 }
 
 function render () {
   renderer.clear()
-  scene.children.forEach((child) => {
-    if (child.render) child.render(renderer, scene, camera)
+  tasks.render.forEach((task) => {
+    task(renderer, scene, camera)
   })
   renderer.render(scene, camera)
 }
