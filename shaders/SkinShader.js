@@ -16,18 +16,15 @@
 // ------------------------------------------------------------------------------------------
 
 // TODO:
-// - integrate new lighting system
-//   - fix SpotLight calculations
-//   - fix HemisphereLight calculations
-// - add shadow map support
+// - use standard normal map system
 
 import {
   Color,
   UniformsLib,
   UniformsUtils
 } from 'three'
-const glsl = require('glslify')
 import { createUniforms } from '../utils/material'
+const glsl = require('glslify')
 
 export const SkinShader = {
   uniforms: UniformsUtils.merge([
