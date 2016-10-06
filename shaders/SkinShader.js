@@ -24,7 +24,15 @@ import {
   UniformsUtils
 } from 'three'
 import { createUniforms } from '../utils/material'
-const glsl = require('glslify')
+
+const fs = require('fs')
+const path = require('path')
+
+const skinVert = fs.readFileSync(path.resolve(__dirname, './glsl/skin.vert'), 'utf8')
+const skinFrag = fs.readFileSync(path.resolve(__dirname, './glsl/skin.frag'), 'utf8')
+const uvVert = fs.readFileSync(path.resolve(__dirname, './glsl/uv.vert'), 'utf8')
+const beckmannVert = fs.readFileSync(path.resolve(__dirname, './glsl/beckmann.vert'), 'utf8')
+const beckmannFrag = fs.readFileSync(path.resolve(__dirname, './glsl/beckmann.frag'), 'utf8')
 
 export const SkinShader = {
   uniforms: UniformsUtils.merge([
@@ -52,9 +60,9 @@ export const SkinShader = {
       specularBrightness: 0.75
     })
   ]),
-  fragmentShader: glsl.file('./glsl/skin.frag'),
-  vertexShader: glsl.file('./glsl/skin.vert'),
-  vertexShaderUV: glsl.file('./glsl/uv.vert')
+  fragmentShader: skinFrag,
+  vertexShader: skinVert,
+  vertexShaderUV: uvVert
 }
 
 // ------------------------------------------------------------------------------------------
@@ -67,6 +75,6 @@ export const SkinShader = {
 
 export const BeckmannShader = {
   uniforms: {},
-  vertexShader: glsl.file('./glsl/beckmann.vert'),
-  fragmentShader: glsl.file('./glsl/beckmann.frag')
+  vertexShader: beckmannVert,
+  fragmentShader: beckmannFrag
 }
