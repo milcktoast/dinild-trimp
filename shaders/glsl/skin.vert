@@ -12,6 +12,7 @@ varying vec2 vUv;
 varying vec3 vViewPosition;
 
 #include <common>
+#include <shadowmap_pars_vertex>
 
 void main() {
   vec4 worldPosition = modelMatrix * vec4(position, 1.0);
@@ -30,4 +31,6 @@ void main() {
   #else
     gl_Position = projectionMatrix * mvPosition;
   #endif
+
+  #include <shadowmap_vertex>
 }

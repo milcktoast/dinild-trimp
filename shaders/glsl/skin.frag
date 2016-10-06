@@ -1,11 +1,13 @@
 // @author alteredq / http://alteredqualia.com/
+// @author jpweeks / http://jayweeks.com
 
 uniform vec3 diffuse;
 uniform vec3 specular;
 uniform float opacity;
 
-uniform float uRoughness;
-uniform float uSpecularBrightness;
+uniform float normalScale;
+uniform float roughness;
+uniform float specularBrightness;
 
 uniform int passID;
 
@@ -19,17 +21,26 @@ uniform sampler2D tBlur4;
 
 uniform sampler2D tBeckmann;
 
-uniform float uNormalScale;
-
 varying vec3 vNormal;
 varying vec2 vUv;
 
 varying vec3 vViewPosition;
 
 #include <common>
+#include <packing>
+#include <aomap_pars_fragment>
+#include <fog_pars_fragment>
 #include <bsdfs>
 #include <lights_pars>
-#include <fog_pars_fragment>
+#include <shadowmap_pars_fragment>
+
+struct SkinMaterial {
+  int passID;
+  vec3  diffuseColor;
+  vec3  specularColor;
+  float roughness;
+  float specularBrightness;
+};
 
 float fresnelReflectance(vec3 H, vec3 V, float F0) {
   float base = 1.0 - dot(V, H);
@@ -37,41 +48,67 @@ float fresnelReflectance(vec3 H, vec3 V, float F0) {
   return exponential + F0 * (1.0 - exponential);
 }
 
-// Kelemen/Szirmay-Kalos specular BRDF
-float KS_Skin_Specular(
-  vec3 N,     // Bumped surface normal
-  vec3 L,     // Points to light
-  vec3 V,     // Points to eye
-  float m,    // Roughness
-  float rho_s // Specular brightness
+vec3 BRDF_Specular_Skin(
+  const in IncidentLight incidentLight,
+  const in GeometricContext geometry,
+  const in SkinMaterial material
 ) {
-  float result = 0.0;
+  vec3 L = incidentLight.direction; // Points to light
+  vec3 N = geometry.normal; // Bumped surface normal
+  vec3 V = geometry.viewDir; // Points to eye
+  float specular = 0.0;
   float ndotl = dot(N, L);
 
   if (ndotl > 0.0) {
     vec3 h = L + V; // Unnormalized half-way vector
     vec3 H = normalize(h);
-
     float ndoth = dot(N, H);
-
-    float PH = pow(2.0 * texture2D(tBeckmann, vec2(ndoth, m)).x, 10.0);
+    float PH = pow(2.0 * texture2D(tBeckmann, vec2(ndoth, material.roughness)).x, 10.0);
     float F = fresnelReflectance(H, V, 0.028);
     float frSpec = max(PH * F / dot(h, h), 0.0);
-
-    result = ndotl * rho_s * frSpec; // BRDF * dot(N,L) * rho_s
+    specular = ndotl * frSpec; // BRDF * dot(N,L) * specularBrightness
   }
 
-  return result;
+  return material.specularColor * specular;
 }
 
-void main() {
-  vec3 outgoingLight = vec3(0.0);  // outgoing light does not have an alpha, the surface does
-  vec4 diffuseColor = vec4(diffuse, opacity);
-  vec4 mSpecular = vec4(specular, opacity);
-  vec4 colDiffuse = texture2D(tDiffuse, vUv);
+void RE_Direct_Skin(
+  const in IncidentLight directLight,
+  const in GeometricContext geometry,
+  const in SkinMaterial material,
+  inout ReflectedLight reflectedLight
+) {
+  float dotNL = saturate(dot(geometry.normal, directLight.direction));
+  vec3 irradiance = dotNL * directLight.color;
+  #ifndef PHYSICALLY_CORRECT_LIGHTS
+    irradiance *= PI;
+  #endif
+  reflectedLight.directDiffuse += irradiance *
+    BRDF_Diffuse_Lambert(material.diffuseColor);
+  if (material.passID == 1) {
+    reflectedLight.directSpecular += irradiance * material.specularBrightness *
+      BRDF_Specular_Skin(directLight, geometry, material);
+  }
+}
 
+void RE_IndirectDiffuse_Skin(
+  const in vec3 irradiance,
+  const in GeometricContext geometry,
+  const in SkinMaterial material,
+  inout ReflectedLight reflectedLight
+) {
+  reflectedLight.indirectDiffuse += irradiance * BRDF_Diffuse_Lambert(material.diffuseColor);
+}
+
+#define RE_Direct RE_Direct_Skin
+#define RE_IndirectDiffuse RE_IndirectDiffuse_Skin
+
+void main() {
+  vec4 diffuseColor = vec4(diffuse, opacity);
+  vec4 colDiffuse = texture2D(tDiffuse, vUv);
   colDiffuse *= colDiffuse;
   diffuseColor *= colDiffuse;
+  ReflectedLight reflectedLight = ReflectedLight(vec3(0.0), vec3(0.0), vec3(0.0), vec3(0.0));
 
   // normal mapping
   vec4 posAndU = vec4(-vViewPosition, vUv.x);
@@ -83,80 +120,43 @@ void main() {
   mat3 tsb = mat3(tangent, binormal, normal);
 
   vec3 normalTex = texture2D(tNormal, vUv).xyz * 2.0 - 1.0;
-  normalTex.xy *= uNormalScale;
+  normalTex.xy *= normalScale;
   normalTex = normalize(normalTex);
 
   vec3 finalNormal = tsb * normalTex;
   normal = normalize(finalNormal);
 
-  vec3 viewerDirection = normalize(vViewPosition);
-  vec3 totalDiffuseLight = vec3(0.0);
-  vec3 totalSpecularLight = vec3(0.0);
+  // accumulation
+  SkinMaterial material;
+  material.passID = passID;
+  material.diffuseColor = diffuseColor.rgb;
+  material.specularColor = specular;
+  material.roughness = roughness;
+  material.specularBrightness = specularBrightness;
 
-  // point lights
-  #if NUM_POINT_LIGHTS > 0
-    for (int i = 0; i < NUM_POINT_LIGHTS; i ++) {
-      vec3 pointVector = normalize(pointLights[i].direction);
-      float attenuation = calcLightAttenuation(length(lVector), pointLights[i].distance, pointLights[i].decay);
-      float pointDiffuseWeight = max(dot(normal, pointVector), 0.0);
-      totalDiffuseLight += pointLightColor[i] * (pointDiffuseWeight * attenuation);
+  #include <lights_template>
 
-      if (passID == 1) {
-        float pointSpecularWeight = KS_Skin_Specular(normal, pointVector, viewerDirection, uRoughness, uSpecularBrightness);
-        totalSpecularLight += pointLightColor[i] * mSpecular.xyz * (pointSpecularWeight * attenuation);
-      }
-    }
-  #endif
+  // modulation
+  #include <aomap_fragment>
 
-  // directional lights
-  #if NUM_DIR_LIGHTS > 0
-    for (int i = 0; i < NUM_DIR_LIGHTS; i++) {
-      vec3 dirVector = directionalLights[i].direction;
-      float dirDiffuseWeight = max(dot(normal, dirVector), 0.0);
-      totalDiffuseLight += directionalLights[i].color * dirDiffuseWeight;
-
-      if (passID == 1) {
-        float dirSpecularWeight = KS_Skin_Specular(normal, dirVector, viewerDirection, uRoughness, uSpecularBrightness);
-        totalSpecularLight += directionalLights[i].color * mSpecular.xyz * dirSpecularWeight;
-      }
-    }
-  #endif
-
-  // spot lights
-  #if NUM_SPOT_LIGHTS > 0
-    for (int i = 0; i < NUM_SPOT_LIGHTS; i++) {
-      vec3 dirVector = spotLights[i].direction;
-      float dirDiffuseWeight = max(dot(normal, dirVector), 0.0);
-      totalDiffuseLight += spotLights[i].color * dirDiffuseWeight;
-
-      if (passID == 1) {
-        float dirSpecularWeight = KS_Skin_Specular(normal, dirVector, viewerDirection, uRoughness, uSpecularBrightness);
-        totalSpecularLight += spotLights[i].color * mSpecular.xyz * dirSpecularWeight;
-      }
-    }
-  #endif
-
-  // accumulate lighting
-  outgoingLight += diffuseColor.rgb * (totalDiffuseLight + totalSpecularLight);
+  vec3 totalDiffuseLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;
+  vec3 totalSpecularLight = reflectedLight.directSpecular + reflectedLight.indirectSpecular;
+  vec3 outgoingLight = totalDiffuseLight + totalSpecularLight;
 
   if (passID == 0) {
     outgoingLight = sqrt(outgoingLight);
   } else if (passID == 1) {
-    // '#define VERSION1
+    #define VERSION1
     #ifdef VERSION1
       vec3 nonblurColor = sqrt(outgoingLight);
     #else
       vec3 nonblurColor = outgoingLight;
     #endif
 
-    vec3 blur1Color = texture2D(tBlur1, vUv).xyz;
-    vec3 blur2Color = texture2D(tBlur2, vUv).xyz;
-    vec3 blur3Color = texture2D(tBlur3, vUv).xyz;
-    vec3 blur4Color = texture2D(tBlur4, vUv).xyz;
-
-    // 'gl_FragColor = vec4(blur1Color, gl_FragColor.w);
-    // 'gl_FragColor = vec4(vec3(0.22, 0.5, 0.7) * nonblurColor + vec3(0.2, 0.5, 0.3) * blur1Color + vec3(0.58, 0.0, 0.0) * blur2Color, gl_FragColor.w);
-    // 'gl_FragColor = vec4(vec3(0.25, 0.6, 0.8) * nonblurColor + vec3(0.15, 0.25, 0.2) * blur1Color + vec3(0.15, 0.15, 0.0) * blur2Color + vec3(0.45, 0.0, 0.0) * blur3Color, gl_FragColor.w);
+    vec3 blur1Color = texture2D(tBlur1, vUv).rgb;
+    vec3 blur2Color = texture2D(tBlur2, vUv).rgb;
+    vec3 blur3Color = texture2D(tBlur3, vUv).rgb;
+    vec3 blur4Color = texture2D(tBlur4, vUv).rgb;
 
     outgoingLight = vec3(vec3(0.22,  0.437, 0.635) * nonblurColor +
       vec3(0.101, 0.355, 0.365) * blur1Color +
@@ -172,7 +172,8 @@ void main() {
     #endif
   }
 
-  gl_FragColor = vec4(outgoingLight, diffuseColor.a);  // TODO, this should be pre-multiplied to allow for bright highlights on very transparent objects
+  // TODO, this should be pre-multiplied to allow for bright highlights on very transparent objects
+  gl_FragColor = vec4(outgoingLight, diffuseColor.a);
 
   #include <fog_fragment>
 }

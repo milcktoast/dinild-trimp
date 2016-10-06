@@ -125,19 +125,19 @@ function createSkinUniforms (passID, {
   diffuse = 0xffffff,
   map,
   normalMap,
-  normalScale = 1,
-  roughness = 0.45,
+  normalScale = 1.2,
+  roughness = 0.18,
   specular = 0xffffff,
-  specularBrightness = 0.7
+  specularBrightness = 0.9
 }) {
   const uniforms = UniformsUtils.clone(SkinShader.uniforms)
   uniforms.passID.value = passID
   uniforms.diffuse.value.setHex(diffuse)
   uniforms.tDiffuse.value = map
   uniforms.tNormal.value = normalMap
-  uniforms.uNormalScale.value = normalScale
-  uniforms.uRoughness.value = roughness
+  uniforms.normalScale.value = normalScale
+  uniforms.roughness.value = roughness
   uniforms.specular.value.setHex(specular)
-  uniforms.uSpecularBrightness.value = specularBrightness
+  uniforms.specularBrightness.value = specularBrightness
   return uniforms
 }

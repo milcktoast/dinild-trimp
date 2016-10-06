@@ -46,14 +46,13 @@ export const SkinShader = {
 
       tBeckmann: null,
 
-      uNormalScale: 1.0,
-
       diffuse: new Color(0xeeeeee),
       specular: new Color(0x111111),
       opacity: 1,
 
-      uRoughness: 0.15,
-      uSpecularBrightness: 0.75
+      normalScale: 1.0,
+      roughness: 0.15,
+      specularBrightness: 0.75
     })
   ]),
   fragmentShader: glsl.file('./glsl/skin.frag'),

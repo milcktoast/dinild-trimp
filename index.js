@@ -44,7 +44,7 @@ function createColor (...args) {
 }
 
 const renderSettings = {
-  skinSubsurface: false
+  skinSubsurface: true
 }
 
 const cameraOptions = [{
@@ -104,7 +104,7 @@ const state = {
     position: createVector(2, -14, 24.5),
     target: createVector(0, 5.5, 1),
     color: createColor(0xD2BAFF),
-    intensity: 1.3,
+    intensity: 2.4,
     distance: 40,
     angle: 0.59,
     penumbra: 0.2,
@@ -114,7 +114,7 @@ const state = {
   lightAmbient: {
     skyColor: createColor(0xBCADFF),
     groundColor: createColor(0xDBFFF4),
-    intensity: 1.4
+    intensity: 0.7
   }
 }
 
