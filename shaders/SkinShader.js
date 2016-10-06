@@ -27,33 +27,34 @@ import {
   UniformsUtils
 } from 'three'
 const glsl = require('glslify')
+import { createUniforms } from '../utils/material'
 
 export const SkinShader = {
   uniforms: UniformsUtils.merge([
     UniformsLib.fog,
     UniformsLib.lights,
-    {
-      passID: { value: 0 },
+    createUniforms({
+      passID: 0,
 
-      tDiffuse: { value: null },
-      tNormal: { value: null },
+      tDiffuse: null,
+      tNormal: null,
 
-      tBlur1: { value: null },
-      tBlur2: { value: null },
-      tBlur3: { value: null },
-      tBlur4: { value: null },
+      tBlur1: null,
+      tBlur2: null,
+      tBlur3: null,
+      tBlur4: null,
 
-      tBeckmann: { value: null },
+      tBeckmann: null,
 
-      uNormalScale: { value: 1.0 },
+      uNormalScale: 1.0,
 
-      diffuse: { value: new Color(0xeeeeee) },
-      specular: { value: new Color(0x111111) },
-      opacity: { value: 1 },
+      diffuse: new Color(0xeeeeee),
+      specular: new Color(0x111111),
+      opacity: 1,
 
-      uRoughness: { value: 0.15 },
-      uSpecularBrightness: { value: 0.75 }
-    }
+      uRoughness: 0.15,
+      uSpecularBrightness: 0.75
+    })
   ]),
   fragmentShader: glsl.file('./glsl/skin.frag'),
   vertexShader: glsl.file('./glsl/skin.vert'),

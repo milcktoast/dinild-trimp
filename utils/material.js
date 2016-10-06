@@ -6,3 +6,11 @@ export function extendShaderMaterial (Ctor, proto = {}) {
   Ctor.prototype.isShaderMaterial = true
   Object.assign(Ctor.prototype, proto)
 }
+
+export function createUniforms (uniforms) {
+  const wrapped = {}
+  Object.keys(uniforms).forEach((key) => {
+    wrapped[key] = { value: uniforms[key] }
+  })
+  return wrapped
+}
