@@ -146,7 +146,7 @@ void main() {
   if (passID == 0) {
     outgoingLight = sqrt(outgoingLight);
   } else if (passID == 1) {
-    #define VERSION1
+    // #define VERSION1
     #ifdef VERSION1
       vec3 nonblurColor = sqrt(outgoingLight);
     #else
@@ -165,7 +165,7 @@ void main() {
       vec3(0.444, 0.0,   0.0)   * blur4Color);
 
     outgoingLight *= sqrt(colDiffuse.xyz);
-    outgoingLight += ambientLightColor * diffuse * colDiffuse.xyz + totalSpecularLight;
+    outgoingLight += ambientLightColor * diffuse * colDiffuse.xyz + totalDiffuseLight + totalSpecularLight;
 
     #ifndef VERSION1
       outgoingLight = sqrt(outgoingLight);
