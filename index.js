@@ -90,15 +90,15 @@ const state = {
     textureAnisotropy: 4
   },
   lightTop: {
-    position: createVector(-10, 24, 14.5),
-    target: createVector(0, 0, 10.5),
+    position: createVector(0, 24.5, 17.5),
+    target: createVector(0, 0, 0.5),
     color: createColor(0xCAFF7C),
     intensity: 2.3,
-    distance: 45,
+    distance: 30,
     angle: 0.62,
     penumbra: 0.2,
     decay: 0.9,
-    castShadow: false
+    castShadow: true
   },
   lightBottom: {
     position: createVector(2, -14, 24.5),
@@ -114,7 +114,7 @@ const state = {
   lightAmbient: {
     skyColor: createColor(0xBCADFF),
     groundColor: createColor(0xDBFFF4),
-    intensity: 0.7
+    intensity: 0.6
   }
 }
 
@@ -125,7 +125,9 @@ const scene = createScene()
 const camera = createCamera()
 
 function createRenderer () {
-  const renderer = new WebGLRenderer()
+  const renderer = new WebGLRenderer({
+    antialias: true
+  })
   renderer.autoClear = false
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = PCFSoftShadowMap
@@ -223,7 +225,8 @@ function createDinild () {
     : MeshPhongMaterial
   const material = new MaterialCtor({
     map: loadTexture('./assets/textures/dinild/diffuse.jpg'),
-    normalMap: loadTexture('./assets/textures/dinild/normal.jpg')
+    normalMap: loadTexture('./assets/textures/dinild/normal.jpg'),
+    roughness: 0.25
   })
   const mesh = new Mesh(geometry, material)
   Object.assign(mesh, {
