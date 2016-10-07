@@ -1,7 +1,7 @@
 // @author alteredq / http://alteredqualia.com/
 // @author jpweeks / http://jayweeks.com
 
-uniform vec3 diffuse;
+uniform vec3 color;
 uniform vec3 specular;
 uniform float opacity;
 
@@ -11,8 +11,8 @@ uniform float specularBrightness;
 
 uniform int passID;
 
-uniform sampler2D tDiffuse;
-uniform sampler2D tNormal;
+uniform sampler2D map;
+uniform sampler2D normalMap;
 
 uniform sampler2D tBlur1;
 uniform sampler2D tBlur2;
@@ -104,8 +104,8 @@ void RE_IndirectDiffuse_Skin(
 #define RE_IndirectDiffuse RE_IndirectDiffuse_Skin
 
 void main() {
-  vec4 diffuseColor = vec4(diffuse, opacity);
-  vec4 colDiffuse = texture2D(tDiffuse, vUv);
+  vec4 diffuseColor = vec4(color, opacity);
+  vec4 colDiffuse = texture2D(map, vUv);
   colDiffuse *= colDiffuse;
   diffuseColor *= colDiffuse;
   ReflectedLight reflectedLight = ReflectedLight(vec3(0.0), vec3(0.0), vec3(0.0), vec3(0.0));
@@ -119,7 +119,7 @@ void main() {
   tangent = cross(normal, binormal); // no normalization required
   mat3 tsb = mat3(tangent, binormal, normal);
 
-  vec3 normalTex = texture2D(tNormal, vUv).xyz * 2.0 - 1.0;
+  vec3 normalTex = texture2D(normalMap, vUv).xyz * 2.0 - 1.0;
   normalTex.xy *= normalScale;
   normalTex = normalize(normalTex);
 
@@ -165,7 +165,7 @@ void main() {
       vec3(0.444, 0.0,   0.0)   * blur4Color);
 
     outgoingLight *= sqrt(colDiffuse.xyz);
-    outgoingLight += ambientLightColor * diffuse * colDiffuse.xyz + totalDiffuseLight + totalSpecularLight;
+    outgoingLight += ambientLightColor * color * colDiffuse.xyz + totalDiffuseLight + totalSpecularLight;
 
     #ifndef VERSION1
       outgoingLight = sqrt(outgoingLight);

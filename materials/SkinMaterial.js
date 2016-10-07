@@ -19,22 +19,51 @@ import { ShaderPass } from '../post-processing/ShaderPass'
 import { TexturePass } from '../post-processing/TexturePass'
 
 export function SkinMaterial (params) {
-  ShaderMaterial.call(this, {
-    fragmentShader: SkinShader.fragmentShader,
-    vertexShader: SkinShader.vertexShader,
-    uniforms: createSkinUniforms(1, params),
-    lights: true,
-    fog: true
-  })
-  this.materialUV = this.createMaterialUV(params)
+  ShaderMaterial.call(this)
+
+  this.color = new Color(0xffffff)
+  this.map = null
+  this.normalMap = null
+  this.normalScale = 1
+  this.roughness = 0.15
+  this.specular = new Color(0xffffff)
+  this.specularBrightness = 0.75
+
+  this.passID = 1
+  this.materialUV = null
   this.renderTargets = null
   this.hasRenderedBeckmann = false
   this.extensions.derivatives = true
+
+  this.setValues({
+    fragmentShader: SkinShader.fragmentShader,
+    vertexShader: SkinShader.vertexShader,
+    uniforms: UniformsUtils.clone(SkinShader.uniforms),
+    lights: true,
+    fog: true,
+    ...params
+  })
 }
+
+const UNIFORM_KEYS = [
+  'color',
+  'map',
+  'normalMap',
+  'normalScale',
+  'roughness',
+  'specular',
+  'specularBrightness',
+  'passID'
+]
 
 extendShaderMaterial(SkinMaterial, {
   createMaterialUV (params) {
-    return new SkinMaterialUV(params)
+    return new SkinMaterial({
+      ...params,
+      vertexShader: SkinShader.vertexShaderUV,
+      passID: 0,
+      fog: false
+    })
   },
 
   createRenderTargets (renderer, scene, camera, params) {
@@ -91,13 +120,31 @@ extendShaderMaterial(SkinMaterial, {
     return renderTargets
   },
 
+  refreshUniforms () {
+    UNIFORM_KEYS.forEach((key) => {
+      this.uniforms[key].value = this[key]
+    })
+  },
+
   render (renderer, scene, camera) {
     if (!this.renderTargets) {
+      this.materialUV = this.createMaterialUV({
+        color: this.color,
+        map: this.map,
+        normalMap: this.normalMap,
+        normalScale: this.normalScale,
+        roughness: this.roughness,
+        specular: this.specular,
+        specularBrightness: this.specularBrightness
+      })
       this.renderTargets = this.createRenderTargets(renderer, scene, camera, {
         width: 512,
         height: 512
       })
     }
+    // TODO: Better way to refresh uniforms?
+    this.refreshUniforms()
+    this.materialUV.refreshUniforms()
     if (!this.hasRenderedBeckmann) {
       this.renderTargets.beckmann.render()
       this.hasRenderedBeckmann = true
@@ -108,36 +155,3 @@ extendShaderMaterial(SkinMaterial, {
     this.renderTargets.blur4.render()
   }
 })
-
-function SkinMaterialUV (params) {
-  ShaderMaterial.call(this, {
-    fragmentShader: SkinShader.fragmentShader,
-    vertexShader: SkinShader.vertexShaderUV,
-    uniforms: createSkinUniforms(0, params),
-    lights: true
-  })
-  this.extensions.derivatives = true
-}
-
-extendShaderMaterial(SkinMaterialUV)
-
-function createSkinUniforms (passID, {
-  diffuse = 0xffffff,
-  map,
-  normalMap,
-  normalScale = 1.2,
-  roughness = 0.18,
-  specular = 0xffffff,
-  specularBrightness = 0.9
-}) {
-  const uniforms = UniformsUtils.clone(SkinShader.uniforms)
-  uniforms.passID.value = passID
-  uniforms.diffuse.value.setHex(diffuse)
-  uniforms.tDiffuse.value = map
-  uniforms.tNormal.value = normalMap
-  uniforms.normalScale.value = normalScale
-  uniforms.roughness.value = roughness
-  uniforms.specular.value.setHex(specular)
-  uniforms.specularBrightness.value = specularBrightness
-  return uniforms
-}

@@ -19,7 +19,6 @@
 // - use standard normal map system
 
 import {
-  Color,
   UniformsLib,
   UniformsUtils
 } from 'three'
@@ -39,25 +38,23 @@ export const SkinShader = {
     UniformsLib.fog,
     UniformsLib.lights,
     createUniforms({
-      passID: 0,
-
-      tDiffuse: null,
-      tNormal: null,
-
-      tBlur1: null,
-      tBlur2: null,
-      tBlur3: null,
-      tBlur4: null,
-
-      tBeckmann: null,
-
-      diffuse: new Color(0xeeeeee),
-      specular: new Color(0x111111),
+      color: null,
+      specular: null,
       opacity: 1,
 
       normalScale: 1.0,
       roughness: 0.15,
-      specularBrightness: 0.75
+      specularBrightness: 0.75,
+
+      map: null,
+      normalMap: null,
+
+      passID: 0,
+      tBeckmann: null,
+      tBlur1: null,
+      tBlur2: null,
+      tBlur3: null,
+      tBlur4: null
     })
   ]),
   fragmentShader: skinFrag,
