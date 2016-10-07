@@ -1,7 +1,6 @@
 {
   "plugins": [
     "static-fs",
-    "transform-inline-environment-variables",
     "transform-object-rest-spread"
   ],
   "env": {
