@@ -2,7 +2,7 @@
  * @author alteredq / http://alteredqualia.com/
  */
 
-import { Pass } from './EffectComposer'
+import { Pass } from './Pass'
 
 export function RenderPass (scene, camera, overrideMaterial, clearColor, clearAlpha) {
   Pass.call(this)

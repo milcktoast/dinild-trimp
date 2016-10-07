@@ -20,10 +20,6 @@ import { SkinMaterial } from './materials/SkinMaterial'
 import { createTaskManager } from './utils/task'
 import { mapLinear } from './utils/math'
 import { parseModel } from './utils/model'
-import {
-  annotateState,
-  createStateControls
-} from './utils/oui'
 
 function createVector (x, y, z) {
   if (y == null) {
@@ -48,8 +44,8 @@ const renderSettings = {
 }
 
 const cameraOptions = [{
-  position: createVector(6, -1, 22),
-  target: createVector(-1.5, 0.5, 0),
+  position: createVector(6, 3, 23),
+  target: createVector(3, 0, 1),
   up: createVector(0, 1, 0),
   fov: 92
 }, {
@@ -63,7 +59,7 @@ const cameraOptions = [{
   up: createVector(0, 1, 0),
   fov: 80.5
 }]
-const cameraStart = cameraOptions[1]
+const cameraStart = cameraOptions[0]
 
 const state = {
   camera: {
@@ -90,11 +86,11 @@ const state = {
     textureAnisotropy: 4
   },
   lightTop: {
-    position: createVector(0, 24.5, 17.5),
-    target: createVector(0, 0, 0.5),
+    position: createVector(-13, 21.5, 20.5),
+    target: createVector(4.5, -1.5, 5),
     color: createColor(0xCAFF7C),
     intensity: 2.3,
-    distance: 30,
+    distance: 35,
     angle: 0.62,
     penumbra: 0.2,
     decay: 0.9,
@@ -103,7 +99,7 @@ const state = {
   lightBottom: {
     position: createVector(2, -14, 24.5),
     target: createVector(0, 5.5, 1),
-    color: createColor(0xD2BAFF),
+    color: createColor(0xD1F08A),
     intensity: 2.4,
     distance: 40,
     angle: 0.59,
@@ -198,16 +194,6 @@ window.addEventListener('resize', resize)
 updateState(state)
 resize()
 animate()
-
-const oui = createStateControls({label: 'Settings'})
-annotateState(state)
-oui(state, updateState)
-camera.controls.addEventListener('change', () => {
-  copyVector(state.camera.position, camera.position)
-  copyVector(state.camera.up, camera.up)
-  copyVector(state.camera.target, camera.controls.target)
-  oui(state, updateState)
-})
 
 let textureLoader
 function loadTexture (src) {
@@ -345,3 +331,12 @@ function render () {
   tasks.run('render', renderer, scene, camera)
   renderer.render(scene, camera)
 }
+
+// FIXME: Don't include in prod build
+require('./index-debug').createDebug({
+  renderer,
+  scene,
+  camera,
+  state,
+  updateState
+})

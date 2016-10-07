@@ -1,2 +1,3 @@
 PATH=$(npm bin):$PATH
-budo index.js --live -- -t babelify -t brfs
+export NODE_ENV=development
+budo index.js:build/index.js --live -- -t brfs-babel -t babelify -t envify

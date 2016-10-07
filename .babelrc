@@ -1,9 +1,26 @@
 {
-  "presets": [
-    "es2015"
-  ],
   "plugins": [
-    "transform-decorators-legacy",
+    "static-fs",
+    "transform-inline-environment-variables",
     "transform-object-rest-spread"
-  ]
+  ],
+  "env": {
+    "development": {
+      "presets": [
+        "es2015"
+      ],
+      "plugins": [
+        "transform-decorators-legacy"
+      ]
+    },
+    "production": {
+      "presets": [
+        ["es2015", {"modules": false}],
+        "babili"
+      ],
+      "plugins": [
+        "external-helpers"
+      ]
+    }
+  }
 }

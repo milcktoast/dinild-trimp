@@ -20,15 +20,14 @@ import {
   UniformsUtils
 } from 'three'
 import { createUniforms } from '../utils/material'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
-const fs = require('fs')
-const path = require('path')
-
-const skinVert = fs.readFileSync(path.resolve(__dirname, './glsl/skin.vert'), 'utf8')
-const skinFrag = fs.readFileSync(path.resolve(__dirname, './glsl/skin.frag'), 'utf8')
-const uvVert = fs.readFileSync(path.resolve(__dirname, './glsl/uv.vert'), 'utf8')
-const beckmannVert = fs.readFileSync(path.resolve(__dirname, './glsl/beckmann.vert'), 'utf8')
-const beckmannFrag = fs.readFileSync(path.resolve(__dirname, './glsl/beckmann.frag'), 'utf8')
+const skinVert = readFileSync(join(__dirname, './glsl/skin.vert'), 'utf8')
+const skinFrag = readFileSync(join(__dirname, './glsl/skin.frag'), 'utf8')
+const uvVert = readFileSync(join(__dirname, './glsl/uv.vert'), 'utf8')
+const beckmannVert = readFileSync(join(__dirname, './glsl/beckmann.vert'), 'utf8')
+const beckmannFrag = readFileSync(join(__dirname, './glsl/beckmann.frag'), 'utf8')
 
 export const SkinShader = {
   uniforms: UniformsUtils.merge([

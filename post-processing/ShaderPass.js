@@ -10,7 +10,7 @@ import {
   ShaderMaterial,
   UniformsUtils
 } from 'three'
-import { Pass } from './EffectComposer'
+import { Pass } from './Pass'
 
 export function ShaderPass (shader, textureID) {
   Pass.call(this)

@@ -11,7 +11,7 @@ import {
   UniformsUtils
 } from 'three'
 import { CopyShader } from '../shaders/CopyShader'
-import { Pass } from './EffectComposer'
+import { Pass } from './Pass'
 
 export function TexturePass (map, opacity) {
   Pass.call(this)

@@ -17,7 +17,7 @@ import {
 } from 'three'
 import { ConvolutionShader } from '../shaders/ConvolutionShader'
 import { CopyShader } from '../shaders/CopyShader'
-import { Pass } from './EffectComposer'
+import { Pass } from './Pass'
 
 export function BloomPass (strength, kernelSize, sigma, resolution) {
   Pass.call(this)
