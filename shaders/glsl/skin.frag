@@ -2,28 +2,23 @@
 // @author jpweeks / http://jayweeks.com
 
 uniform vec3 color;
-uniform vec3 specular;
 uniform float opacity;
+uniform sampler2D map;
 
-uniform float normalScale;
 uniform float roughness;
+uniform vec3 specular;
 uniform float specularBrightness;
 
 uniform int passID;
 
-uniform sampler2D map;
-uniform sampler2D normalMap;
-
+uniform sampler2D tBeckmann;
 uniform sampler2D tBlur1;
 uniform sampler2D tBlur2;
 uniform sampler2D tBlur3;
 uniform sampler2D tBlur4;
 
-uniform sampler2D tBeckmann;
-
 varying vec3 vNormal;
 varying vec2 vUv;
-
 varying vec3 vViewPosition;
 
 #include <common>
@@ -33,6 +28,7 @@ varying vec3 vViewPosition;
 #include <bsdfs>
 #include <lights_pars>
 #include <shadowmap_pars_fragment>
+#include <normalmap_pars_fragment>
 
 struct SkinMaterial {
   int passID;
@@ -110,21 +106,8 @@ void main() {
   diffuseColor *= colDiffuse;
   ReflectedLight reflectedLight = ReflectedLight(vec3(0.0), vec3(0.0), vec3(0.0), vec3(0.0));
 
-  // normal mapping
-  vec4 posAndU = vec4(-vViewPosition, vUv.x);
-  vec4 posAndU_dx = dFdx(posAndU),  posAndU_dy = dFdy(posAndU);
-  vec3 tangent = posAndU_dx.w * posAndU_dx.xyz + posAndU_dy.w * posAndU_dy.xyz;
-  vec3 normal = normalize(vNormal);
-  vec3 binormal = normalize(cross(tangent, normal));
-  tangent = cross(normal, binormal); // no normalization required
-  mat3 tsb = mat3(tangent, binormal, normal);
-
-  vec3 normalTex = texture2D(normalMap, vUv).xyz * 2.0 - 1.0;
-  normalTex.xy *= normalScale;
-  normalTex = normalize(normalTex);
-
-  vec3 finalNormal = tsb * normalTex;
-  normal = normalize(finalNormal);
+  #include <normal_flip>
+  #include <normal_fragment>
 
   // accumulation
   SkinMaterial material;
@@ -158,17 +141,18 @@ void main() {
     vec3 blur3Color = texture2D(tBlur3, vUv).rgb;
     vec3 blur4Color = texture2D(tBlur4, vUv).rgb;
 
-    outgoingLight = vec3(vec3(0.22,  0.437, 0.635) * nonblurColor +
+    outgoingLight = vec3(
+      vec3(0.22,  0.437, 0.635) * nonblurColor +
       vec3(0.101, 0.355, 0.365) * blur1Color +
       vec3(0.119, 0.208, 0.0)   * blur2Color +
       vec3(0.114, 0.0,   0.0)   * blur3Color +
       vec3(0.444, 0.0,   0.0)   * blur4Color);
 
     outgoingLight *= sqrt(colDiffuse.xyz);
-    outgoingLight += ambientLightColor * color * colDiffuse.xyz + totalDiffuseLight + totalSpecularLight;
+    outgoingLight += ambientLightColor * color * colDiffuse.xyz;
 
     #ifndef VERSION1
-      outgoingLight = sqrt(outgoingLight);
+      outgoingLight = sqrt(outgoingLight + nonblurColor);
     #endif
   }
 

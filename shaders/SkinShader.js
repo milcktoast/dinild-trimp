@@ -15,9 +15,6 @@
 //     http://http.developer.nvidia.com/GPUGems3/gpugems3_ch14.html
 // ------------------------------------------------------------------------------------------
 
-// TODO:
-// - use standard normal map system
-
 import {
   UniformsLib,
   UniformsUtils
@@ -42,7 +39,7 @@ export const SkinShader = {
       specular: null,
       opacity: 1,
 
-      normalScale: 1.0,
+      normalScale: null,
       roughness: 0.15,
       specularBrightness: 0.75,
 

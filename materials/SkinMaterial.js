@@ -5,6 +5,7 @@ import {
   RGBFormat,
   ShaderMaterial,
   UniformsUtils,
+  Vector2,
   WebGLRenderTarget
 } from 'three'
 import {
@@ -24,7 +25,7 @@ export function SkinMaterial (params) {
   this.color = new Color(0xffffff)
   this.map = null
   this.normalMap = null
-  this.normalScale = 1
+  this.normalScale = new Vector2(1, 1)
   this.roughness = 0.15
   this.specular = new Color(0xffffff)
   this.specularBrightness = 0.75
