@@ -332,7 +332,8 @@ function render () {
   renderer.render(scene, camera)
 }
 
-// FIXME: Don't include in prod build
+// FIXME
+// #ifdef DEVELOPMENT
 require('./index-debug').createDebug({
   renderer,
   scene,
@@ -340,3 +341,4 @@ require('./index-debug').createDebug({
   state,
   updateState
 })
+// #endif
