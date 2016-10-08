@@ -19,7 +19,8 @@ import { TrackballControls } from './controls/TrackballControls'
 import { SkinMaterial } from './materials/SkinMaterial'
 import { createTaskManager } from './utils/task'
 import { mapLinear } from './utils/math'
-import { parseModel } from './utils/model'
+import { loadModel } from './utils/model-load'
+import { parseModel } from './utils/model-parse'
 
 function createVector (x, y, z) {
   if (y == null) {
@@ -143,11 +144,13 @@ function createCamera () {
   camera.controls = new TrackballControls(camera, container)
   Object.assign(camera.controls, {
     rotateSpeed: 1,
-    zoomSpeed: 0.02,
+    zoomSpeed: 0.8,
     panSpeed: 0.1,
     noZoom: false,
     noPan: false,
-    dynamicDampingFactor: 0.3
+    dynamicDampingFactor: 0.3,
+    minDistance: 18,
+    maxDistance: 30
   })
   tasks.add(camera.controls, 'update')
   return camera
@@ -180,8 +183,7 @@ Object.keys(lights).forEach((key) => {
   scene.add(lights[key])
 })
 
-const dinild = createDinild()
-scene.add(dinild)
+createDinild(scene)
 
 Object.assign(container.style, {
   position: 'absolute',
@@ -204,30 +206,36 @@ function loadTexture (src) {
   return texture
 }
 
-function createDinild () {
-  const dinildJSON = require('../assets/models/dinild.json')
-  const { geometry } = parseModel(dinildJSON)
+function createDinild (scene) {
+  const meta = require('../assets/models/dinild/meta.json')
+  const material = createSkinMaterial('./assets/textures/dinild')
+  loadModel('./assets/models/dinild', meta).then((modelData) => {
+    const { geometry } = parseModel(modelData)
+    const mesh = new Mesh(geometry, material)
+    Object.assign(mesh, {
+      castShadow: true,
+      receiveShadow: true
+    })
+    if (material.render) tasks.add(material, 'render')
+    scene.add(mesh)
+  })
+}
+
+function createSkinMaterial (basePath) {
   const MaterialCtor = renderSettings.skinSubsurface
     ? SkinMaterial
     : MeshPhongMaterial
-  const material = new MaterialCtor({
-    map: loadTexture('./assets/textures/dinild/diffuse.webp'),
-    normalMap: loadTexture('./assets/textures/dinild/normal.webp'),
+  return new MaterialCtor({
+    map: loadTexture(basePath + '/diffuse.webp'),
+    normalMap: loadTexture(basePath + '/normal.webp'),
     roughness: 0.25
   })
-  const mesh = new Mesh(geometry, material)
-  Object.assign(mesh, {
-    castShadow: true,
-    receiveShadow: true
-  })
-  if (material.render) tasks.add(material, 'render')
-  return mesh
 }
 
 function updateState (nextState) {
   updateCamera(nextState.camera)
   updateFog(nextState.fog)
-  updateSkinMaterial(dinild.material, nextState.skin)
+  // updateSkinMaterial(dinild.material, nextState.skin)
   updateSpotLight(lights.top, nextState.lightTop)
   updateSpotLight(lights.bottom, nextState.lightBottom)
   updateHemiLight(lights.ambient, nextState.lightAmbient)
@@ -248,17 +256,17 @@ function updateFog (state) {
   scene.fog.far = state.far
 }
 
-function updateSkinMaterial (material, state) {
-  // const { map, normalMap } = material
-  // material.shininess = state.shininess
-  // material.normalScale.set(state.normalScale, state.normalScale)
-  // if (map.anisotropy !== state.textureAnisotropy) {
-  //   map.anisotropy = state.textureAnisotropy
-  //   normalMap.anisotropy = state.textureAnisotropy
-  //   if (map.image) map.needsUpdate = true
-  //   if (normalMap.image) normalMap.needsUpdate = true
-  // }
-}
+// function updateSkinMaterial (material, state) {
+//   const { map, normalMap } = material
+//   material.shininess = state.shininess
+//   material.normalScale.set(state.normalScale, state.normalScale)
+//   if (map.anisotropy !== state.textureAnisotropy) {
+//     map.anisotropy = state.textureAnisotropy
+//     normalMap.anisotropy = state.textureAnisotropy
+//     if (map.image) map.needsUpdate = true
+//     if (normalMap.image) normalMap.needsUpdate = true
+//   }
+// }
 
 function updateLight (light, state) {
   light.color.copy(state.color)

@@ -52,7 +52,7 @@ function isBitSet (value, position) {
 // - Only single UV layer
 function parseBufferAttributes (props) {
   const { faces, normals, uvs, vertices } = props
-  const uvLayer = uvs[0]
+  const uvLayer = uvs
 
   if (!faces.length) {
     return {

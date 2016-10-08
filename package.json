@@ -30,6 +30,8 @@
     "uglifyjs": "^2.4.10"
   },
   "dependencies": {
+    "es6-promise": "^4.0.5",
+    "isomorphic-fetch": "^2.2.1",
     "three": "^0.81.0"
   }
 }
