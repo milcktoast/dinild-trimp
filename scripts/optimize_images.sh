@@ -1,5 +1,8 @@
+optimize_image () {
+  convert -strip -quality 90% $1.tif $1.jpg
+  convert -quality 90 -define webp:lossless=false $1.tif $1.webp
+}
+
 DINILD=./assets/textures/dinild
-convert -strip -quality 90% $DINILD/diffuse.tif $DINILD/diffuse.jpg
-convert -strip -quality 90% $DINILD/normal.tif $DINILD/normal.jpg
-convert -quality 90 -define webp:lossless=false $DINILD/diffuse.tif $DINILD/diffuse.webp
-convert -quality 90 -define webp:lossless=false $DINILD/normal.tif $DINILD/normal.webp
+optimize_image $DINILD/diffuse
+optimize_image $DINILD/normal
