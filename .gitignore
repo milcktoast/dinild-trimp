@@ -8,6 +8,7 @@
 *.vi
 *~
 *.psd
+*.tmp
 
 # OS or Editor folders
 .DS_Store

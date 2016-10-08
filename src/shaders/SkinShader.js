@@ -21,13 +21,15 @@ import {
 } from 'three'
 import { createUniforms } from '../utils/material'
 import { readFileSync } from 'fs'
-import { join } from 'path'
+// import { join } from 'path' // FIXME
 
-const skinVert = readFileSync(join(__dirname, './glsl/skin.vert'), 'utf8')
-const skinFrag = readFileSync(join(__dirname, './glsl/skin.frag'), 'utf8')
-const uvVert = readFileSync(join(__dirname, './glsl/uv.vert'), 'utf8')
-const beckmannVert = readFileSync(join(__dirname, './glsl/beckmann.vert'), 'utf8')
-const beckmannFrag = readFileSync(join(__dirname, './glsl/beckmann.frag'), 'utf8')
+/* eslint-disable no-path-concat */
+const skinVert = readFileSync(__dirname + '/glsl/skin.vert', 'utf8')
+const skinFrag = readFileSync(__dirname + '/glsl/skin.frag', 'utf8')
+const uvVert = readFileSync(__dirname + '/glsl/uv.vert', 'utf8')
+const beckmannVert = readFileSync(__dirname + '/glsl/beckmann.vert', 'utf8')
+const beckmannFrag = readFileSync(__dirname + '/glsl/beckmann.frag', 'utf8')
+/* eslint-enable no-path-concat */
 
 export const SkinShader = {
   uniforms: UniformsUtils.merge([
