@@ -204,7 +204,7 @@ function loadTexture (src) {
 }
 
 function createDinild () {
-  const dinildJSON = require('./assets/models/dinild.json')
+  const dinildJSON = require('../assets/models/dinild.json')
   const { geometry } = parseModel(dinildJSON)
   const MaterialCtor = renderSettings.skinSubsurface
     ? SkinMaterial
