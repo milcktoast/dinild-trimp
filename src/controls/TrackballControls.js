@@ -380,7 +380,7 @@ export function TrackballControls (object, domElement) {
     event.preventDefault()
     event.stopPropagation()
 
-    _zoomStart.y -= event.deltaY * 0.01
+    _zoomStart.y -= event.deltaY * 0.0005
 
     _this.dispatchEvent(startEvent)
     _this.dispatchEvent(endEvent)
