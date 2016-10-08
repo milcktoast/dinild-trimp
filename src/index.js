@@ -195,6 +195,7 @@ updateState(state)
 resize()
 animate()
 
+// TODO: Detect WebP support
 let textureLoader
 function loadTexture (src) {
   if (!textureLoader) textureLoader = new TextureLoader()
@@ -210,8 +211,8 @@ function createDinild () {
     ? SkinMaterial
     : MeshPhongMaterial
   const material = new MaterialCtor({
-    map: loadTexture('./assets/textures/dinild/diffuse.jpg'),
-    normalMap: loadTexture('./assets/textures/dinild/normal.jpg'),
+    map: loadTexture('./assets/textures/dinild/diffuse.webp'),
+    normalMap: loadTexture('./assets/textures/dinild/normal.webp'),
     roughness: 0.25
   })
   const mesh = new Mesh(geometry, material)
