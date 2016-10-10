@@ -1,6 +1,6 @@
 optimize_track () {
   ffmpeg -loglevel quiet -y -i $1 -c:a libmp3lame -q:a 5 "${1/%ogg/mp3}"
-  echo "Optimized track: $1"
+  echo "Optimized track: $(basename $1 .ogg)"
 }
 
 cd ./assets/audio
