@@ -27,7 +27,8 @@
     "rollup-plugin-babel": "^2.6.1",
     "rollupify": "^0.3.4",
     "standard": "^8.1.0",
-    "uglifyjs": "^2.4.10"
+    "uglifyjs": "^2.4.10",
+    "ytdl-audio": "0.0.2"
   },
   "dependencies": {
     "es6-promise": "^4.0.5",

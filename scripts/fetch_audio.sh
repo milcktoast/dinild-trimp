@@ -1,3 +1,4 @@
+PATH=$(npm bin):$PATH
 SOURCE=./assets/audio/clips/sources.csv
 
 fetch_audio () {
