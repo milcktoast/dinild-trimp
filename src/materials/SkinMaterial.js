@@ -30,6 +30,7 @@ export function SkinMaterial (params) {
   this.specular = new Color(0xffffff)
   this.specularBrightness = 0.75
 
+  this.renderTargetSize = 512
   this.passID = 1
   this.materialUV = null
   this.renderTargets = null
@@ -68,9 +69,10 @@ extendShaderMaterial(SkinMaterial, {
   },
 
   createRenderTargets (renderer, scene, camera, params) {
+    const { renderTargetSize } = this
     function createRenderTarget () {
-      const { width, height } = params
-      return new WebGLRenderTarget(width, height, {
+      const size = renderTargetSize
+      return new WebGLRenderTarget(size, size, {
         minFilter: LinearMipmapLinearFilter,
         magFilter: LinearFilter,
         format: RGBFormat,
@@ -138,10 +140,7 @@ extendShaderMaterial(SkinMaterial, {
         specular: this.specular,
         specularBrightness: this.specularBrightness
       })
-      this.renderTargets = this.createRenderTargets(renderer, scene, camera, {
-        width: 512,
-        height: 512
-      })
+      this.renderTargets = this.createRenderTargets(renderer, scene, camera)
     }
     // TODO: Better way to refresh uniforms?
     this.refreshUniforms()
