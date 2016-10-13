@@ -22,6 +22,7 @@ function setupAnnotators () {
   addAnnotator(annotateCamera, 'position', 'target', 'up')
   addAnnotator(annotateFog, 'color', 'near', 'far')
   addAnnotator(annotateSkinMaterial, 'shininess')
+  addAnnotator(annotatePose, 'activeFrameWeight')
   addAnnotator(annotateVector, 'x', 'y', 'z')
 }
 
@@ -42,8 +43,8 @@ export function annotateState (state) {
 
 function hasProps (state, keys) {
   return keys.reduce((prev, key) => (
-    prev && state[key] != null
-  ))
+    state[key] !== undefined && prev === true
+  ), true)
 }
 
 const colorPicker = annotate({
@@ -101,6 +102,16 @@ function annotateSkinMaterial ({
     @shininessRange shininess,
     @normalScaleRange normalScale,
     @textureAnisotropyRange textureAnisotropy
+  }
+}
+
+function annotatePose ({
+  activeFrameWeight
+}) {
+  const weightRange = annotate({ min: 0, max: 1, step: 0.01 })
+  console.log('annotatePose', activeFrameWeight)
+  return {
+    @weightRange activeFrameWeight
   }
 }
 

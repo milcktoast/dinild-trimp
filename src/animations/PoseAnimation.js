@@ -41,11 +41,11 @@ Object.assign(PoseAnimation.prototype, {
       pos.copy(restFrame.pos)
       rot.copy(restFrame.rot)
 
-      // Skip first key which is neutral position
       for (let j = 0; j < weights.length; j++) {
         const weight = weights[j]
         if (!weight) continue
 
+        // Skip first frame which is rest position
         const frame = actionFrames[j + 1]
         scratchVec3.copy(restFrame.pos).lerp(frame.pos, weight)
         scratchVec3.sub(restFrame.pos)

@@ -89,6 +89,9 @@ const state = {
     normalScale: 1,
     textureAnisotropy: 4
   },
+  pose: {
+    activeFrameWeight: 0
+  },
   lightTop: {
     position: createVector(-13, 21.5, 20.5),
     target: createVector(4.5, -1.5, 5),
@@ -219,12 +222,15 @@ function createDinild (scene) {
     const { geometry } = parseModel(modelData)
     const mesh = new SkinnedMesh(geometry, material)
     const pose = new PoseAnimation(geometry.boneFrames)
-    pose.weights[0] = 1
-    pose.applyWeights(mesh.skeleton.bones)
     Object.assign(mesh, {
       castShadow: castShadows,
       receiveShadow: castShadows
     })
+    tasks.add(() => {
+      pose.resetWeights()
+      pose.weights[0] = state.pose.activeFrameWeight
+      pose.applyWeights(mesh.skeleton.bones)
+    }, 'update')
     if (material.render) tasks.add(material, 'render')
     scene.add(mesh)
   })
