@@ -10,6 +10,10 @@ const FLOAT_ATTR_KEYS = [
 const INT_ATTR_KEYS = [
   'skinIndices'
 ]
+const JSON_ATTR_KEYS = [
+  'bones',
+  'boneFrames'
+]
 
 const fetchFloatBuffers = createBufferFetcher(Float32Array)
 const fetchIntBuffers = createBufferFetcher(Uint16Array)
@@ -19,18 +23,29 @@ export function loadModel (baseUrl, modelJson) {
     key,
     url: formatDestPath(baseUrl, key, 'bin')
   })
+  const mapJsonUrl = (key) => ({
+    key,
+    url: formatDestPath(baseUrl, key, 'json')
+  })
+
   return Promise.all([
     ...FLOAT_ATTR_KEYS
       .filter((key) => !!modelJson[key])
       .map(mapBufferUrl)
       .map(fetchFloatBuffers),
+
     ...INT_ATTR_KEYS
       .filter((key) => !!modelJson[key])
       .map(mapBufferUrl)
-      .map(fetchIntBuffers)
-  ]).then((resolutions) => resolutions.reduce((hash, data) => {
-    hash[data.key] = data.buffer
-    return hash
+      .map(fetchIntBuffers),
+
+    ...JSON_ATTR_KEYS
+      .filter((key) => !!modelJson[key])
+      .map(mapJsonUrl)
+      .map(fetchJson)
+  ]).then((resolutions) => resolutions.reduce((props, data) => {
+    props[data.key] = data.payload
+    return props
   }, {}))
 }
 
@@ -40,7 +55,18 @@ function createBufferFetcher (BufferCtor) {
       .then((res) => res.arrayBuffer())
       .then((buffer) => resolve({
         key,
-        buffer: new BufferCtor(buffer)
+        payload: new BufferCtor(buffer)
+      }))
+  })
+}
+
+function fetchJson ({key, url}) {
+  return new Promise((resolve, reject) => {
+    fetch(url)
+      .then((res) => res.json())
+      .then((json) => resolve({
+        key,
+        payload: json
       }))
   })
 }
