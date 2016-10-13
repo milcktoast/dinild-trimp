@@ -2,7 +2,7 @@ import {
   Quaternion,
   Vector3
 } from 'three'
-
+import { inherit } from '../utils/ctor'
 import {
   add as addQuat,
   sub as subQuat,
@@ -12,31 +12,14 @@ import {
 const scratchQuat = new Quaternion()
 const scratchVec3 = new Vector3()
 
-export function PoseAnimation (animation) {
-  const frameCount = animation[0].length - 1 // First frame is rest pose
-  this.animation = animation
+export function PoseAnimation (boneFrames) {
+  const frameCount = boneFrames[0].length - 1 // First frame is rest pose
+  this.boneFrames = boneFrames
   this.weights = new Float32Array(frameCount)
 }
 
-PoseAnimation.prototype.constructor = PoseAnimation
+inherit(PoseAnimation)
 Object.assign(PoseAnimation.prototype, {
-  // setAnimation (animation) {
-  //   this.animation = animation;
-  //   this.weights.length = animation[0].length;
-  //   this.resetWeights();
-  //   if (animation.isInitialized) { return; }
-  //   animation.isInitialized = true;
-  //   var boneKeys, key;
-  //   for (var i = 0, il = animation.length; i < il; i ++) {
-  //     boneKeys = animation[i];
-  //     for (var j = 0, jl = boneKeys.length; j < jl; j ++) {
-  //       key = boneKeys[j];
-  //       key.pos = new THREE.Vector3().fromArray(key.pos);
-  //       key.rot = new THREE.Quaternion().fromArray(key.rot);
-  //     }
-  //   }
-  // },
-
   resetWeights () {
     const { weights } = this
     for (let i = 0; i < weights.length; i++) {
@@ -46,15 +29,15 @@ Object.assign(PoseAnimation.prototype, {
 
   // TODO: Transform scale
   applyWeights (bones) {
-    const { animation, weights } = this
+    const { boneFrames, weights } = this
     for (let i = 0; i < bones.length; i++) {
-      const boneFrames = animation[i]
+      const actionFrames = boneFrames[i]
       const bone = bones[i]
       const pos = bone.position
       const rot = bone.quaternion
 
       // Reset bone to rest position
-      const restFrame = boneFrames[0]
+      const restFrame = actionFrames[0]
       pos.copy(restFrame.pos)
       rot.copy(restFrame.rot)
 
@@ -63,7 +46,7 @@ Object.assign(PoseAnimation.prototype, {
         const weight = weights[j]
         if (!weight) continue
 
-        const frame = boneFrames[j + 1]
+        const frame = actionFrames[j + 1]
         scratchVec3.copy(restFrame.pos).lerp(frame.pos, weight)
         scratchVec3.sub(restFrame.pos)
         pos.add(scratchVec3)

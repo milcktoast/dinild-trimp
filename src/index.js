@@ -3,12 +3,12 @@ import {
   Fog,
   Group,
   HemisphereLight,
-  Mesh,
   MeshPhongMaterial,
   PCFSoftShadowMap,
   PerspectiveCamera,
   RGBFormat,
   Scene,
+  SkinnedMesh,
   SpotLight,
   SpotLightHelper,
   TextureLoader,
@@ -17,6 +17,7 @@ import {
 
 import { TrackballControls } from './controls/TrackballControls'
 import { SkinMaterial } from './materials/SkinMaterial'
+import { PoseAnimation } from './animations/PoseAnimation'
 import { createTaskManager } from './utils/task'
 import { mapLinear } from './utils/math'
 import { loadModel } from './utils/model-load'
@@ -41,7 +42,9 @@ function createColor (...args) {
 }
 
 const renderSettings = {
-  skinSubsurface: true
+  skinSubsurface: false,
+  castShadows: false,
+  shadowMapSize: 1024
 }
 
 const cameraOptions = [{
@@ -126,7 +129,7 @@ function createRenderer () {
     antialias: true
   })
   renderer.autoClear = false
-  renderer.shadowMap.enabled = true
+  renderer.shadowMap.enabled = renderSettings.castShadows
   renderer.shadowMap.type = PCFSoftShadowMap
   return renderer
 }
@@ -166,7 +169,8 @@ function addSpotlightHelper (light) {
 
 function createSpotLight () {
   const light = new SpotLight()
-  light.shadow.mapSize.set(1024, 1024)
+  const { shadowMapSize } = renderSettings
+  light.shadow.mapSize.set(shadowMapSize, shadowMapSize)
   return light
 }
 
@@ -206,15 +210,20 @@ function loadTexture (src) {
   return texture
 }
 
+// TODO: Implement pose
 function createDinild (scene) {
+  const { castShadows } = renderSettings
   const meta = require('../assets/models/dinild/meta.json')
   const material = createSkinMaterial('./assets/textures/dinild')
   loadModel('./assets/models/dinild', meta).then((modelData) => {
     const { geometry } = parseModel(modelData)
-    const mesh = new Mesh(geometry, material)
+    const mesh = new SkinnedMesh(geometry, material)
+    const pose = new PoseAnimation(geometry.boneFrames)
+    pose.weights[0] = 1
+    pose.applyWeights(mesh.skeleton.bones)
     Object.assign(mesh, {
-      castShadow: true,
-      receiveShadow: true
+      castShadow: castShadows,
+      receiveShadow: castShadows
     })
     if (material.render) tasks.add(material, 'render')
     scene.add(mesh)
@@ -226,9 +235,10 @@ function createSkinMaterial (basePath) {
     ? SkinMaterial
     : MeshPhongMaterial
   return new MaterialCtor({
-    map: loadTexture(basePath + '/diffuse.webp'),
-    normalMap: loadTexture(basePath + '/normal.webp'),
-    roughness: 0.25
+    map: loadTexture(basePath + '/diffuse.jpg'),
+    normalMap: loadTexture(basePath + '/normal.jpg'),
+    // roughness: 0.25
+    skinning: true
   })
 }
 
@@ -272,7 +282,7 @@ function updateLight (light, state) {
   light.color.copy(state.color)
   light.position.copy(state.position)
   light.intensity = state.intensity
-  light.castShadow = state.castShadow
+  light.castShadow = renderSettings.castShadows && state.castShadow
 }
 
 function updateSpotLight (light, state) {
