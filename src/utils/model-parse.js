@@ -4,6 +4,7 @@ import {
   Quaternion,
   Vector3
 } from 'three'
+import { createArrayCursor } from './array'
 import { logger } from './logger'
 
 const LOG_KEYS = {
@@ -13,19 +14,20 @@ const LOG_KEYS = {
   createBufferAttributes: '|  create buffer attributes'
 }
 
-export function parseModel (props) {
+export function parseModel (props, meta) {
+  logger.logHash('model meta', meta)
   logger.time(LOG_KEYS.createGeometry)
-  const geometry = createGeometry(props)
+  const geometry = createGeometry(props, meta)
   logger.timeEnd(LOG_KEYS.createGeometry)
   return {
     geometry
   }
 }
 
-function createGeometry (props) {
+function createGeometry (props, meta) {
   const geometry = new BufferGeometry()
   logger.time(LOG_KEYS.parseBufferAttributes)
-  const attributes = parseBufferAttributes(props)
+  const attributes = parseBufferAttributes(props, meta)
   logger.timeEnd(LOG_KEYS.parseBufferAttributes)
 
   geometry.bones = props.bones
@@ -37,31 +39,26 @@ function createGeometry (props) {
   addBufferAttribute(geometry, {
     key: 'position',
     value: attributes.position,
-    type: Float32Array,
     itemSize: 3
   })
   addBufferAttribute(geometry, {
     key: 'normal',
     value: attributes.normal,
-    type: Float32Array,
     itemSize: 3
   })
   addBufferAttribute(geometry, {
     key: 'uv',
     value: attributes.uv,
-    type: Float32Array,
     itemSize: 2
   })
   addBufferAttribute(geometry, {
     key: 'skinIndex',
     value: attributes.skinIndex,
-    type: Float32Array,
     itemSize: 4
   })
   addBufferAttribute(geometry, {
     key: 'skinWeight',
     value: attributes.skinWeight,
-    type: Float32Array,
     itemSize: 4
   })
   logger.timeEnd(LOG_KEYS.createBufferAttributes)
@@ -72,11 +69,8 @@ function createGeometry (props) {
 function addBufferAttribute (geometry, props) {
   const { key, value } = props
   if (!(value && value.length)) return
-  const Ctor = props.type
-  const typedArray = new Ctor(value)
-
   geometry.addAttribute(key,
-    new BufferAttribute(typedArray, props.itemSize))
+    new BufferAttribute(value, props.itemSize))
 }
 
 function isBitSet (value, position) {
@@ -86,7 +80,7 @@ function isBitSet (value, position) {
 // NOTE:
 // - Only triangles (no quads)
 // - Only single UV layer
-function parseBufferAttributes (props) {
+function parseBufferAttributes (props, meta) {
   const {
     faces, normals, uvs, vertices,
     skinIndices, skinWeights
@@ -99,11 +93,11 @@ function parseBufferAttributes (props) {
     }
   }
 
-  const position = []
-  const uv = []
-  const normal = []
-  const skinIndex = []
-  const skinWeight = []
+  const position = createArrayCursor(new Float32Array(meta.faces * 3 * 3))
+  const uv = createArrayCursor(new Float32Array(meta.faces * 3 * 2))
+  const normal = createArrayCursor(new Float32Array(meta.faces * 3 * 3))
+  const skinIndex = createArrayCursor(new Float32Array(meta.faces * 3 * 4))
+  const skinWeight = createArrayCursor(new Float32Array(meta.faces * 3 * 4))
 
   const hasSkinning = skinIndices && skinWeights
   const fLength = faces.length
@@ -212,11 +206,11 @@ function parseBufferAttributes (props) {
   }
 
   return {
-    position,
-    normal,
-    uv,
-    skinIndex,
-    skinWeight
+    position: position.array,
+    normal: normal.array,
+    uv: uv.array,
+    skinIndex: skinIndex.array,
+    skinWeight: skinWeight.array
   }
 }
 

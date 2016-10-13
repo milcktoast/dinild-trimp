@@ -219,7 +219,7 @@ function createDinild (scene) {
   const meta = require('../assets/models/dinild/meta.json')
   const material = createSkinMaterial('./assets/textures/dinild')
   loadModel('./assets/models/dinild', meta).then((modelData) => {
-    const { geometry } = parseModel(modelData)
+    const { geometry } = parseModel(modelData, meta)
     const mesh = new SkinnedMesh(geometry, material)
     const pose = new PoseAnimation(geometry.boneFrames)
     Object.assign(mesh, {
