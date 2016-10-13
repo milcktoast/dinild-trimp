@@ -1,6 +1,8 @@
 import {
   BufferAttribute,
-  BufferGeometry
+  BufferGeometry,
+  Quaternion,
+  Vector3
 } from 'three'
 
 export function parseModel (props) {
@@ -12,6 +14,10 @@ export function parseModel (props) {
 function createGeometry (props) {
   const geometry = new BufferGeometry()
   const attributes = parseBufferAttributes(props)
+
+  geometry.bones = props.bones
+  geometry.boneFrames = parseBoneFrames(props.boneFrames)
+
   addBufferAttribute(geometry, {
     key: 'position',
     value: attributes.position,
@@ -92,9 +98,13 @@ function parseBufferAttributes (props) {
     const hasFaceNormal = isBitSet(type, 4)
     const hasFaceVertexNormal = isBitSet(type, 5)
 
-    let vertA = 3 * faces[fOffset++]
-    let vertB = 3 * faces[fOffset++]
-    let vertC = 3 * faces[fOffset++]
+    let indexA = faces[fOffset++]
+    let indexB = faces[fOffset++]
+    let indexC = faces[fOffset++]
+
+    let vertA = indexA * 3
+    let vertB = indexB * 3
+    let vertC = indexC * 3
 
     position.push(
       vertices[vertA],
@@ -110,6 +120,10 @@ function parseBufferAttributes (props) {
       vertices[vertC + 2])
 
     if (hasSkinning) {
+      let vertA = indexA * 4
+      let vertB = indexB * 4
+      let vertC = indexC * 4
+
       skinIndex.push(
         skinIndices[vertA],
         skinIndices[vertA + 1],
@@ -186,4 +200,14 @@ function parseBufferAttributes (props) {
     skinIndex,
     skinWeight
   }
+}
+
+function parseBoneFrames (boneFrames) {
+  return boneFrames.map((actionFrames) => (
+    actionFrames.map((frame) => ({
+      pos: new Vector3().fromArray(frame.pos),
+      rot: new Quaternion().fromArray(frame.rot)
+      // scl: new Vector3().fromArray(frame.scl)
+    }))
+  ))
 }
