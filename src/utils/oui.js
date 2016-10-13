@@ -109,7 +109,6 @@ function annotatePose ({
   activeFrameWeight
 }) {
   const weightRange = annotate({ min: 0, max: 1, step: 0.01 })
-  console.log('annotatePose', activeFrameWeight)
   return {
     @weightRange activeFrameWeight
   }
