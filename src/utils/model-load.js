@@ -1,13 +1,13 @@
 import fetch from 'isomorphic-fetch'
 
 const FLOAT_ATTR_KEYS = [
-  'faces',
   'normals',
   'skinWeights',
   'uvs',
   'vertices'
 ]
 const INT_ATTR_KEYS = [
+  'faces',
   'skinIndices'
 ]
 const JSON_ATTR_KEYS = [

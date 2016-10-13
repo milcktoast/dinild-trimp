@@ -2,13 +2,13 @@ const fs = require('fs')
 const path = require('path')
 
 const FLOAT_ATTR_KEYS = [
-  'faces',
   'normals',
   'skinWeights',
   'uvs',
   'vertices'
 ]
 const INT_ATTR_KEYS = [
+  'faces',
   'skinIndices'
 ]
 
