@@ -4,20 +4,36 @@ import {
   Quaternion,
   Vector3
 } from 'three'
+import { logger } from './logger'
+
+const LOG_KEYS = {
+  createGeometry: 'create geometry',
+  parseBufferAttributes: '|  parse buffer attributes',
+  parseBoneFrames: '|  parse bone frames',
+  createBufferAttributes: '|  create buffer attributes'
+}
 
 export function parseModel (props) {
+  logger.time(LOG_KEYS.createGeometry)
+  const geometry = createGeometry(props)
+  logger.timeEnd(LOG_KEYS.createGeometry)
   return {
-    geometry: createGeometry(props)
+    geometry
   }
 }
 
 function createGeometry (props) {
   const geometry = new BufferGeometry()
+  logger.time(LOG_KEYS.parseBufferAttributes)
   const attributes = parseBufferAttributes(props)
+  logger.timeEnd(LOG_KEYS.parseBufferAttributes)
 
   geometry.bones = props.bones
+  logger.time(LOG_KEYS.parseBoneFrames)
   geometry.boneFrames = parseBoneFrames(props.boneFrames)
+  logger.timeEnd(LOG_KEYS.parseBoneFrames)
 
+  logger.time(LOG_KEYS.createBufferAttributes)
   addBufferAttribute(geometry, {
     key: 'position',
     value: attributes.position,
@@ -48,6 +64,8 @@ function createGeometry (props) {
     type: Float32Array,
     itemSize: 4
   })
+  logger.timeEnd(LOG_KEYS.createBufferAttributes)
+
   return geometry
 }
 
