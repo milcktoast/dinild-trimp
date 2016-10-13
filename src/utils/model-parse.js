@@ -30,6 +30,18 @@ function createGeometry (props) {
     type: Float32Array,
     itemSize: 2
   })
+  addBufferAttribute(geometry, {
+    key: 'skinIndex',
+    value: attributes.skinIndex,
+    type: Float32Array,
+    itemSize: 4
+  })
+  addBufferAttribute(geometry, {
+    key: 'skinWeight',
+    value: attributes.skinWeight,
+    type: Float32Array,
+    itemSize: 4
+  })
   return geometry
 }
 
@@ -51,7 +63,10 @@ function isBitSet (value, position) {
 // - Only triangles (no quads)
 // - Only single UV layer
 function parseBufferAttributes (props) {
-  const { faces, normals, uvs, vertices } = props
+  const {
+    faces, normals, uvs, vertices,
+    skinIndices, skinWeights
+  } = props
   const uvLayer = uvs
 
   if (!faces.length) {
@@ -63,7 +78,10 @@ function parseBufferAttributes (props) {
   const position = []
   const uv = []
   const normal = []
+  const skinIndex = []
+  const skinWeight = []
 
+  const hasSkinning = skinIndices && skinWeights
   const fLength = faces.length
   let fOffset = 0
 
@@ -90,6 +108,40 @@ function parseBufferAttributes (props) {
       vertices[vertC],
       vertices[vertC + 1],
       vertices[vertC + 2])
+
+    if (hasSkinning) {
+      skinIndex.push(
+        skinIndices[vertA],
+        skinIndices[vertA + 1],
+        skinIndices[vertA + 2],
+        skinIndices[vertA + 3],
+
+        skinIndices[vertB],
+        skinIndices[vertB + 1],
+        skinIndices[vertB + 2],
+        skinIndices[vertB + 3],
+
+        skinIndices[vertC],
+        skinIndices[vertC + 1],
+        skinIndices[vertC + 2],
+        skinIndices[vertC + 3])
+
+      skinWeight.push(
+        skinWeights[vertA],
+        skinWeights[vertA + 1],
+        skinWeights[vertA + 2],
+        skinWeights[vertA + 3],
+
+        skinWeights[vertB],
+        skinWeights[vertB + 1],
+        skinWeights[vertB + 2],
+        skinWeights[vertB + 3],
+
+        skinWeights[vertC],
+        skinWeights[vertC + 1],
+        skinWeights[vertC + 2],
+        skinWeights[vertC + 3])
+    }
 
     if (hasMaterial) {
       fOffset++
@@ -130,6 +182,8 @@ function parseBufferAttributes (props) {
   return {
     position,
     normal,
-    uv
+    uv,
+    skinIndex,
+    skinWeight
   }
 }
