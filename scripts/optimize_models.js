@@ -26,6 +26,8 @@ function optimizeModel (src) {
     const attrJson = json[key]
     writeIntData(formatDestPath(basePath, key, 'bin'), attrJson)
   })
+  writeBoneData(formatDestPath(basePath, 'bones', 'json'), json)
+  writeAnimationData(formatDestPath(basePath, 'boneFrames', 'json'), json)
   writeMetaData(formatDestPath(basePath, 'meta', 'json'), json)
   console.log('Optimized model: ' + path.basename(src))
 }
@@ -58,6 +60,24 @@ function writeIntData (destPath, data) {
   writer.end()
 }
 
+function writeBoneData (destPath, data) {
+  fs.writeFileSync(destPath, JSON.stringify(data.bones), {
+    encoding: 'utf8'
+  })
+}
+
+// TODO: Write animation data to float binary file
+function writeAnimationData (destPath, data) {
+  const { animations } = data
+  const boneFrames = animations[0].hierarchy
+    .map((boneFrame) => boneFrame.keys.map(({pos, rot, scl}) => ({
+      pos, rot, scl
+    })))
+  fs.writeFileSync(destPath, JSON.stringify(boneFrames), {
+    encoding: 'utf8'
+  })
+}
+
 function writeMetaData (destPath, json) {
   const metaData = {
     uvs: json.metadata.uvs,
@@ -65,6 +85,8 @@ function writeMetaData (destPath, json) {
     vertices: json.metadata.vertices,
     faces: json.metadata.faces,
     bones: json.metadata.bones,
+    boneFrames: json.animations[0].hierarchy.length,
+    animationFrames: json.animations[0].hierarchy[0].keys.length,
     skinIndices: json.skinIndices.length / 4,
     skinWeights: json.skinWeights.length / 4,
     skinInfluencesPerVertex: json.influencesPerVertex
