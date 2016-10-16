@@ -208,7 +208,7 @@ animate()
 let textureLoader
 function loadTexture (src) {
   if (!textureLoader) textureLoader = new TextureLoader()
-  const texture = textureLoader.load(src)
+  const texture = textureLoader.load(src + '.jpg')
   texture.format = RGBFormat
   return texture
 }
@@ -241,8 +241,8 @@ function createSkinMaterial (basePath) {
     ? SkinMaterial
     : MeshPhongMaterial
   return new MaterialCtor({
-    map: loadTexture(basePath + '/diffuse.jpg'),
-    normalMap: loadTexture(basePath + '/normal.jpg'),
+    map: loadTexture(basePath + '/diffuse'),
+    normalMap: loadTexture(basePath + '/normal'),
     // roughness: 0.25
     skinning: true
   })
