@@ -7,14 +7,8 @@
     "start": "sh ./scripts/start.sh",
     "build": "sh ./scripts/build.sh",
     "test": "npm run test-lint && npm run test-unit",
-    "test-lint": "standard",
+    "test-lint": "sh ./scripts/test-lint.sh",
     "test-unit": "sh ./scripts/test-unit.sh"
-  },
-  "standard": {
-    "parser": "babel-eslint",
-    "ignore": [
-      "build"
-    ]
   },
   "author": "Jay Weeks <jay.patrick.weeks@gmail.com> (http://jayweeks.com)",
   "license": "Artistic-2.0",
@@ -29,10 +23,11 @@
     "babel-tape-runner": "^2.0.1",
     "babelify": "^7.3.0",
     "budo": "^9.2.0",
+    "eslint": "^3.8.0",
+    "eslint-config-standard": "^6.2.0",
     "ouioui": "0.0.20",
     "rollup-plugin-babel": "^2.6.1",
     "rollupify": "^0.3.4",
-    "standard": "^8.1.0",
     "tap-spec": "^4.1.1",
     "tape": "^4.6.2",
     "uglifyjs": "^2.4.10",
