@@ -33,13 +33,13 @@ Object.assign(PoseAnimation.prototype, {
     for (let i = 0; i < bones.length; i++) {
       const actionFrames = boneFrames[i]
       const bone = bones[i]
-      const pos = bone.position
-      const rot = bone.quaternion
+      const { position, quaternion, scale } = bone
 
       // Reset bone to rest position
       const restFrame = actionFrames[0]
-      pos.copy(restFrame.pos)
-      rot.copy(restFrame.rot)
+      position.copy(restFrame.pos)
+      quaternion.copy(restFrame.rot)
+      scale.copy(restFrame.scl)
 
       for (let j = 0; j < weights.length; j++) {
         const weight = weights[j]
@@ -47,14 +47,19 @@ Object.assign(PoseAnimation.prototype, {
 
         // Skip first frame which is rest position
         const frame = actionFrames[j + 1]
+
         scratchVec3.copy(restFrame.pos).lerp(frame.pos, weight)
         scratchVec3.sub(restFrame.pos)
-        pos.add(scratchVec3)
+        position.add(scratchVec3)
+
+        scratchVec3.copy(restFrame.scl).lerp(frame.scl, weight)
+        scratchVec3.sub(restFrame.scl)
+        scale.add(scratchVec3)
 
         scratchQuat.copy(restFrame.rot)
         nlerpQuat(scratchQuat, frame.rot, weight)
         subQuat(scratchQuat, restFrame.rot)
-        addQuat(rot, scratchQuat)
+        addQuat(quaternion, scratchQuat)
       }
     }
   }

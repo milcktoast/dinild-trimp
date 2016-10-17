@@ -222,8 +222,8 @@ function parseBoneFrames (boneFrames) {
   return boneFrames.map((actionFrames) => (
     actionFrames.map((frame) => ({
       pos: new Vector3().fromArray(frame.pos),
-      rot: new Quaternion().fromArray(frame.rot)
-      // scl: new Vector3().fromArray(frame.scl)
+      rot: new Quaternion().fromArray(frame.rot),
+      scl: new Vector3().fromArray(frame.scl)
     }))
   ))
 }
