@@ -30,10 +30,14 @@ function createGeometry (props, meta) {
   const attributes = parseBufferAttributes(props, meta)
   logger.timeEnd(LOG_KEYS.parseBufferAttributes)
 
-  geometry.bones = props.bones
-  logger.time(LOG_KEYS.parseBoneFrames)
-  geometry.boneFrames = parseBoneFrames(props.boneFrames)
-  logger.timeEnd(LOG_KEYS.parseBoneFrames)
+  if (props.bones) {
+    geometry.bones = props.bones
+  }
+  if (props.boneFrames) {
+    logger.time(LOG_KEYS.parseBoneFrames)
+    geometry.boneFrames = parseBoneFrames(props.boneFrames)
+    logger.timeEnd(LOG_KEYS.parseBoneFrames)
+  }
 
   logger.time(LOG_KEYS.createBufferAttributes)
   addBufferAttribute(geometry, {

@@ -8,6 +8,7 @@ import {
   PerspectiveCamera,
   RGBFormat,
   Scene,
+  SkeletonHelper,
   SkinnedMesh,
   SpotLight,
   SpotLightHelper,
@@ -162,6 +163,13 @@ function createCamera () {
   return camera
 }
 
+function addSkeletonHelper (mesh) {
+  const helper = new SkeletonHelper(mesh)
+  mesh.skeletonHelper = helper
+  scene.helpers.add(helper)
+  tasks.add(helper, 'update')
+}
+
 // TODO: Cleanup
 function addSpotlightHelper (light) {
   const helper = new SpotLightHelper(light)
@@ -190,7 +198,7 @@ Object.keys(lights).forEach((key) => {
   scene.add(lights[key])
 })
 
-createDinild(scene)
+const dinild = createDinild(scene)
 
 Object.assign(container.style, {
   position: 'absolute',
@@ -216,6 +224,7 @@ function loadTexture (src) {
 // TODO: Implement pose
 function createDinild (scene) {
   const { castShadows } = renderSettings
+  const localState = {}
   const meta = require('../assets/models/dinild/meta.json')
   const material = createSkinMaterial('./assets/textures/dinild')
   loadModel('./assets/models/dinild', meta).then((modelData) => {
@@ -226,14 +235,13 @@ function createDinild (scene) {
       castShadow: castShadows,
       receiveShadow: castShadows
     })
-    tasks.add(() => {
-      pose.resetWeights()
-      pose.weights[0] = state.pose.activeFrameWeight
-      pose.applyWeights(mesh.skeleton.bones)
-    }, 'update')
+    Object.assign(localState, {
+      mesh, pose, material
+    })
     if (material.render) tasks.add(material, 'render')
     scene.add(mesh)
   })
+  return localState
 }
 
 function createSkinMaterial (basePath) {
@@ -251,7 +259,8 @@ function createSkinMaterial (basePath) {
 function updateState (nextState) {
   updateCamera(nextState.camera)
   updateFog(nextState.fog)
-  // updateSkinMaterial(dinild.material, nextState.skin)
+  updatePose(dinild.pose, dinild.mesh, nextState.pose)
+  updateSkinMaterial(dinild.material, nextState.skin)
   updateSpotLight(lights.top, nextState.lightTop)
   updateSpotLight(lights.bottom, nextState.lightBottom)
   updateHemiLight(lights.ambient, nextState.lightAmbient)
@@ -272,17 +281,27 @@ function updateFog (state) {
   scene.fog.far = state.far
 }
 
-// function updateSkinMaterial (material, state) {
-//   const { map, normalMap } = material
-//   material.shininess = state.shininess
-//   material.normalScale.set(state.normalScale, state.normalScale)
-//   if (map.anisotropy !== state.textureAnisotropy) {
-//     map.anisotropy = state.textureAnisotropy
-//     normalMap.anisotropy = state.textureAnisotropy
-//     if (map.image) map.needsUpdate = true
-//     if (normalMap.image) normalMap.needsUpdate = true
-//   }
-// }
+function updatePose (pose, mesh, state) {
+  if (!pose) return
+  pose.resetWeights()
+  pose.weights[0] = state.activeFrameWeight
+  pose.applyWeights(mesh.skeleton.bones)
+  if (state.helper && !mesh.skeletonHelper) addSkeletonHelper(mesh)
+  if (mesh.skeletonHelper) mesh.skeletonHelper.visible = !!state.helper
+}
+
+function updateSkinMaterial (material, state) {
+  if (!material) return
+  const { map, normalMap } = material
+  material.shininess = state.shininess
+  material.normalScale.set(state.normalScale, state.normalScale)
+  if (map.anisotropy !== state.textureAnisotropy) {
+    map.anisotropy = state.textureAnisotropy
+    normalMap.anisotropy = state.textureAnisotropy
+    if (map.image) map.needsUpdate = true
+    if (normalMap.image) normalMap.needsUpdate = true
+  }
+}
 
 function updateLight (light, state) {
   light.color.copy(state.color)
