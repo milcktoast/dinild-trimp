@@ -18,8 +18,7 @@ export function PoseAnimation (boneFrames) {
   this.weights = new Float32Array(frameCount)
 }
 
-inherit(PoseAnimation)
-Object.assign(PoseAnimation.prototype, {
+inherit(null, PoseAnimation, {
   resetWeights () {
     const { weights } = this
     for (let i = 0; i < weights.length; i++) {

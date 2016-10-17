@@ -1,4 +1,8 @@
 import fetch from 'isomorphic-fetch'
+import {
+  RGBFormat,
+  TextureLoader
+} from 'three'
 import { logger } from './logger'
 
 const FLOAT_ATTR_KEYS = [
@@ -60,7 +64,7 @@ export function loadModel (baseUrl, modelJson) {
 
 function createBufferFetcher (BufferCtor) {
   return ({key, url}) => new Promise((resolve, reject) => {
-    const logKey = `| fetch ${key}`
+    const logKey = `|  fetch ${key}`
     logger.time(logKey)
     fetch(url)
       .then((res) => res.arrayBuffer())
@@ -75,7 +79,7 @@ function createBufferFetcher (BufferCtor) {
 }
 
 function fetchJson ({key, url}) {
-  const logKey = `| fetch ${key}`
+  const logKey = `|  fetch ${key}`
   return new Promise((resolve, reject) => {
     logger.time(logKey)
     fetch(url)
@@ -92,4 +96,13 @@ function fetchJson ({key, url}) {
 
 function formatDestPath (baseUrl, key, ext) {
   return `${baseUrl}/${key}.${ext}`
+}
+
+// TODO: Detect WebP support
+let textureLoader
+export function loadTexture (src) {
+  if (!textureLoader) textureLoader = new TextureLoader()
+  const texture = textureLoader.load(src + '.jpg')
+  texture.format = RGBFormat
+  return texture
 }

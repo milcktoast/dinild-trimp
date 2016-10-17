@@ -3,26 +3,20 @@ import {
   Fog,
   Group,
   HemisphereLight,
-  MeshPhongMaterial,
   PCFSoftShadowMap,
   PerspectiveCamera,
-  RGBFormat,
   Scene,
   SkeletonHelper,
-  SkinnedMesh,
   SpotLight,
   SpotLightHelper,
-  TextureLoader,
   WebGLRenderer
 } from 'three'
 
+import { RENDER_SETTINGS } from './constants/fidelity'
 import { TrackballControls } from './controls/TrackballControls'
-import { SkinMaterial } from './materials/SkinMaterial'
-import { PoseAnimation } from './animations/PoseAnimation'
 import { createTaskManager } from './utils/task'
 import { mapLinear } from './utils/math'
-import { loadModel } from './utils/model-load'
-import { parseModel } from './utils/model-parse'
+import { Dinild } from './entities/Dinild'
 
 function createVector (x, y, z) {
   if (y == null) {
@@ -40,12 +34,6 @@ function copyVector (a, b) {
 
 function createColor (...args) {
   return new Color(...args)
-}
-
-const renderSettings = {
-  skinSubsurface: false,
-  castShadows: false,
-  shadowMapSize: 1024
 }
 
 const cameraOptions = [{
@@ -133,7 +121,7 @@ function createRenderer () {
     antialias: true
   })
   renderer.autoClear = false
-  renderer.shadowMap.enabled = renderSettings.castShadows
+  renderer.shadowMap.enabled = RENDER_SETTINGS.castShadows
   renderer.shadowMap.type = PCFSoftShadowMap
   return renderer
 }
@@ -180,7 +168,7 @@ function addSpotlightHelper (light) {
 
 function createSpotLight () {
   const light = new SpotLight()
-  const { shadowMapSize } = renderSettings
+  const { shadowMapSize } = RENDER_SETTINGS
   light.shadow.mapSize.set(shadowMapSize, shadowMapSize)
   return light
 }
@@ -198,7 +186,9 @@ Object.keys(lights).forEach((key) => {
   scene.add(lights[key])
 })
 
-const dinild = createDinild(scene)
+const dinild = new Dinild()
+dinild.addTo(scene)
+tasks.add(dinild, 'render')
 
 Object.assign(container.style, {
   position: 'absolute',
@@ -211,50 +201,6 @@ window.addEventListener('resize', resize)
 updateState(state)
 resize()
 animate()
-
-// TODO: Detect WebP support
-let textureLoader
-function loadTexture (src) {
-  if (!textureLoader) textureLoader = new TextureLoader()
-  const texture = textureLoader.load(src + '.jpg')
-  texture.format = RGBFormat
-  return texture
-}
-
-// TODO: Implement pose
-function createDinild (scene) {
-  const { castShadows } = renderSettings
-  const localState = {}
-  const meta = require('../assets/models/dinild/meta.json')
-  const material = createSkinMaterial('./assets/textures/dinild')
-  loadModel('./assets/models/dinild', meta).then((modelData) => {
-    const { geometry } = parseModel(modelData, meta)
-    const mesh = new SkinnedMesh(geometry, material)
-    const pose = new PoseAnimation(geometry.boneFrames)
-    Object.assign(mesh, {
-      castShadow: castShadows,
-      receiveShadow: castShadows
-    })
-    Object.assign(localState, {
-      mesh, pose, material
-    })
-    if (material.render) tasks.add(material, 'render')
-    scene.add(mesh)
-  })
-  return localState
-}
-
-function createSkinMaterial (basePath) {
-  const MaterialCtor = renderSettings.skinSubsurface
-    ? SkinMaterial
-    : MeshPhongMaterial
-  return new MaterialCtor({
-    map: loadTexture(basePath + '/diffuse'),
-    normalMap: loadTexture(basePath + '/normal'),
-    // roughness: 0.25
-    skinning: true
-  })
-}
 
 function updateState (nextState) {
   updateCamera(nextState.camera)
@@ -307,7 +253,7 @@ function updateLight (light, state) {
   light.color.copy(state.color)
   light.position.copy(state.position)
   light.intensity = state.intensity
-  light.castShadow = renderSettings.castShadows && state.castShadow
+  light.castShadow = RENDER_SETTINGS.castShadows && state.castShadow
 }
 
 function updateSpotLight (light, state) {
