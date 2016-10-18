@@ -188,7 +188,9 @@ Object.keys(lights).forEach((key) => {
 })
 
 const dinild = new Dinild()
+dinild.load()
 dinild.addTo(scene)
+tasks.add(dinild, 'update')
 tasks.add(dinild, 'render')
 
 Object.assign(container.style, {
@@ -232,9 +234,9 @@ function updateFog (state) {
 
 function updatePose (pose, mesh, state) {
   if (!pose) return
-  pose.resetWeights()
-  pose.weights[0] = state.activeFrameWeight
-  pose.applyWeights(mesh.skeleton.bones)
+  // pose.resetWeights()
+  // pose.weights[8] = state.activeFrameWeight
+  // pose.applyWeights(mesh.skeleton.bones)
   if (state.helper && !mesh.skeletonHelper) addSkeletonHelper(mesh)
   if (mesh.skeletonHelper) mesh.skeletonHelper.visible = !!state.helper
 }

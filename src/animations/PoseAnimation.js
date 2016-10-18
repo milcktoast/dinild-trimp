@@ -13,7 +13,7 @@ const scratchQuat = new Quaternion()
 const scratchVec3 = new Vector3()
 
 export function PoseAnimation (boneFrames) {
-  const frameCount = boneFrames[0].length - 1 // First frame is rest pose
+  const frameCount = boneFrames[0].length
   this.boneFrames = boneFrames
   this.weights = new Float32Array(frameCount)
 }
@@ -26,7 +26,6 @@ inherit(null, PoseAnimation, {
     }
   },
 
-  // TODO: Transform scale
   applyWeights (bones) {
     const { boneFrames, weights } = this
     for (let i = 0; i < bones.length; i++) {
@@ -42,10 +41,8 @@ inherit(null, PoseAnimation, {
 
       for (let j = 0; j < weights.length; j++) {
         const weight = weights[j]
-        if (!weight) continue
-
-        // Skip first frame which is rest position
-        const frame = actionFrames[j + 1]
+        const frame = actionFrames[j]
+        if (weight === 0) continue
 
         scratchVec3.copy(restFrame.pos).lerp(frame.pos, weight)
         scratchVec3.sub(restFrame.pos)
