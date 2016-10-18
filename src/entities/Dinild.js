@@ -14,8 +14,18 @@ import { parseModel } from '../utils/model-parse'
 import { PoseAnimation } from '../animations/PoseAnimation'
 import { SkinMaterial } from '../materials/SkinMaterial'
 
-function mapWordToFrames (word) {
-  return word.split('').map((letter) => MOUTH_FRAMES[letter] || 7)
+function expandFrameKeys (map) {
+  const expanded = {}
+  Object.keys(map).forEach((key) => {
+    key.split('').forEach((char) => {
+      expanded[char] = map[key]
+    })
+  })
+  return expanded
+}
+
+function mapWordToFrames (word, frames) {
+  return word.split('').map((letter) => frames[letter] || 7)
 }
 
 function easeInOut (k) {
@@ -27,7 +37,7 @@ const MODEL_META = require('../../assets/models/dinild/meta.json')
 const PHRASE = {
   frame: 0,
   framesPerLetter: 8,
-  letters: mapWordToFrames('__BAD_MOUF_DUDE__')
+  letters: mapWordToFrames('__BAD_MOUF_DUDE__', expandFrameKeys(MOUTH_FRAMES))
 }
 
 export function Dinild () {
