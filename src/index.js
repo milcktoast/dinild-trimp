@@ -6,17 +6,18 @@ import {
   PCFSoftShadowMap,
   PerspectiveCamera,
   Scene,
-  SkeletonHelper,
   SpotLight,
-  SpotLightHelper,
   WebGLRenderer
 } from 'three'
 
 import { RENDER_SETTINGS } from './constants/fidelity'
+import { MOUTH_FRAMES } from './constants/animation'
+
 import { createTaskManager } from './utils/task'
 import { createLoop } from './utils/loop'
 import { TrackballControls } from './controls/TrackballControls'
 import { mapLinear } from './utils/math'
+import { SceneState } from './state/SceneState'
 import { Dinild } from './entities/Dinild'
 
 function createVector (x, y, z) {
@@ -80,6 +81,9 @@ const state = {
     textureAnisotropy: 4
   },
   pose: {
+    frames: MOUTH_FRAMES,
+    startFrame: 0,
+    targetFrame: 1,
     activeFrameWeight: 0
   },
   lightTop: {
@@ -152,21 +156,6 @@ function createCamera () {
   return camera
 }
 
-function addSkeletonHelper (mesh) {
-  const helper = new SkeletonHelper(mesh)
-  mesh.skeletonHelper = helper
-  scene.helpers.add(helper)
-  tasks.add(helper, 'update')
-}
-
-// TODO: Cleanup
-function addSpotlightHelper (light) {
-  const helper = new SpotLightHelper(light)
-  light.helper = helper
-  scene.helpers.add(helper)
-  tasks.add(helper, 'update')
-}
-
 function createSpotLight () {
   const light = new SpotLight()
   const { shadowMapSize } = RENDER_SETTINGS
@@ -190,8 +179,24 @@ Object.keys(lights).forEach((key) => {
 const dinild = new Dinild()
 dinild.load()
 dinild.addTo(scene)
-tasks.add(dinild, 'update')
+// tasks.add(dinild, 'update')
 tasks.add(dinild, 'render')
+
+const index = new SceneState({
+  camera,
+  renderer,
+  scene,
+  tasks
+})
+function updateState (nextState) {
+  index.updateCamera(nextState.camera)
+  index.updateFog(nextState.fog)
+  index.updatePose(dinild.pose, dinild.mesh, nextState.pose)
+  index.updateSkinMaterial(dinild.material, nextState.skin)
+  index.updateSpotLight(lights.top, nextState.lightTop)
+  index.updateSpotLight(lights.bottom, nextState.lightBottom)
+  index.updateHemiLight(lights.ambient, nextState.lightAmbient)
+}
 
 Object.assign(container.style, {
   position: 'absolute',
@@ -206,78 +211,6 @@ document.body.appendChild(container)
 window.addEventListener('resize', resize)
 updateState(state)
 resize()
-
-function updateState (nextState) {
-  updateCamera(nextState.camera)
-  updateFog(nextState.fog)
-  updatePose(dinild.pose, dinild.mesh, nextState.pose)
-  updateSkinMaterial(dinild.material, nextState.skin)
-  updateSpotLight(lights.top, nextState.lightTop)
-  updateSpotLight(lights.bottom, nextState.lightBottom)
-  updateHemiLight(lights.ambient, nextState.lightAmbient)
-}
-
-function updateCamera (state) {
-  camera.position.copy(state.position)
-  camera.up.copy(state.up).normalize()
-  camera.fov = state.fov
-  camera.controls.target.copy(state.target)
-  camera.updateProjectionMatrix()
-}
-
-function updateFog (state) {
-  renderer.setClearColor(state.color)
-  scene.fog.color.copy(state.color)
-  scene.fog.near = state.near
-  scene.fog.far = state.far
-}
-
-function updatePose (pose, mesh, state) {
-  if (!pose) return
-  // pose.resetWeights()
-  // pose.weights[8] = state.activeFrameWeight
-  // pose.applyWeights(mesh.skeleton.bones)
-  if (state.helper && !mesh.skeletonHelper) addSkeletonHelper(mesh)
-  if (mesh.skeletonHelper) mesh.skeletonHelper.visible = !!state.helper
-}
-
-function updateSkinMaterial (material, state) {
-  if (!material) return
-  const { map, normalMap } = material
-  material.shininess = state.shininess
-  material.normalScale.set(state.normalScale, state.normalScale)
-  if (map.anisotropy !== state.textureAnisotropy) {
-    map.anisotropy = state.textureAnisotropy
-    normalMap.anisotropy = state.textureAnisotropy
-    if (map.image) map.needsUpdate = true
-    if (normalMap.image) normalMap.needsUpdate = true
-  }
-}
-
-function updateLight (light, state) {
-  light.color.copy(state.color)
-  light.position.copy(state.position)
-  light.intensity = state.intensity
-  light.castShadow = RENDER_SETTINGS.castShadows && state.castShadow
-}
-
-function updateSpotLight (light, state) {
-  updateLight(light, state)
-  light.target.position.copy(state.target)
-  light.target.updateMatrixWorld()
-  light.distance = state.distance
-  light.angle = state.angle
-  light.penumbra = state.penumbra
-  light.decay = state.decay
-  if (state.helper && !light.helper) addSpotlightHelper(light)
-  if (light.helper) light.helper.visible = !!state.helper
-}
-
-function updateHemiLight (light, state) {
-  light.color.copy(state.skyColor)
-  light.groundColor.copy(state.groundColor)
-  light.intensity = state.intensity
-}
 
 function resize () {
   camera.aspect = window.innerWidth / window.innerHeight

@@ -107,11 +107,20 @@ function annotateSkinMaterial ({
 
 function annotatePose ({
   helper,
+  frames,
+  startFrame,
+  targetFrame,
   activeFrameWeight
 }) {
+  const frameOptions = annotate({
+    control: controls.ComboBox,
+    options: frames
+  })
   const weightRange = annotate({ min: 0, max: 1, step: 0.01 })
   return {
     helper: helper || false,
+    @frameOptions startFrame,
+    @frameOptions targetFrame,
     @weightRange activeFrameWeight
   }
 }
