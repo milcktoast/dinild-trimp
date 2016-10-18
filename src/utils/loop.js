@@ -31,8 +31,8 @@ export function createLoop (context_, update_, render_, delta) {
 
   function animate () {
     if (!isLooping) { return }
-    var time = Date.now()
-    var delta = Math.min(maxDelta, time - lastTime)
+    const time = Date.now()
+    const delta = Math.min(maxDelta, time - lastTime)
 
     instance.didUpdate = false
     animateStep(delta)
