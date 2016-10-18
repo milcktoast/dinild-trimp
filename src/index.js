@@ -13,8 +13,9 @@ import {
 } from 'three'
 
 import { RENDER_SETTINGS } from './constants/fidelity'
-import { TrackballControls } from './controls/TrackballControls'
 import { createTaskManager } from './utils/task'
+import { createLoop } from './utils/loop'
+import { TrackballControls } from './controls/TrackballControls'
 import { mapLinear } from './utils/math'
 import { Dinild } from './entities/Dinild'
 
@@ -193,14 +194,16 @@ tasks.add(dinild, 'render')
 Object.assign(container.style, {
   position: 'absolute',
   top: 0,
-  left: 0
+  left: 0,
+  width: '100%',
+  height: '100%',
+  overflow: 'hidden'
 })
 container.appendChild(renderer.domElement)
 document.body.appendChild(container)
 window.addEventListener('resize', resize)
 updateState(state)
 resize()
-animate()
 
 function updateState (nextState) {
   updateCamera(nextState.camera)
@@ -309,18 +312,26 @@ function animateLights (frame) {
 }
 tasks.add(animateLights, 'update')
 
+const loop = createLoop(null, update, render)
 let animationFrame = 0
-function animate () {
+function update () {
   tasks.run('update', animationFrame++)
-  render()
-  window.requestAnimationFrame(animate)
 }
-
 function render () {
   renderer.clear()
   tasks.run('render', renderer, scene, camera)
   renderer.render(scene, camera)
 }
+
+loop.start()
+document.addEventListener('keyup', (event) => {
+  switch (event.which) {
+    case 32:
+      loop.toggle()
+      event.preventDefault()
+      break
+  }
+})
 
 // FIXME
 // #ifdef DEVELOPMENT
