@@ -115,11 +115,27 @@ const state = {
   }
 }
 
-const container = document.createElement('div')
-const tasks = createTaskManager('update', 'render')
+const container = createContainer()
+const tasks = createTaskManager(
+  'load', 'update', 'render',
+  'resize', 'keyUp', 'mouseDown')
 const renderer = createRenderer()
 const scene = createScene()
 const camera = createCamera()
+const loop = createAnimationLoop()
+
+function createContainer () {
+  const element = document.createElement('div')
+  Object.assign(element.style, {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden'
+  })
+  return element
+}
 
 function createRenderer () {
   const renderer = new WebGLRenderer({
@@ -153,8 +169,56 @@ function createCamera () {
     maxDistance: 30
   })
   tasks.add(camera.controls, 'update')
+  tasks.add(function handleResize () {
+    camera.controls.handleResize()
+  }, 'resize')
   return camera
 }
+
+function createAnimationLoop () {
+  const loop = createLoop(null, update, render)
+  let animationFrame = 0
+  function update () {
+    tasks.run('update', animationFrame++)
+  }
+  function render () {
+    renderer.clear()
+    tasks.run('render', renderer, scene, camera)
+    renderer.render(scene, camera)
+  }
+  tasks.add(function loopKey (event) {
+    switch (event.which) {
+      case 32:
+        loop.toggle()
+        event.preventDefault()
+        break
+    }
+  }, 'keyUp')
+  return loop
+}
+
+// Events
+
+function keyUp (event) {
+  tasks.run('keyUp', event)
+}
+
+function mouseDown (event) {
+  tasks.run('mouseDown', event)
+}
+
+function resize (event) {
+  camera.aspect = window.innerWidth / window.innerHeight
+  camera.updateProjectionMatrix()
+  renderer.setSize(window.innerWidth, window.innerHeight)
+  tasks.run('resize', event)
+}
+
+container.addEventListener('mousedown', mouseDown, false)
+document.addEventListener('keyup', keyUp, false)
+window.addEventListener('resize', resize, false)
+
+// Lights
 
 function createSpotLight () {
   const light = new SpotLight()
@@ -176,54 +240,6 @@ Object.keys(lights).forEach((key) => {
   scene.add(lights[key])
 })
 
-const dinild = new Dinild({
-  castShadow: RENDER_SETTINGS.useShadow,
-  receiveShadow: RENDER_SETTINGS.useShadow,
-  useSubsurface: RENDER_SETTINGS.useSubsurface
-})
-dinild.load()
-dinild.addTo(scene)
-tasks.add(dinild, 'update')
-tasks.add(dinild, 'render')
-
-const index = new SceneState({
-  camera,
-  renderer,
-  scene,
-  tasks
-})
-function updateState (nextState) {
-  index.updateCamera(nextState.camera)
-  index.updateFog(nextState.fog)
-  index.updatePose(dinild.pose, dinild.mesh, nextState.pose)
-  index.updateSkinMaterial(dinild.material, nextState.skin)
-  index.updateSpotLight(lights.top, nextState.lightTop)
-  index.updateSpotLight(lights.bottom, nextState.lightBottom)
-  index.updateHemiLight(lights.ambient, nextState.lightAmbient)
-}
-
-Object.assign(container.style, {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  width: '100%',
-  height: '100%',
-  overflow: 'hidden'
-})
-container.appendChild(renderer.domElement)
-document.body.appendChild(container)
-window.addEventListener('resize', resize)
-updateState(state)
-resize()
-
-function resize () {
-  camera.aspect = window.innerWidth / window.innerHeight
-  camera.updateProjectionMatrix()
-  renderer.setSize(window.innerWidth, window.innerHeight)
-  camera.controls.handleResize()
-  render()
-}
-
 function modulateSinPrime (t) {
   const { sin } = Math
   return sin(
@@ -241,36 +257,67 @@ function modulateIntensity (intensity, scaleMin, t) {
     modulateSinPrime(t))
 }
 
-function animateLights (frame) {
+tasks.add(function animateLights (frame) {
   lights.top.intensity = modulateIntensity(state.lightTop.intensity,
     0.65, frame * 0.0021)
   lights.bottom.intensity = modulateIntensity(state.lightBottom.intensity,
     0.75, frame * 0.0022)
   lights.ambient.intensity = modulateIntensity(state.lightAmbient.intensity,
     0.85, frame * 0.0020)
-}
-tasks.add(animateLights, 'update')
+}, 'update')
 
-const loop = createLoop(null, update, render)
-let animationFrame = 0
-function update () {
-  tasks.run('update', animationFrame++)
-}
-function render () {
-  renderer.clear()
-  tasks.run('render', renderer, scene, camera)
-  renderer.render(scene, camera)
-}
+// Dinild
 
-loop.start()
-document.addEventListener('keyup', (event) => {
-  switch (event.which) {
-    case 32:
-      loop.toggle()
-      event.preventDefault()
-      break
-  }
+const dinild = new Dinild({
+  castShadow: RENDER_SETTINGS.useShadow,
+  receiveShadow: RENDER_SETTINGS.useShadow,
+  useSubsurface: RENDER_SETTINGS.useSubsurface
 })
+dinild.addTo(scene)
+tasks.add(dinild, 'load')
+tasks.add(dinild, 'update')
+tasks.add(dinild, 'render')
+
+// Link state to scene
+
+const index = new SceneState({
+  camera,
+  renderer,
+  scene,
+  tasks
+})
+function updateState (nextState) {
+  index.updateCamera(nextState.camera)
+  index.updateFog(nextState.fog)
+  // index.updatePose(dinild.pose, dinild.mesh, nextState.pose)
+  index.updateSkinMaterial(dinild.material, nextState.skin)
+  index.updateSpotLight(lights.top, nextState.lightTop)
+  index.updateSpotLight(lights.bottom, nextState.lightBottom)
+  index.updateHemiLight(lights.ambient, nextState.lightAmbient)
+}
+
+// Start
+
+function inject () {
+  resize()
+  container.appendChild(renderer.domElement)
+  document.body.appendChild(container)
+}
+
+function load () {
+  tasks.run('load')
+}
+
+function start () {
+  updateState(state)
+  loop.start()
+}
+
+inject()
+setTimeout(() => {
+  load()
+  start()
+}, 0)
 
 // FIXME
 // #ifdef DEVELOPMENT
