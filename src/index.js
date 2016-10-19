@@ -11,7 +11,7 @@ import {
 } from 'three'
 
 import { RENDER_SETTINGS } from './constants/fidelity'
-import { MOUTH_FRAMES } from './constants/animation'
+import { MOUTH_FRAMES_MAP } from './constants/animation'
 
 import { createTaskManager } from './utils/task'
 import { createLoop } from './utils/loop'
@@ -81,7 +81,7 @@ const state = {
     textureAnisotropy: 4
   },
   pose: {
-    frames: MOUTH_FRAMES,
+    frames: MOUTH_FRAMES_MAP,
     startFrame: 0,
     targetFrame: 1,
     activeFrameWeight: 0

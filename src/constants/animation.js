@@ -1,12 +1,28 @@
 // TODO: Create generic consonant frame
-export const MOUTH_FRAMES = {
-  '_': 0, // Create blank frame
-  'AI': 1,
-  'LND': 2, // Probably add unique frames for N, D
-  'E': 3,
-  'O': 4,
-  'U': 5,
-  'WQ': 6,
-  'MBP': 7,
-  'FV': 8
-}
+export const MOUTH_FRAMES = [
+  '_', // Create blank frame
+  'AI',
+  'LND', // Probably add unique frames for N, D
+  'E',
+  'O',
+  'U',
+  'WQ',
+  'MBP',
+  'FV'
+]
+
+export const MOUTH_FRAMES_MAP = MOUTH_FRAMES
+  .reduce((map, v, i) => {
+    map[v] = i
+    return map
+  }, {})
+
+export const WORDS = [
+  'childhood',
+  'deal',
+  'honestly',
+  'love',
+  'people',
+  'pussy',
+  'strict'
+]

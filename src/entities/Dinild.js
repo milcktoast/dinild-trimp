@@ -14,11 +14,11 @@ import { parseModel } from '../utils/model-parse'
 import { PoseAnimation } from '../animations/PoseAnimation'
 import { SkinMaterial } from '../materials/SkinMaterial'
 
-function expandFrameKeys (map) {
+function expandFrameKeys (frames) {
   const expanded = {}
-  Object.keys(map).forEach((key) => {
+  frames.forEach((key, index) => {
     key.split('').forEach((char) => {
-      expanded[char] = map[key]
+      expanded[char] = index
     })
   })
   return expanded
