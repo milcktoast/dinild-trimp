@@ -3,6 +3,8 @@ import {
   MeshPhongMaterial,
   SkinnedMesh
 } from 'three'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
 
 import { RENDER_SETTINGS } from '../constants/fidelity'
 import { MOUTH_FRAMES } from '../constants/animation'
@@ -25,19 +27,20 @@ function expandFrameKeys (map) {
 }
 
 function mapWordToFrames (word, frames) {
-  return word.split('').map((letter) => frames[letter] || 7)
+  return word.split('').map((letter) => frames[letter])
 }
 
 function easeInOut (k) {
-  if ((k *= 2) < 1) return 0.5 * k * k * k
-  return 0.5 * ((k -= 2) * k * k + 2)
+  if ((k *= 2) < 1) return 0.5 * k * k
+  return -0.5 * (--k * (k - 2) - 1)
 }
 
-const MODEL_META = require('../../assets/models/dinild/meta.json')
+const MODEL_META = JSON.parse(
+  readFileSync(resolve(__dirname, '../../assets/models/dinild/meta.json'), 'utf8'))
 const PHRASE = {
   frame: 0,
-  framesPerLetter: 8,
-  letters: mapWordToFrames('__BAD_MOUF_DUDE__', expandFrameKeys(MOUTH_FRAMES))
+  framesPerLetter: 12,
+  letters: mapWordToFrames('__YOU_HAVE_A_MOUF__', expandFrameKeys(MOUTH_FRAMES))
 }
 
 export function Dinild () {
