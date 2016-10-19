@@ -6,9 +6,7 @@ import {
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
-import { RENDER_SETTINGS } from '../constants/fidelity'
 import { MOUTH_FRAMES } from '../constants/animation'
-
 import { inherit } from '../utils/ctor'
 // import { clamp } from '../utils/math'
 import { loadModel, loadTexture } from '../utils/model-load'
@@ -43,9 +41,13 @@ const PHRASE = {
   letters: mapWordToFrames('__YOU_HAVE_A_MOUF__', expandFrameKeys(MOUTH_FRAMES))
 }
 
-export function Dinild () {
+export function Dinild (params) {
+  this.castShadow = params.castShadow
+  this.receiveShadow = params.receiveShadow
   this.item = new Group()
-  this.material = this.createSkinMaterial()
+  this.material = this.createSkinMaterial({
+    useSubsurface: params.useSubsurface
+  })
 }
 
 inherit(null, Dinild, {
@@ -53,9 +55,9 @@ inherit(null, Dinild, {
     parent.add(this.item)
   },
 
-  createSkinMaterial () {
+  createSkinMaterial ({ useSubsurface }) {
     const basePath = '../assets/textures/dinild'
-    const MaterialCtor = RENDER_SETTINGS.skinSubsurface
+    const MaterialCtor = useSubsurface
       ? SkinMaterial
       : MeshPhongMaterial
     const material = new MaterialCtor({
@@ -77,8 +79,8 @@ inherit(null, Dinild, {
       const mesh = new SkinnedMesh(geometry, material)
       const pose = new PoseAnimation(geometry.boneFrames)
       Object.assign(mesh, {
-        castShadow: RENDER_SETTINGS.castShadows,
-        receiveShadow: RENDER_SETTINGS.castShadows
+        castShadow: this.castShadow,
+        receiveShadow: this.receiveShadow
       })
       Object.assign(this, {
         mesh, pose

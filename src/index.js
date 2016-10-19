@@ -126,7 +126,7 @@ function createRenderer () {
     antialias: true
   })
   renderer.autoClear = false
-  renderer.shadowMap.enabled = RENDER_SETTINGS.castShadows
+  renderer.shadowMap.enabled = RENDER_SETTINGS.useShadow
   renderer.shadowMap.type = PCFSoftShadowMap
   return renderer
 }
@@ -176,10 +176,14 @@ Object.keys(lights).forEach((key) => {
   scene.add(lights[key])
 })
 
-const dinild = new Dinild()
+const dinild = new Dinild({
+  castShadow: RENDER_SETTINGS.useShadow,
+  receiveShadow: RENDER_SETTINGS.useShadow,
+  useSubsurface: RENDER_SETTINGS.useSubsurface
+})
 dinild.load()
 dinild.addTo(scene)
-// tasks.add(dinild, 'update')
+tasks.add(dinild, 'update')
 tasks.add(dinild, 'render')
 
 const index = new SceneState({

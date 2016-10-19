@@ -1,5 +1,5 @@
 export const RENDER_SETTINGS = {
-  skinSubsurface: false,
-  castShadows: false,
+  useSubsurface: false,
+  useShadow: false,
   shadowMapSize: 1024
 }

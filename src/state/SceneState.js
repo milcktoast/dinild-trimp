@@ -2,8 +2,6 @@ import {
   SkeletonHelper,
   SpotLightHelper
 } from 'three'
-
-import { RENDER_SETTINGS } from '../constants/fidelity'
 import { inherit } from '../utils/ctor'
 
 export function SceneState (context) {
@@ -52,10 +50,11 @@ inherit(null, SceneState, {
   },
 
   updateLight (light, state) {
+    const { renderer } = this.context
     light.color.copy(state.color)
     light.position.copy(state.position)
     light.intensity = state.intensity
-    light.castShadow = RENDER_SETTINGS.castShadows && state.castShadow
+    light.castShadow = renderer.shadowMap.enabled && state.castShadow
   },
 
   updateSpotLight (light, state) {
