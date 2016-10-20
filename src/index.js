@@ -141,6 +141,9 @@ function createRenderer () {
   renderer.autoClear = false
   renderer.shadowMap.enabled = RENDER_SETTINGS.useShadow
   renderer.shadowMap.type = PCFSoftShadowMap
+  tasks.add(() => {
+    renderer.setSize(window.innerWidth, window.innerHeight)
+  }, 'resize')
   return renderer
 }
 
@@ -167,7 +170,9 @@ function createCamera () {
     maxDistance: 30
   })
   tasks.add(camera.controls, 'update')
-  tasks.add(function handleResize () {
+  tasks.add(() => {
+    camera.aspect = window.innerWidth / window.innerHeight
+    camera.updateProjectionMatrix()
     camera.controls.handleResize()
   }, 'resize')
 
@@ -196,14 +201,9 @@ function createAnimationLoop () {
 
 // Events
 
-function resize (event) {
-  camera.aspect = window.innerWidth / window.innerHeight
-  camera.updateProjectionMatrix()
-  renderer.setSize(window.innerWidth, window.innerHeight)
+window.addEventListener('resize', (event) => {
   tasks.run('resize', event)
-}
-
-window.addEventListener('resize', resize, false)
+}, false)
 
 // Lights
 
@@ -297,7 +297,7 @@ function updateState (nextState) {
 function inject () {
   container.appendChild(renderer.domElement)
   document.body.appendChild(container)
-  resize()
+  tasks.run('resize')
 }
 
 function load () {
