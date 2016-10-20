@@ -115,8 +115,7 @@ const state = {
 
 const container = createContainer()
 const tasks = createTaskManager(
-  'load', 'update', 'render',
-  'resize', 'keyUp')
+  'load', 'update', 'render', 'resize')
 const renderer = createRenderer()
 const scene = createScene()
 const camera = createCamera()
@@ -192,22 +191,10 @@ function createAnimationLoop () {
     tasks.run('render', renderer, scene, camera)
     renderer.render(scene, camera)
   }
-  tasks.add(function loopKey (event) {
-    switch (event.which) {
-      case 32:
-        loop.toggle()
-        event.preventDefault()
-        break
-    }
-  }, 'keyUp')
   return loop
 }
 
 // Events
-
-function keyUp (event) {
-  tasks.run('keyUp', event)
-}
 
 function resize (event) {
   camera.aspect = window.innerWidth / window.innerHeight
@@ -216,7 +203,6 @@ function resize (event) {
   tasks.run('resize', event)
 }
 
-document.addEventListener('keyup', keyUp, false)
 window.addEventListener('resize', resize, false)
 
 // Lights
@@ -335,6 +321,7 @@ require('./index-debug').createDebug({
   renderer,
   scene,
   camera,
+  loop,
   state,
   updateState
 })

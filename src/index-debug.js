@@ -14,6 +14,7 @@ export function createDebug ({
   renderer,
   scene,
   camera,
+  loop,
   state,
   updateState
 }) {
@@ -25,6 +26,14 @@ export function createDebug ({
     copyVector(state.camera.up, camera.up)
     copyVector(state.camera.target, camera.controls.target)
     oui(state, updateState)
+  })
+  document.addEventListener('keyup', (event) => {
+    switch (event.which) {
+      case 32:
+        loop.toggle()
+        event.preventDefault()
+        break
+    }
   })
   return oui
 }
