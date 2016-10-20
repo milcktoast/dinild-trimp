@@ -9,5 +9,6 @@ export const WORDS = [
 ]
 
 export const WORD_LOCATIONS = [
-  0.008, 4.692, 12.985
+  0.575829, 0.433556,
+  0.557586, 0.280022
 ]

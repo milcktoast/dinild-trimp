@@ -178,7 +178,7 @@ function createCamera () {
 
   camera.selection = new SelectionControls(camera, container)
   Object.assign(camera.selection, {
-    optionPositions: WORD_LOCATIONS
+    optionUVs: WORD_LOCATIONS
   })
   tasks.add(camera.selection, 'resize')
 
@@ -270,7 +270,7 @@ needles.addTo(dinild)
 
 camera.selection.target = dinild
 camera.selection.addEventListener('add', () => {
-  console.log(camera.selection.valueIndex)
+  console.log(camera.selection.intersections)
 })
 
 // Link state to scene

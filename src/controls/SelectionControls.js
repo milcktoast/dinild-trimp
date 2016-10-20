@@ -2,83 +2,101 @@ import {
   EventDispatcher,
   Raycaster,
   Vector2
-  // Vector3
 } from 'three'
 import { inherit } from '../utils/ctor'
-
-// const scratchVec3 = new Vector3()
 
 export function SelectionControls (object, domElement) {
   this.object = object
   this.domElement = domElement || document
 
-  this.optionPositions = null
-  this.valueIndex = -1
-
+  this.optionUVs = null
+  this.intersections = []
   this.target = {
     pointerTarget: null
   }
+
+  this.size = new Vector2()
+  this.raycaster = new Raycaster()
   this.context = {
-    pointer: new Vector2(),
-    raycaster: new Raycaster()
-  }
-  this.size = {
-    width: 0,
-    height: 0
+    start: this.createEventContext(),
+    end: this.createEventContext()
   }
 
   this._addEvent = { type: 'add' }
   this.domElement.addEventListener('mousedown', this.mouseDown.bind(this), false)
+  this.domElement.addEventListener('mouseup', this.mouseUp.bind(this), false)
 }
 
 inherit(EventDispatcher, SelectionControls, {
-  resize (event) {
-    const { size } = this
-    size.width = window.innerWidth
-    size.height = window.innerHeight
-  },
-
-  mouseDown (event) {
-    const { context, object, size } = this
-    const { pointer, raycaster } = context
-    pointer.x = (event.clientX / size.width) * 2 - 1
-    pointer.y = -(event.clientY / size.height) * 2 + 1
-    raycaster.setFromCamera(pointer, object)
-    this.pointerSelect(event, context)
-  },
-
-  pointerSelect (event, context) {
-    const { pointerTarget } = this.target
-    const { raycaster } = context
-    if (!pointerTarget) return
-
-    const intersects = raycaster.intersectObject(pointerTarget)
-    if (!intersects.length) return
-    const { point } = intersects[0]
-
-    const prevIndex = this.valueIndex
-    const nextIndex = this.findSelectionAt(point)
-
-    event.preventDefault()
-    this.valueIndex = nextIndex
-    if (prevIndex !== nextIndex) {
-      this.dispatchEvent(this._addEvent)
+  createEventContext () {
+    return {
+      time: null,
+      intersections: null,
+      pointer: new Vector2()
     }
   },
 
-  findSelectionAt (position) {
-    const positions = this.optionPositions
-    const { x, y, z } = position
+  resize (event) {
+    const { size } = this
+    size.x = window.innerWidth
+    size.y = window.innerHeight
+  },
+
+  updateContext (event, name) {
+    const { context, object, raycaster, size, target } = this
+    const { pointerTarget } = target
+    if (!pointerTarget) return
+
+    const currentContext = context[name]
+    const { pointer } = currentContext
+    pointer.x = (event.clientX / size.width) * 2 - 1
+    pointer.y = -(event.clientY / size.height) * 2 + 1
+
+    raycaster.setFromCamera(pointer, object)
+    currentContext.intersections = raycaster.intersectObject(pointerTarget)
+    currentContext.time = Date.now()
+
+    return context
+  },
+
+  mouseDown (event) {
+    this.updateContext(event, 'start')
+  },
+
+  mouseUp (event) {
+    const { start, end } = this.updateContext(event, 'end')
+    const duration = end.time - start.time
+    const screenDist = end.pointer.distanceTo(start.pointer)
+    if (screenDist < 0.02 && duration > 50) {
+      this.pointerSelect(event, end)
+    }
+  },
+
+  pointerSelect (event, context) {
+    const { intersections } = context
+    if (!intersections.length) return
+
+    const { face, point, uv } = intersections[0]
+    const valueIndex = this.findSelectionAt(uv)
+    this.intersections.push({
+      valueIndex, face, point, uv
+    })
+    this.dispatchEvent(this._addEvent)
+    event.preventDefault()
+  },
+
+  findSelectionAt (uv) {
+    const uvs = this.optionUVs
+    const { x, y } = uv
     let distance = Infinity
     let index = -1
-    for (let i = 0; i < positions.length; i += 3) {
-      const dx = x - positions[i]
-      const dy = y - positions[i + 1]
-      const dz = z - positions[i + 2]
-      const dist = dx * dx + dy * dy + dz * dz
+    for (let i = 0; i < uvs.length; i += 2) {
+      const dx = x - uvs[i]
+      const dy = y - uvs[i + 1]
+      const dist = dx * dx + dy * dy
       if (dist < distance) {
         distance = dist
-        index = i / 3
+        index = i / 2
       }
     }
     return index
