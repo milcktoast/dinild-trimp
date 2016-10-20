@@ -49,8 +49,8 @@ inherit(EventDispatcher, SelectionControls, {
 
     const currentContext = context[name]
     const { pointer } = currentContext
-    pointer.x = (event.clientX / size.width) * 2 - 1
-    pointer.y = -(event.clientY / size.height) * 2 + 1
+    pointer.x = (event.clientX / size.x) * 2 - 1
+    pointer.y = -(event.clientY / size.y) * 2 + 1
 
     raycaster.setFromCamera(pointer, object)
     currentContext.intersections = raycaster.intersectObject(pointerTarget)
