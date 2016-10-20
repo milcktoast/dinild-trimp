@@ -51,6 +51,10 @@ export function Dinild (params) {
 }
 
 inherit(null, Dinild, {
+  add (child) {
+    this.item.add(child)
+  },
+
   addTo (parent) {
     parent.add(this.item)
   },
@@ -85,6 +89,8 @@ inherit(null, Dinild, {
       Object.assign(this, {
         mesh, pose
       })
+      // TODO: Optimize pointer target geometry
+      this.pointerTarget = mesh
       this.item.add(mesh)
     })
   },

@@ -12,27 +12,17 @@ import {
 
 import { RENDER_SETTINGS } from './constants/fidelity'
 import { MOUTH_FRAMES_MAP } from './constants/animation'
+import { WORD_LOCATIONS } from './constants/phrase'
 
 import { createTaskManager } from './utils/task'
 import { createLoop } from './utils/loop'
+import { createVector, copyVector } from './utils/vector'
 import { TrackballControls } from './controls/TrackballControls'
+import { SelectionControls } from './controls/SelectionControls'
 import { mapLinear } from './utils/math'
 import { SceneState } from './state/SceneState'
 import { Dinild } from './entities/Dinild'
-
-function createVector (x, y, z) {
-  if (y == null) {
-    return { x: x.x, y: x.y, z: x.z }
-  }
-  return { x, y, z }
-}
-
-function copyVector (a, b) {
-  a.x = b.x
-  a.y = b.y
-  a.z = b.z
-  return a
-}
+import { NeedleGroup } from './entities/NeedleGroup'
 
 function createColor (...args) {
   return new Color(...args)
@@ -86,6 +76,14 @@ const state = {
     targetFrame: 1,
     activeFrameWeight: 0
   },
+  phrase: {
+    words: [],
+    preview: {
+      position: createVector(0, 0, 0),
+      normal: createVector(0, 0, 0),
+      visible: false
+    }
+  },
   lightTop: {
     position: createVector(-13, 21.5, 20.5),
     target: createVector(4.5, -1.5, 5),
@@ -118,7 +116,7 @@ const state = {
 const container = createContainer()
 const tasks = createTaskManager(
   'load', 'update', 'render',
-  'resize', 'keyUp', 'mouseDown')
+  'resize', 'keyUp')
 const renderer = createRenderer()
 const scene = createScene()
 const camera = createCamera()
@@ -157,6 +155,7 @@ function createScene () {
 
 function createCamera () {
   const camera = new PerspectiveCamera(1, 1, 0.1, 100)
+
   camera.controls = new TrackballControls(camera, container)
   Object.assign(camera.controls, {
     rotateSpeed: 1,
@@ -172,6 +171,13 @@ function createCamera () {
   tasks.add(function handleResize () {
     camera.controls.handleResize()
   }, 'resize')
+
+  camera.selection = new SelectionControls(camera, container)
+  Object.assign(camera.selection, {
+    optionPositions: WORD_LOCATIONS
+  })
+  tasks.add(camera.selection, 'resize')
+
   return camera
 }
 
@@ -203,10 +209,6 @@ function keyUp (event) {
   tasks.run('keyUp', event)
 }
 
-function mouseDown (event) {
-  tasks.run('mouseDown', event)
-}
-
 function resize (event) {
   camera.aspect = window.innerWidth / window.innerHeight
   camera.updateProjectionMatrix()
@@ -214,7 +216,6 @@ function resize (event) {
   tasks.run('resize', event)
 }
 
-container.addEventListener('mousedown', mouseDown, false)
 document.addEventListener('keyup', keyUp, false)
 window.addEventListener('resize', resize, false)
 
@@ -275,8 +276,16 @@ const dinild = new Dinild({
 })
 dinild.addTo(scene)
 tasks.add(dinild, 'load')
-tasks.add(dinild, 'update')
+// tasks.add(dinild, 'update')
 tasks.add(dinild, 'render')
+
+const needles = new NeedleGroup()
+needles.addTo(dinild)
+
+camera.selection.target = dinild
+camera.selection.addEventListener('add', () => {
+  console.log(camera.selection.valueIndex)
+})
 
 // Link state to scene
 
@@ -286,6 +295,7 @@ const index = new SceneState({
   scene,
   tasks
 })
+
 function updateState (nextState) {
   index.updateCamera(nextState.camera)
   index.updateFog(nextState.fog)
@@ -299,9 +309,9 @@ function updateState (nextState) {
 // Start
 
 function inject () {
-  resize()
   container.appendChild(renderer.domElement)
   document.body.appendChild(container)
+  resize()
 }
 
 function load () {

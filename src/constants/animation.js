@@ -16,13 +16,3 @@ export const MOUTH_FRAMES_MAP = MOUTH_FRAMES
     map[v] = i
     return map
   }, {})
-
-export const WORDS = [
-  'childhood',
-  'deal',
-  'honestly',
-  'love',
-  'people',
-  'pussy',
-  'strict'
-]
