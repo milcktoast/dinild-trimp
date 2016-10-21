@@ -45,6 +45,7 @@ inherit(null, NeedleGroup, Entity, {
 
     applyToBuffer(fromItem.matrixWorld,
       itemPosition, instanceCount * verticesPerInstance, verticesPerInstance)
+    item.geometry.drawRange.count = (instanceCount + 1) * verticesPerInstance
     itemPosition.needsUpdate = true
   },
 
