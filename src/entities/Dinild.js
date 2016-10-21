@@ -11,6 +11,7 @@ import { inherit } from '../utils/ctor'
 // import { clamp } from '../utils/math'
 import { loadModel, loadTexture } from '../utils/model-load'
 import { parseModel } from '../utils/model-parse'
+import { Entity } from '../mixins/Entity'
 import { PoseAnimation } from '../animations/PoseAnimation'
 import { SkinMaterial } from '../materials/SkinMaterial'
 
@@ -50,15 +51,7 @@ export function Dinild (params) {
   })
 }
 
-inherit(null, Dinild, {
-  add (child) {
-    this.item.add(child)
-  },
-
-  addTo (parent) {
-    parent.add(this.item)
-  },
-
+inherit(null, Dinild, Entity, {
   createSkinMaterial ({ useSubsurface }) {
     const basePath = '../assets/textures/dinild'
     const MaterialCtor = useSubsurface

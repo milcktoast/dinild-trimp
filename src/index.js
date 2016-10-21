@@ -157,9 +157,14 @@ function createScene () {
 
 function createCamera () {
   const camera = new PerspectiveCamera(1, 1, 0.1, 100)
+  const controls = new TrackballControls(camera, container)
+  const selection = new SelectionControls(camera, container)
 
-  camera.controls = new TrackballControls(camera, container)
-  Object.assign(camera.controls, {
+  Object.assign(camera, {
+    controls,
+    selection
+  })
+  Object.assign(controls, {
     rotateSpeed: 1,
     zoomSpeed: 0.8,
     panSpeed: 0.1,
@@ -169,18 +174,27 @@ function createCamera () {
     minDistance: 18,
     maxDistance: 30
   })
-  tasks.add(camera.controls, 'update')
+  Object.assign(selection, {
+    optionUVs: WORD_LOCATIONS
+  })
+
+  selection.addEventListener('start', () => {
+    controls.enabled = false
+  })
+  selection.addEventListener('end', () => {
+    controls.enabled = true
+  })
+
+  tasks.add((frame) => {
+    controls.update(frame)
+    selection.update(frame)
+  }, 'update')
   tasks.add(() => {
     camera.aspect = window.innerWidth / window.innerHeight
     camera.updateProjectionMatrix()
-    camera.controls.handleResize()
+    controls.resize()
+    selection.resize()
   }, 'resize')
-
-  camera.selection = new SelectionControls(camera, container)
-  Object.assign(camera.selection, {
-    optionUVs: WORD_LOCATIONS
-  })
-  tasks.add(camera.selection, 'resize')
 
   return camera
 }
@@ -268,7 +282,13 @@ tasks.add(dinild, 'render')
 const needles = new NeedleGroup()
 needles.addTo(dinild)
 
-camera.selection.target = dinild
+const needlePreview = needles.createPreviewEntity()
+scene.add(needlePreview.item)
+
+Object.assign(camera.selection, {
+  previewEntity: needlePreview,
+  targetEntity: dinild
+})
 camera.selection.addEventListener('add', () => {
   console.log(camera.selection.intersections)
 })

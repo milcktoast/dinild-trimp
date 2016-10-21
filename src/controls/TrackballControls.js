@@ -87,7 +87,7 @@ export function TrackballControls (object, domElement) {
 
   // methods
 
-  this.handleResize = function () {
+  this.resize = function () {
     if (this.domElement === document) {
       this.screen.left = 0
       this.screen.top = 0
@@ -491,7 +491,7 @@ export function TrackballControls (object, domElement) {
   window.addEventListener('keydown', keydown, false)
   window.addEventListener('keyup', keyup, false)
 
-  this.handleResize()
+  this.resize()
 
   // force an update at start
   this.update()

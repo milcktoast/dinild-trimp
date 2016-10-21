@@ -1,37 +1,67 @@
 import {
   EventDispatcher,
   Raycaster,
-  Vector2
+  Vector2,
+  Vector3
 } from 'three'
 import { inherit } from '../utils/ctor'
+import { bindAll } from '../utils/function'
+import { factorTween } from '../utils/tween'
 
-export function SelectionControls (object, domElement) {
-  this.object = object
-  this.domElement = domElement || document
+const scratchVec3 = new Vector3()
+
+export function SelectionControls (camera, element) {
+  this.camera = camera
+  this.bindElement(element)
 
   this.optionUVs = null
   this.intersections = []
-  this.target = {
-    pointerTarget: null
-  }
+
+  this.previewEntity = null
+  this.targetEntity = null
 
   this.size = new Vector2()
   this.raycaster = new Raycaster()
   this.context = {
     start: this.createEventContext(),
+    move: this.createEventContext(),
     end: this.createEventContext()
   }
 
-  this._addEvent = { type: 'add' }
-  this.domElement.addEventListener('mousedown', this.mouseDown.bind(this), false)
-  this.domElement.addEventListener('mouseup', this.mouseUp.bind(this), false)
+  this.isPointerDown = false
+
+  this.previewState = {
+    opacity: 0,
+    offset: 0,
+    position: new Vector3(),
+    normal: new Vector3()
+  }
 }
 
 inherit(EventDispatcher, SelectionControls, {
+  _events: {
+    start: { type: 'start' },
+    end: { type: 'end' },
+    add: { type: 'add' }
+  },
+
+  _elementEvents: [
+    'mouseDown', 'mouseMove', 'mouseUp'
+  ],
+
+  bindElement (element_) {
+    const element = element_ || document
+    this.element = element
+    bindAll(this, ...this._elementEvents)
+    this._elementEvents.forEach((name) => {
+      element.addEventListener(name.toLowerCase(), this[name], false)
+    })
+  },
+
   createEventContext () {
     return {
-      time: null,
-      intersections: null,
+      frame: null,
+      intersections: [],
       pointer: new Vector2()
     }
   },
@@ -43,24 +73,43 @@ inherit(EventDispatcher, SelectionControls, {
   },
 
   updateContext (event, name) {
-    const { context, object, raycaster, size, target } = this
-    const { pointerTarget } = target
-    if (!pointerTarget) return
-
+    const { camera, context, raycaster, size, targetEntity } = this
+    const pointerTarget = targetEntity && targetEntity.pointerTarget
     const currentContext = context[name]
+
     const { pointer } = currentContext
     pointer.x = (event.clientX / size.x) * 2 - 1
     pointer.y = -(event.clientY / size.y) * 2 + 1
 
-    raycaster.setFromCamera(pointer, object)
-    currentContext.intersections = raycaster.intersectObject(pointerTarget)
-    currentContext.time = Date.now()
+    raycaster.setFromCamera(pointer, camera)
+    if (pointerTarget) {
+      currentContext.intersections = raycaster.intersectObject(pointerTarget)
+    }
 
     return context
   },
 
   mouseDown (event) {
-    this.updateContext(event, 'start')
+    const { start } = this.updateContext(event, 'start')
+    const intersection = start.intersections[0]
+    if (intersection) {
+      this.isPointerDown = true
+      this.orientPreview(intersection, -1)
+      this.dispatchEvent(this._events.start)
+    }
+  },
+
+  mouseMove (event) {
+    const { move } = this.updateContext(event, 'move')
+    const intersection = move.intersections[0]
+    if (intersection) {
+      this.showPreview()
+      if (!this.isPointerDown) {
+        this.orientPreview(intersection, 1)
+      }
+    } else {
+      this.hidePreview()
+    }
   },
 
   mouseUp (event) {
@@ -70,6 +119,8 @@ inherit(EventDispatcher, SelectionControls, {
     if (screenDist < 0.02 && duration > 50) {
       this.pointerSelect(event, end)
     }
+    this.isPointerDown = false
+    this.dispatchEvent(this._events.end)
   },
 
   pointerSelect (event, context) {
@@ -81,7 +132,7 @@ inherit(EventDispatcher, SelectionControls, {
     this.intersections.push({
       valueIndex, face, point, uv
     })
-    this.dispatchEvent(this._addEvent)
+    this.dispatchEvent(this._events.add)
     event.preventDefault()
   },
 
@@ -100,5 +151,46 @@ inherit(EventDispatcher, SelectionControls, {
       }
     }
     return index
+  },
+
+  orientPreview (intersection, offset) {
+    const { previewEntity, previewState } = this
+    const { face, point } = intersection
+    const { normal } = face
+
+    scratchVec3.copy(normal).multiplyScalar(10).add(point)
+    previewEntity.item.position.copy(point)
+    previewEntity.item.lookAt(scratchVec3)
+
+    previewState.position.copy(point)
+    previewState.normal.copy(normal)
+    previewState.offset = offset
+  },
+
+  showPreview () {
+    const { previewState } = this
+    previewState.opacity = 1
+  },
+
+  hidePreview () {
+    const { previewState } = this
+    previewState.opacity = 0
+  },
+
+  // TODO: Smooth normal changes (currently jumpy orientation changes)
+  updatePreview () {
+    const { previewEntity, previewState } = this
+
+    factorTween('opacity', previewEntity.item.material, previewState, 0.1)
+    factorTween('offset', previewEntity, previewState, 0.15)
+
+    scratchVec3.copy(previewState.normal)
+      .multiplyScalar(previewEntity.offset)
+    previewEntity.item.position.copy(previewState.position)
+      .add(scratchVec3)
+  },
+
+  update (frame) {
+    this.updatePreview()
   }
 })
