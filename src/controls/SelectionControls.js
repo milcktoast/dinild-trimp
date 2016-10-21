@@ -6,9 +6,12 @@ import {
 } from 'three'
 import { inherit } from '../utils/ctor'
 import { bindAll } from '../utils/function'
+import { clamp } from '../utils/math'
+import { pointOnLine } from '../utils/ray'
 import { factorTween, factorTweenAll, KEYS } from '../utils/tween'
 
-const scratchVec3 = new Vector3()
+const scratchVec3A = new Vector3()
+const scratchVec3B = new Vector3()
 
 export function SelectionControls (camera, element) {
   this.camera = camera
@@ -21,8 +24,9 @@ export function SelectionControls (camera, element) {
   this.size = new Vector2()
   this.raycaster = new Raycaster()
   this.context = {
-    start: this.createEventContext(),
     move: this.createEventContext(),
+    start: this.createEventContext(),
+    drag: this.createEventContext(),
     end: this.createEventContext()
   }
 
@@ -30,7 +34,7 @@ export function SelectionControls (camera, element) {
 
   this.cursorState = {
     opacity: 0,
-    offset: 0,
+    offset: 2,
     position: new Vector3(),
     normal: new Vector3()
   }
@@ -59,8 +63,9 @@ inherit(EventDispatcher, SelectionControls, {
   createEventContext () {
     return {
       frame: null,
-      intersections: [],
-      pointer: new Vector2()
+      intersection: null,
+      screen: new Vector2(),
+      point: new Vector3()
     }
   },
 
@@ -72,16 +77,21 @@ inherit(EventDispatcher, SelectionControls, {
 
   updateContext (event, name) {
     const { camera, context, raycaster, size, targetEntity } = this
-    const pointerTarget = targetEntity && targetEntity.pointerTarget
+    const pointerTarget = targetEntity && targetEntity.pointerTarget // FIXME
     const currentContext = context[name]
 
-    const { pointer } = currentContext
-    pointer.x = (event.clientX / size.x) * 2 - 1
-    pointer.y = -(event.clientY / size.y) * 2 + 1
+    const { screen } = currentContext
+    screen.x = (event.clientX / size.x) * 2 - 1
+    screen.y = -(event.clientY / size.y) * 2 + 1
+    raycaster.setFromCamera(screen, camera)
 
-    raycaster.setFromCamera(pointer, camera)
-    if (pointerTarget) {
-      currentContext.intersections = raycaster.intersectObject(pointerTarget)
+    if (name === 'drag') {
+      const { start } = context
+      const { face, point } = start.intersection
+      pointOnLine(raycaster.ray, point, face.normal, currentContext.point)
+    } else if (pointerTarget) {
+      const intersections = raycaster.intersectObject(pointerTarget)
+      currentContext.intersection = intersections[0]
     }
 
     return context
@@ -89,42 +99,61 @@ inherit(EventDispatcher, SelectionControls, {
 
   mouseDown (event) {
     const { start } = this.updateContext(event, 'start')
-    const intersection = start.intersections[0]
+    const { intersection } = start
     if (intersection) {
       this.isPointerDown = true
-      this.orientCursor(intersection, -1)
+      this.offsetCursor(0.1)
+      this.orientCursor(intersection)
       this.dispatchEvent(this._events.start)
     }
   },
 
-  // TODO: Implement cursor depth controls
   mouseMove (event) {
-    const { move } = this.updateContext(event, 'move')
-    const intersection = move.intersections[0]
-
-    if (intersection) {
-      this.showCursor()
-      if (!this.isPointerDown) {
-        this.orientCursor(intersection, 1)
-      }
+    if (this.isPointerDown) {
+      const { start, drag } = this.updateContext(event, 'drag')
+      this.dragCursorOffset(event, start, drag)
     } else {
-      this.hideCursor()
+      const { move } = this.updateContext(event, 'move')
+      const { intersection } = move
+      if (intersection) {
+        this.showCursor()
+        this.orientCursor(intersection)
+      } else {
+        this.hideCursor()
+      }
     }
+  },
+
+  dragCursorOffset (event, start, drag) {
+    const A = start.intersection.point
+    const B = start.intersection.face.normal
+    const P = drag.point
+
+    const ABU = scratchVec3A.subVectors(B, A).normalize()
+    const AP = scratchVec3B.subVectors(A, P)
+
+    const t = clamp(-2, 2,
+      ABU.x * AP.x + ABU.y * AP.y + ABU.z * AP.z)
+    this.offsetCursor(t)
   },
 
   mouseUp (event) {
     const { end } = this.updateContext(event, 'end')
     this.isPointerDown = false
     this.pointerSelect(event, end)
+    this.offsetCursor(2)
     this.dispatchEvent(this._events.end)
   },
 
   pointerSelect (event, context) {
-    const { intersections } = context
-    if (!intersections.length) return
+    const { cursorState } = this
+    if (cursorState.offset > 0) return
+
+    const { intersection } = context
+    if (!intersection) return
 
     const eventAdd = this._events.add
-    const { face, point, uv } = intersections[0]
+    const { face, point, uv } = intersection
 
     eventAdd.face = face
     eventAdd.point = point
@@ -155,14 +184,18 @@ inherit(EventDispatcher, SelectionControls, {
     return index
   },
 
-  orientCursor (intersection, offset) {
+  offsetCursor (offset) {
+    const { cursorState } = this
+    cursorState.offset = offset
+  },
+
+  orientCursor (intersection) {
     const { cursorState } = this
     const { face, point } = intersection
     const { normal } = face
 
     cursorState.position.copy(point)
     cursorState.normal.copy(normal)
-    cursorState.offset = offset
   },
 
   showCursor () {
@@ -184,20 +217,20 @@ inherit(EventDispatcher, SelectionControls, {
     factorTweenAll(KEYS.Vector3, cursorEntity.normal, cursorState.normal, 0.4)
 
     // position, offset
-    scratchVec3
+    scratchVec3A
       .copy(cursorEntity.normal)
       .multiplyScalar(cursorEntity.offset)
     cursorEntity.item.position
       .copy(cursorEntity.position)
-      .add(scratchVec3)
+      .add(scratchVec3A)
 
     // rotation
-    scratchVec3
+    scratchVec3A
       .copy(cursorEntity.normal)
       .multiplyScalar(10)
       .add(cursorEntity.position)
     cursorEntity.item
-      .lookAt(scratchVec3)
+      .lookAt(scratchVec3A)
   },
 
   update (frame) {
