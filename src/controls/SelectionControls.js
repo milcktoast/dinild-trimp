@@ -62,7 +62,6 @@ inherit(EventDispatcher, SelectionControls, {
 
   createEventContext () {
     return {
-      frame: null,
       intersection: null,
       screen: new Vector2(),
       point: new Vector3()
@@ -147,6 +146,9 @@ inherit(EventDispatcher, SelectionControls, {
     const { cursorState, isPointerDragging } = this
     const eventEnd = this._events.end
 
+    this.isPointerDown = false
+    this.isPointerDragging = false
+
     if (isPointerDragging && cursorState.offset < 0) {
       const { start, end } = this.updateContext(event, 'end')
       const { face, point } = end.intersection
@@ -160,9 +162,6 @@ inherit(EventDispatcher, SelectionControls, {
       this.dispatchEvent(eventEnd)
       event.preventDefault()
     }
-
-    this.isPointerDown = false
-    this.isPointerDragging = false
   },
 
   pointerSelect (context) {
