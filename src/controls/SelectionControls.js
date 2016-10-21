@@ -31,12 +31,11 @@ export function SelectionControls (camera, element) {
   }
 
   this.isPointerDown = false
-
   this.cursorState = {
-    opacity: 0,
-    offset: 2,
     position: new Vector3(),
-    normal: new Vector3()
+    normal: new Vector3(),
+    offset: 2,
+    opacity: 0
   }
 }
 
@@ -138,17 +137,21 @@ inherit(EventDispatcher, SelectionControls, {
   },
 
   mouseUp (event) {
+    const { cursorState } = this
     const { end } = this.updateContext(event, 'end')
+    const { face, point } = end.intersection
+
     this.isPointerDown = false
-    this.pointerSelect(event, end)
-    this.offsetCursor(2)
+    if (cursorState.offset < 0) {
+      this.pointerSelect(event, end)
+      this.resetCursor(point, face.normal, 2)
+    } else {
+      this.offsetCursor(2)
+    }
     this.dispatchEvent(this._events.end)
   },
 
   pointerSelect (event, context) {
-    const { cursorState } = this
-    if (cursorState.offset > 0) return
-
     const { intersection } = context
     if (!intersection) return
 
@@ -196,6 +199,18 @@ inherit(EventDispatcher, SelectionControls, {
 
     cursorState.position.copy(point)
     cursorState.normal.copy(normal)
+  },
+
+  resetCursor (position, normal, offset) {
+    const { cursorEntity, cursorState } = this
+
+    cursorEntity.position.copy(normal)
+      .multiplyScalar(10)
+      .add(position)
+
+    cursorState.position.copy(position)
+    cursorState.normal.copy(normal)
+    cursorState.offset = offset
   },
 
   showCursor () {
