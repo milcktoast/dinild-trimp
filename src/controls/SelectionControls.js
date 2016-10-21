@@ -6,7 +6,7 @@ import {
 } from 'three'
 import { inherit } from '../utils/ctor'
 import { bindAll } from '../utils/function'
-import { factorTween } from '../utils/tween'
+import { factorTween, factorTweenAll, KEYS } from '../utils/tween'
 
 const scratchVec3 = new Vector3()
 
@@ -154,13 +154,9 @@ inherit(EventDispatcher, SelectionControls, {
   },
 
   orientPreview (intersection, offset) {
-    const { previewEntity, previewState } = this
+    const { previewState } = this
     const { face, point } = intersection
     const { normal } = face
-
-    scratchVec3.copy(normal).multiplyScalar(10).add(point)
-    previewEntity.item.position.copy(point)
-    previewEntity.item.lookAt(scratchVec3)
 
     previewState.position.copy(point)
     previewState.normal.copy(normal)
@@ -177,17 +173,29 @@ inherit(EventDispatcher, SelectionControls, {
     previewState.opacity = 0
   },
 
-  // TODO: Smooth normal changes (currently jumpy orientation changes)
   updatePreview () {
     const { previewEntity, previewState } = this
 
     factorTween('opacity', previewEntity.item.material, previewState, 0.1)
     factorTween('offset', previewEntity, previewState, 0.15)
+    factorTweenAll(KEYS.position, previewEntity.position, previewState.position, 0.4)
+    factorTweenAll(KEYS.position, previewEntity.normal, previewState.normal, 0.4)
 
-    scratchVec3.copy(previewState.normal)
+    // position, offset
+    scratchVec3
+      .copy(previewEntity.normal)
       .multiplyScalar(previewEntity.offset)
-    previewEntity.item.position.copy(previewState.position)
+    previewEntity.item.position
+      .copy(previewEntity.position)
       .add(scratchVec3)
+
+    // rotation
+    scratchVec3
+      .copy(previewEntity.normal)
+      .multiplyScalar(10)
+      .add(previewEntity.position)
+    previewEntity.item
+      .lookAt(scratchVec3)
   },
 
   update (frame) {

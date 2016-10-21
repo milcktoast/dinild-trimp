@@ -7,6 +7,17 @@ export function factorTween (name, context, target, factor) {
   return context[name]
 }
 
+export const KEYS = {
+  position: ['x', 'y', 'z']
+}
+
+export function factorTweenAll (keys, context, target, factor) {
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i]
+    factorTween(key, context, target, factor)
+  }
+}
+
 // Tween to target by fixed step
 export function stepTween (context, defaultStep) {
   return (name, target, instanceStep) => {

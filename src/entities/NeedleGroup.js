@@ -28,7 +28,9 @@ inherit(null, NeedleGroup, Entity, {
 
   createPreviewEntity () {
     return {
-      item: this.createDebugLine()
+      item: this.createDebugLine(),
+      position: new Vector3(),
+      normal: new Vector3()
     }
   }
 })
