@@ -99,11 +99,13 @@ inherit(EventDispatcher, SelectionControls, {
   mouseDown (event) {
     const { start } = this.updateContext(event, 'start')
     const { intersection } = start
+    const eventStart = this._events.start
+
     if (intersection) {
       this.isPointerDown = true
       this.offsetCursor(0.1)
       this.orientCursor(intersection)
-      this.dispatchEvent(this._events.start)
+      this.dispatchEvent(eventStart)
     }
   },
 
@@ -111,6 +113,7 @@ inherit(EventDispatcher, SelectionControls, {
     if (this.isPointerDown) {
       const { start, drag } = this.updateContext(event, 'drag')
       this.dragCursorOffset(event, start, drag)
+      event.preventDefault()
     } else {
       const { move } = this.updateContext(event, 'move')
       const { intersection } = move
@@ -137,34 +140,34 @@ inherit(EventDispatcher, SelectionControls, {
   },
 
   mouseUp (event) {
+    if (!this.isPointerDown) return
     const { cursorState } = this
-    const { end } = this.updateContext(event, 'end')
+    const { start, end } = this.updateContext(event, 'end')
     const { face, point } = end.intersection
+    const eventEnd = this._events.end
 
-    this.isPointerDown = false
     if (cursorState.offset < 0) {
-      this.pointerSelect(event, end)
       this.resetCursor(point, face.normal, 2)
+      this.pointerSelect(start)
     } else {
       this.offsetCursor(2)
     }
-    this.dispatchEvent(this._events.end)
+
+    this.isPointerDown = false
+    this.dispatchEvent(eventEnd)
+    event.preventDefault()
   },
 
-  pointerSelect (event, context) {
+  pointerSelect (context) {
     const { intersection } = context
-    if (!intersection) return
-
-    const eventAdd = this._events.add
     const { face, point, uv } = intersection
+    const eventAdd = this._events.add
 
     eventAdd.face = face
     eventAdd.point = point
     eventAdd.uv = uv
     eventAdd.value = this.findSelectionAt(uv)
-
     this.dispatchEvent(eventAdd)
-    event.preventDefault()
   },
 
   findSelectionAt (uv) {
