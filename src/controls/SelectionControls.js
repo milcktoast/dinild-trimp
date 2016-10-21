@@ -31,6 +31,7 @@ export function SelectionControls (camera, element) {
   }
 
   this.isPointerDown = false
+  this.isPointerDragging = false
   this.cursorState = {
     position: new Vector3(),
     normal: new Vector3(),
@@ -101,8 +102,9 @@ inherit(EventDispatcher, SelectionControls, {
     const { intersection } = start
     const eventStart = this._events.start
 
+    this.isPointerDown = true
     if (intersection) {
-      this.isPointerDown = true
+      this.isPointerDragging = true
       this.offsetCursor(0.1)
       this.orientCursor(intersection)
       this.dispatchEvent(eventStart)
@@ -110,11 +112,13 @@ inherit(EventDispatcher, SelectionControls, {
   },
 
   mouseMove (event) {
-    if (this.isPointerDown) {
+    const { isPointerDown, isPointerDragging } = this
+
+    if (isPointerDown && isPointerDragging) {
       const { start, drag } = this.updateContext(event, 'drag')
       this.dragCursorOffset(event, start, drag)
       event.preventDefault()
-    } else {
+    } else if (!isPointerDown) {
       const { move } = this.updateContext(event, 'move')
       const { intersection } = move
       if (intersection) {
@@ -140,22 +144,25 @@ inherit(EventDispatcher, SelectionControls, {
   },
 
   mouseUp (event) {
-    if (!this.isPointerDown) return
-    const { cursorState } = this
-    const { start, end } = this.updateContext(event, 'end')
-    const { face, point } = end.intersection
+    const { cursorState, isPointerDragging } = this
     const eventEnd = this._events.end
 
-    if (cursorState.offset < 0) {
+    if (isPointerDragging && cursorState.offset < 0) {
+      const { start, end } = this.updateContext(event, 'end')
+      const { face, point } = end.intersection
       this.resetCursor(point, face.normal, 2)
       this.pointerSelect(start)
     } else {
       this.offsetCursor(2)
     }
 
+    if (isPointerDragging) {
+      this.dispatchEvent(eventEnd)
+      event.preventDefault()
+    }
+
     this.isPointerDown = false
-    this.dispatchEvent(eventEnd)
-    event.preventDefault()
+    this.isPointerDragging = false
   },
 
   pointerSelect (context) {
