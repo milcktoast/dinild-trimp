@@ -22,6 +22,7 @@ import { SelectionControls } from './controls/SelectionControls'
 import { mapLinear } from './utils/math'
 import { SceneState } from './state/SceneState'
 import { Dinild } from './entities/Dinild'
+import { Needle } from './entities/Needle'
 import { NeedleGroup } from './entities/NeedleGroup'
 
 function createColor (...args) {
@@ -277,10 +278,10 @@ tasks.add(dinild, 'load')
 tasks.add(dinild, 'render')
 
 const needles = new NeedleGroup()
-needles.addTo(dinild)
+needles.addTo(scene)
 
-const needleCursor = needles.createCursorEntity()
-scene.add(needleCursor.item)
+const needleCursor = new Needle()
+needleCursor.addTo(scene)
 
 Object.assign(camera.selection, {
   cursorEntity: needleCursor,

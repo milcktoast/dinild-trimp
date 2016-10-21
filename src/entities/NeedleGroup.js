@@ -2,8 +2,7 @@ import {
   BufferGeometry,
   BufferAttribute,
   LineSegments,
-  LineBasicMaterial,
-  Vector3
+  LineBasicMaterial
 } from 'three'
 
 import { inherit } from '../utils/ctor'
@@ -47,28 +46,5 @@ inherit(null, NeedleGroup, Entity, {
       itemPosition, instanceCount * verticesPerInstance, verticesPerInstance)
     item.geometry.drawRange.count = (instanceCount + 1) * verticesPerInstance
     itemPosition.needsUpdate = true
-  },
-
-  createCursorEntity () {
-    return {
-      item: this.createDebugLine(),
-      position: new Vector3(),
-      normal: new Vector3()
-    }
-  },
-
-  createDebugLine () {
-    const geom = new BufferGeometry()
-    const mat = new LineBasicMaterial({
-      color: 0xffffff,
-      transparent: true
-    })
-    const position = new BufferAttribute(
-      new Float32Array([
-        0, 0, 0,
-        0, 0, 3
-      ]), 3)
-    geom.addAttribute('position', position)
-    return new LineSegments(geom, mat)
   }
 })
