@@ -174,9 +174,6 @@ function createCamera () {
     minDistance: 18,
     maxDistance: 30
   })
-  Object.assign(selection, {
-    optionUVs: WORD_LOCATIONS
-  })
 
   selection.addEventListener('start', () => {
     controls.enabled = false
@@ -282,15 +279,17 @@ tasks.add(dinild, 'render')
 const needles = new NeedleGroup()
 needles.addTo(dinild)
 
-const needlePreview = needles.createPreviewEntity()
-scene.add(needlePreview.item)
+const needleCursor = needles.createCursorEntity()
+scene.add(needleCursor.item)
 
 Object.assign(camera.selection, {
-  previewEntity: needlePreview,
-  targetEntity: dinild
+  cursorEntity: needleCursor,
+  targetEntity: dinild,
+  targetOptionUVs: WORD_LOCATIONS
 })
-camera.selection.addEventListener('add', () => {
-  console.log(camera.selection.intersections)
+camera.selection.addEventListener('add', (event) => {
+  console.log(event)
+  needles.addInstanceFrom(needleCursor)
 })
 
 // Link state to scene

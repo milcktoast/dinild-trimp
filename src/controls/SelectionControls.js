@@ -14,11 +14,9 @@ export function SelectionControls (camera, element) {
   this.camera = camera
   this.bindElement(element)
 
-  this.optionUVs = null
-  this.intersections = []
-
-  this.previewEntity = null
+  this.cursorEntity = null
   this.targetEntity = null
+  this.targetOptionUVs = null
 
   this.size = new Vector2()
   this.raycaster = new Raycaster()
@@ -30,7 +28,7 @@ export function SelectionControls (camera, element) {
 
   this.isPointerDown = false
 
-  this.previewState = {
+  this.cursorState = {
     opacity: 0,
     offset: 0,
     position: new Vector3(),
@@ -94,32 +92,30 @@ inherit(EventDispatcher, SelectionControls, {
     const intersection = start.intersections[0]
     if (intersection) {
       this.isPointerDown = true
-      this.orientPreview(intersection, -1)
+      this.orientCursor(intersection, -1)
       this.dispatchEvent(this._events.start)
     }
   },
 
+  // TODO: Implement cursor depth controls
   mouseMove (event) {
     const { move } = this.updateContext(event, 'move')
     const intersection = move.intersections[0]
+
     if (intersection) {
-      this.showPreview()
+      this.showCursor()
       if (!this.isPointerDown) {
-        this.orientPreview(intersection, 1)
+        this.orientCursor(intersection, 1)
       }
     } else {
-      this.hidePreview()
+      this.hideCursor()
     }
   },
 
   mouseUp (event) {
-    const { start, end } = this.updateContext(event, 'end')
-    const duration = end.time - start.time
-    const screenDist = end.pointer.distanceTo(start.pointer)
-    if (screenDist < 0.02 && duration > 50) {
-      this.pointerSelect(event, end)
-    }
+    const { end } = this.updateContext(event, 'end')
     this.isPointerDown = false
+    this.pointerSelect(event, end)
     this.dispatchEvent(this._events.end)
   },
 
@@ -127,78 +123,84 @@ inherit(EventDispatcher, SelectionControls, {
     const { intersections } = context
     if (!intersections.length) return
 
+    const eventAdd = this._events.add
     const { face, point, uv } = intersections[0]
-    const valueIndex = this.findSelectionAt(uv)
-    this.intersections.push({
-      valueIndex, face, point, uv
-    })
-    this.dispatchEvent(this._events.add)
+
+    eventAdd.face = face
+    eventAdd.point = point
+    eventAdd.uv = uv
+    eventAdd.value = this.findSelectionAt(uv)
+
+    this.dispatchEvent(eventAdd)
     event.preventDefault()
   },
 
   findSelectionAt (uv) {
-    const uvs = this.optionUVs
+    const uvs = this.targetOptionUVs
     const { x, y } = uv
     let distance = Infinity
     let index = -1
+
     for (let i = 0; i < uvs.length; i += 2) {
       const dx = x - uvs[i]
       const dy = y - uvs[i + 1]
       const dist = dx * dx + dy * dy
+
       if (dist < distance) {
         distance = dist
         index = i / 2
       }
     }
+
     return index
   },
 
-  orientPreview (intersection, offset) {
-    const { previewState } = this
+  orientCursor (intersection, offset) {
+    const { cursorState } = this
     const { face, point } = intersection
     const { normal } = face
 
-    previewState.position.copy(point)
-    previewState.normal.copy(normal)
-    previewState.offset = offset
+    cursorState.position.copy(point)
+    cursorState.normal.copy(normal)
+    cursorState.offset = offset
   },
 
-  showPreview () {
-    const { previewState } = this
-    previewState.opacity = 1
+  showCursor () {
+    const { cursorState } = this
+    cursorState.opacity = 1
   },
 
-  hidePreview () {
-    const { previewState } = this
-    previewState.opacity = 0
+  hideCursor () {
+    const { cursorState } = this
+    cursorState.opacity = 0
   },
 
-  updatePreview () {
-    const { previewEntity, previewState } = this
+  updateCursor () {
+    const { cursorEntity, cursorState } = this
 
-    factorTween('opacity', previewEntity.item.material, previewState, 0.1)
-    factorTween('offset', previewEntity, previewState, 0.15)
-    factorTweenAll(KEYS.position, previewEntity.position, previewState.position, 0.4)
-    factorTweenAll(KEYS.position, previewEntity.normal, previewState.normal, 0.4)
+    factorTween('opacity', cursorEntity.item.material, cursorState, 0.1)
+    factorTween('offset', cursorEntity, cursorState, 0.15)
+    factorTweenAll(KEYS.Vector3, cursorEntity.position, cursorState.position, 0.4)
+    factorTweenAll(KEYS.Vector3, cursorEntity.normal, cursorState.normal, 0.4)
 
     // position, offset
     scratchVec3
-      .copy(previewEntity.normal)
-      .multiplyScalar(previewEntity.offset)
-    previewEntity.item.position
-      .copy(previewEntity.position)
+      .copy(cursorEntity.normal)
+      .multiplyScalar(cursorEntity.offset)
+    cursorEntity.item.position
+      .copy(cursorEntity.position)
       .add(scratchVec3)
 
     // rotation
     scratchVec3
-      .copy(previewEntity.normal)
+      .copy(cursorEntity.normal)
       .multiplyScalar(10)
-      .add(previewEntity.position)
-    previewEntity.item
+      .add(cursorEntity.position)
+    cursorEntity.item
       .lookAt(scratchVec3)
   },
 
   update (frame) {
-    this.updatePreview()
+    this.updateCursor()
   }
 })

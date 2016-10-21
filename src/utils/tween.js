@@ -8,7 +8,7 @@ export function factorTween (name, context, target, factor) {
 }
 
 export const KEYS = {
-  position: ['x', 'y', 'z']
+  Vector3: ['x', 'y', 'z']
 }
 
 export function factorTweenAll (keys, context, target, factor) {
