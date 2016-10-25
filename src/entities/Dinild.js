@@ -1,18 +1,16 @@
 import {
-  Group,
-  MeshPhongMaterial,
-  SkinnedMesh
+  MeshPhongMaterial
 } from 'three'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
 import { MOUTH_FRAMES } from '../constants/animation'
 import { inherit } from '../utils/ctor'
-// import { clamp } from '../utils/math'
-import { loadModel, loadTexture } from '../utils/model-load'
-import { parseModel } from '../utils/model-parse'
+import { loadModel, loadSkin, loadTexture } from '../utils/model-load'
+import { parseModel, parseSkin } from '../utils/model-parse'
 import { Entity } from '../mixins/Entity'
 import { PoseAnimation } from '../animations/PoseAnimation'
+import { SkinnedMesh } from '../objects/SkinnedMesh'
 import { SkinMaterial } from '../materials/SkinMaterial'
 
 function expandFrameKeys (frames) {
@@ -34,6 +32,7 @@ function easeInOut (k) {
   return -0.5 * (--k * (k - 2) - 1)
 }
 
+const ASSET_PATH = '../assets/models/dinild'
 const MODEL_META = JSON.parse(
   readFileSync(resolve(__dirname, '../../assets/models/dinild/meta.json'), 'utf8'))
 const PHRASE = {
@@ -45,7 +44,7 @@ const PHRASE = {
 export function Dinild (params) {
   this.castShadow = params.castShadow
   this.receiveShadow = params.receiveShadow
-  this.item = new Group()
+  this.item = null
   this.material = this.createSkinMaterial({
     useSubsurface: params.useSubsurface
   })
@@ -70,21 +69,38 @@ inherit(null, Dinild, Entity, {
   },
 
   load () {
-    const { material } = this
-    return loadModel('../assets/models/dinild', MODEL_META).then((modelData) => {
+    return Promise.all([
+      this.loadModel(),
+      this.loadSkin()
+    ]).then(([model, skin]) => {
+      const { mesh } = model
+      const { skeleton } = skin
+      Object.assign(this, model, skin)
+      // TODO: Optimize pointer target geometry
+      this.item = mesh
+      this.pointerTarget = mesh
+      mesh.add(skeleton)
+      mesh.bind(skeleton)
+      return this
+    })
+  },
+
+  loadModel () {
+    const { castShadow, material, receiveShadow } = this
+    return loadModel(ASSET_PATH, MODEL_META).then((modelData) => {
       const { geometry } = parseModel(modelData, MODEL_META)
       const mesh = new SkinnedMesh(geometry, material)
-      const pose = new PoseAnimation(geometry.boneFrames)
-      Object.assign(mesh, {
-        castShadow: this.castShadow,
-        receiveShadow: this.receiveShadow
-      })
-      Object.assign(this, {
-        mesh, pose
-      })
-      // TODO: Optimize pointer target geometry
-      this.pointerTarget = mesh
-      this.item.add(mesh)
+      mesh.castShadow = castShadow
+      mesh.receiveShadow = receiveShadow
+      return { mesh }
+    })
+  },
+
+  loadSkin () {
+    return loadSkin(ASSET_PATH, MODEL_META).then((skinData) => {
+      const { skeleton, frames } = parseSkin(skinData, MODEL_META)
+      const pose = new PoseAnimation(frames)
+      return { pose, skeleton }
     })
   },
 
@@ -122,7 +138,7 @@ inherit(null, Dinild, Entity, {
 
   updateBones () {
     if (!this.mesh) return
-    this.pose.applyWeights(this.mesh.skeleton.bones)
+    this.pose.applyWeights(this.skeleton.bones)
   },
 
   renderSkin () {},

@@ -15,13 +15,14 @@ const INT_ATTR_KEYS = [
   'faces',
   'skinIndices'
 ]
-const JSON_ATTR_KEYS = [
+const JSON_SKIN_ATTR_KEYS = [
   'bones',
   'boneFrames'
 ]
 
 const LOG_KEYS = {
-  loadModel: 'load model'
+  loadModel: '> load model',
+  loadSkin: '> load skin'
 }
 
 const fetchFloatBuffers = createBufferFetcher(Float32Array)
@@ -33,10 +34,6 @@ export function loadModel (baseUrl, modelJson) {
     key,
     url: formatDestPath(baseUrl, key, 'bin')
   })
-  const mapJsonUrl = (key) => ({
-    key,
-    url: formatDestPath(baseUrl, key, 'json')
-  })
 
   return Promise.all([
     ...FLOAT_ATTR_KEYS
@@ -47,12 +44,7 @@ export function loadModel (baseUrl, modelJson) {
     ...INT_ATTR_KEYS
       .filter((key) => !!modelJson[key])
       .map(mapBufferUrl)
-      .map(fetchIntBuffers),
-
-    ...JSON_ATTR_KEYS
-      .filter((key) => !!modelJson[key])
-      .map(mapJsonUrl)
-      .map(fetchJson)
+      .map(fetchIntBuffers)
   ]).then((resolutions) => resolutions.reduce((props, data) => {
     props[data.key] = data.payload
     return props
@@ -62,9 +54,30 @@ export function loadModel (baseUrl, modelJson) {
   })
 }
 
+export function loadSkin (baseUrl, modelJson) {
+  logger.time(LOG_KEYS.loadSkin)
+  const mapJsonUrl = (key) => ({
+    key,
+    url: formatDestPath(baseUrl, key, 'json')
+  })
+
+  return Promise.all([
+    ...JSON_SKIN_ATTR_KEYS
+      .filter((key) => !!modelJson[key])
+      .map(mapJsonUrl)
+      .map(fetchJson)
+  ]).then((resolutions) => resolutions.reduce((props, data) => {
+    props[data.key] = data.payload
+    return props
+  }, {})).then((props) => {
+    logger.timeEnd(LOG_KEYS.loadSkin)
+    return props
+  })
+}
+
 function createBufferFetcher (BufferCtor) {
   return ({key, url}) => new Promise((resolve, reject) => {
-    const logKey = `|  fetch ${key}`
+    const logKey = `-  fetch ${key}`
     logger.time(logKey)
     fetch(url)
       .then((res) => res.arrayBuffer())
@@ -79,7 +92,7 @@ function createBufferFetcher (BufferCtor) {
 }
 
 function fetchJson ({key, url}) {
-  const logKey = `|  fetch ${key}`
+  const logKey = `-  fetch ${key}`
   return new Promise((resolve, reject) => {
     logger.time(logKey)
     fetch(url)

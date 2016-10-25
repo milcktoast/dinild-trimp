@@ -272,16 +272,20 @@ const dinild = new Dinild({
   receiveShadow: RENDER_SETTINGS.useShadow,
   useSubsurface: RENDER_SETTINGS.useSubsurface
 })
-dinild.addTo(scene)
-tasks.add(dinild, 'load')
-// tasks.add(dinild, 'update')
-tasks.add(dinild, 'render')
-
 const needles = new NeedleGroup()
-needles.addTo(scene)
-
 const needleCursor = new Needle()
-needleCursor.addTo(scene)
+
+tasks.defer(dinild, 'load').then(() => {
+  // needleCursor.bind(dinild.skeleton)
+  // needles.bind(dinild.skeleton)
+
+  needleCursor.addTo(dinild)
+  needles.addTo(dinild)
+  dinild.addTo(scene)
+
+  // tasks.add(dinild, 'update')
+  tasks.add(dinild, 'render')
+})
 
 Object.assign(camera.selection, {
   cursorEntity: needleCursor,
@@ -321,7 +325,7 @@ function inject () {
 }
 
 function load () {
-  tasks.run('load')
+  tasks.flush('load')
 }
 
 function start () {

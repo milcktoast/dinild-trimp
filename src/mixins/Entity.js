@@ -5,5 +5,9 @@ export const Entity = {
 
   addTo (parent) {
     parent.add(this.item)
+  },
+
+  bind (skeleton) {
+    this.item.bind(skeleton)
   }
 }

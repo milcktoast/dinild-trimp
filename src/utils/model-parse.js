@@ -1,4 +1,5 @@
 import {
+  Bone,
   BufferAttribute,
   BufferGeometry,
   Quaternion,
@@ -6,16 +7,20 @@ import {
 } from 'three'
 import { createArrayCursor } from './array'
 import { logger } from './logger'
+import { Skeleton } from '../objects/Skeleton'
 
 const LOG_KEYS = {
-  createGeometry: 'create geometry',
-  parseBufferAttributes: '|  parse buffer attributes',
-  parseBoneFrames: '|  parse bone frames',
-  createBufferAttributes: '|  create buffer attributes'
+  createGeometry: '> create geometry',
+  parseBufferAttributes: '-  parse buffer attributes',
+  createBufferAttributes: '-  create buffer attributes',
+  createSkin: '> create skin',
+  parseBones: '-  parse bones',
+  parseBoneFrames: '-  parse bone frames',
+  createSkeleton: '-  create skeleton'
 }
 
 export function parseModel (props, meta) {
-  logger.logHash('model meta', meta)
+  // logger.logHash('model meta', meta)
   logger.time(LOG_KEYS.createGeometry)
   const geometry = createGeometry(props, meta)
   logger.timeEnd(LOG_KEYS.createGeometry)
@@ -24,20 +29,35 @@ export function parseModel (props, meta) {
   }
 }
 
+export function parseSkin (props, meta) {
+  // logger.logHash('model meta', meta)
+  logger.time(LOG_KEYS.createSkin)
+
+  logger.time(LOG_KEYS.parseBones)
+  const bones = parseBones(props.bones)
+  logger.timeEnd(LOG_KEYS.parseBones)
+
+  logger.time(LOG_KEYS.parseBoneFrames)
+  const frames = parseBoneFrames(props.boneFrames)
+  logger.timeEnd(LOG_KEYS.parseBoneFrames)
+
+  logger.time(LOG_KEYS.createSkeleton)
+  const skeleton = createSkeleton(bones)
+  logger.timeEnd(LOG_KEYS.createSkeleton)
+
+  logger.timeEnd(LOG_KEYS.createSkin)
+
+  return {
+    skeleton,
+    frames
+  }
+}
+
 function createGeometry (props, meta) {
   const geometry = new BufferGeometry()
   logger.time(LOG_KEYS.parseBufferAttributes)
   const attributes = parseBufferAttributes(props, meta)
   logger.timeEnd(LOG_KEYS.parseBufferAttributes)
-
-  if (props.bones) {
-    geometry.bones = props.bones
-  }
-  if (props.boneFrames) {
-    logger.time(LOG_KEYS.parseBoneFrames)
-    geometry.boneFrames = parseBoneFrames(props.boneFrames)
-    logger.timeEnd(LOG_KEYS.parseBoneFrames)
-  }
 
   logger.time(LOG_KEYS.createBufferAttributes)
   addBufferAttribute(geometry, {
@@ -216,6 +236,22 @@ function parseBufferAttributes (props, meta) {
     skinIndex: skinIndex.array,
     skinWeight: skinWeight.array
   }
+}
+
+function createSkeleton (bones) {
+  return new Skeleton(bones, undefined, true)
+}
+
+function parseBones (bonesData) {
+  return bonesData.map((data) => {
+    const bone = new Bone()
+    bone.name = data.name
+    bone.parentIndex = data.parent
+    bone.position.fromArray(data.pos)
+    bone.quaternion.fromArray(data.rotq)
+    if (data.scl) bone.scale.fromArray(data.scl)
+    return bone
+  })
 }
 
 function parseBoneFrames (boneFrames) {
