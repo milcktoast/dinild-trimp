@@ -234,6 +234,7 @@ inherit(EventDispatcher, SelectionControls, {
 
   updateCursor () {
     const { cursorEntity, cursorState } = this
+    if (!cursorEntity) return
 
     factorTween('opacity', cursorEntity.item.material, cursorState, 0.1)
     factorTween('offset', cursorEntity, cursorState, 0.15)

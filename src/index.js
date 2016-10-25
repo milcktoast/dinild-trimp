@@ -275,26 +275,32 @@ const dinild = new Dinild({
 const needles = new NeedleGroup()
 const needleCursor = new Needle()
 
-tasks.defer(dinild, 'load').then(() => {
+const loadDinild = tasks.defer(dinild, 'load')
+const loadNeedle = tasks.defer(needleCursor, 'load')
+
+loadDinild.then(() => {
+  dinild.addTo(scene)
+  // tasks.add(dinild, 'update')
+  tasks.add(dinild, 'render')
+})
+
+Promise.all([loadDinild, loadNeedle]).then(() => {
   // needleCursor.bind(dinild.skeleton)
   // needles.bind(dinild.skeleton)
 
   needleCursor.addTo(dinild)
   needles.addTo(dinild)
-  dinild.addTo(scene)
 
-  // tasks.add(dinild, 'update')
-  tasks.add(dinild, 'render')
-})
+  Object.assign(camera.selection, {
+    cursorEntity: needleCursor,
+    targetEntity: dinild,
+    targetOptionUVs: WORD_LOCATIONS
+  })
 
-Object.assign(camera.selection, {
-  cursorEntity: needleCursor,
-  targetEntity: dinild,
-  targetOptionUVs: WORD_LOCATIONS
-})
-camera.selection.addEventListener('add', (event) => {
-  console.log(event)
-  needles.addInstanceFrom(needleCursor)
+  camera.selection.addEventListener('add', (event) => {
+    console.log(event)
+    needles.addInstanceFrom(needleCursor)
+  })
 })
 
 // Link state to scene

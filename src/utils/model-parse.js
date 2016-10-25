@@ -117,15 +117,15 @@ function parseBufferAttributes (props, meta) {
     }
   }
 
+  const hasSkinning = !!(skinIndices && skinWeights)
+  const fLength = faces.length
+  let fOffset = 0
+
   const position = createArrayCursor(new Float32Array(meta.faces * 3 * 3))
   const uv = createArrayCursor(new Float32Array(meta.faces * 3 * 2))
   const normal = createArrayCursor(new Float32Array(meta.faces * 3 * 3))
-  const skinIndex = createArrayCursor(new Float32Array(meta.faces * 3 * 4))
-  const skinWeight = createArrayCursor(new Float32Array(meta.faces * 3 * 4))
-
-  const hasSkinning = skinIndices && skinWeights
-  const fLength = faces.length
-  let fOffset = 0
+  const skinIndex = hasSkinning && createArrayCursor(new Float32Array(meta.faces * 3 * 4))
+  const skinWeight = hasSkinning && createArrayCursor(new Float32Array(meta.faces * 3 * 4))
 
   while (fOffset < fLength) {
     const type = faces[fOffset++]
@@ -229,13 +229,16 @@ function parseBufferAttributes (props, meta) {
     }
   }
 
-  return {
+  const propAttrs = {
     position: position.array,
     normal: normal.array,
-    uv: uv.array,
-    skinIndex: skinIndex.array,
-    skinWeight: skinWeight.array
+    uv: uv.array
   }
+  if (hasSkinning) {
+    propAttrs.skinIndex = skinIndex.array
+    propAttrs.skinWeight = skinWeight.array
+  }
+  return propAttrs
 }
 
 function createSkeleton (bones) {
