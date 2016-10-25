@@ -29,7 +29,7 @@ const fetchFloatBuffers = createBufferFetcher(Float32Array)
 const fetchIntBuffers = createBufferFetcher(Uint16Array)
 
 export function loadModel (baseUrl, modelJson) {
-  logger.time(LOG_KEYS.loadModel)
+  logger.time(LOG_KEYS.loadModel + baseUrl)
   const mapBufferUrl = (key) => ({
     key,
     url: formatDestPath(baseUrl, key, 'bin')
@@ -49,13 +49,13 @@ export function loadModel (baseUrl, modelJson) {
     props[data.key] = data.payload
     return props
   }, {})).then((props) => {
-    logger.timeEnd(LOG_KEYS.loadModel)
+    logger.timeEnd(LOG_KEYS.loadModel + baseUrl)
     return props
   })
 }
 
 export function loadSkin (baseUrl, modelJson) {
-  logger.time(LOG_KEYS.loadSkin)
+  logger.time(LOG_KEYS.loadSkin + baseUrl)
   const mapJsonUrl = (key) => ({
     key,
     url: formatDestPath(baseUrl, key, 'json')
@@ -70,14 +70,14 @@ export function loadSkin (baseUrl, modelJson) {
     props[data.key] = data.payload
     return props
   }, {})).then((props) => {
-    logger.timeEnd(LOG_KEYS.loadSkin)
+    logger.timeEnd(LOG_KEYS.loadSkin + baseUrl)
     return props
   })
 }
 
 function createBufferFetcher (BufferCtor) {
   return ({key, url}) => new Promise((resolve, reject) => {
-    const logKey = `-  fetch ${key}`
+    const logKey = `-  fetch ${key} ${url}`
     logger.time(logKey)
     fetch(url)
       .then((res) => res.arrayBuffer())
@@ -92,7 +92,7 @@ function createBufferFetcher (BufferCtor) {
 }
 
 function fetchJson ({key, url}) {
-  const logKey = `-  fetch ${key}`
+  const logKey = `-  fetch ${key} ${url}`
   return new Promise((resolve, reject) => {
     logger.time(logKey)
     fetch(url)
