@@ -14,9 +14,6 @@ import { factorTween, factorTweenAll, KEYS } from '../utils/tween'
 const scratchVec3A = new Vector3()
 const scratchVec3B = new Vector3()
 
-// TODO: Select closest face index per intersection
-const FACE_INDEX = 'a'
-
 export function SelectionControls (camera, element) {
   this.camera = camera
   this.bindElement(element)
@@ -156,7 +153,7 @@ inherit(EventDispatcher, SelectionControls, {
     if (isPointerDragging && cursorState.offset < 0) {
       const { start, end } = this.updateContext(event, 'end')
       const { face, point } = end.intersection
-      this.skinCursor(face[FACE_INDEX])
+      this.skinCursor(face)
       this.resetCursor(point, face.normal, 2)
       this.pointerSelect(start)
     } else {
@@ -207,21 +204,19 @@ inherit(EventDispatcher, SelectionControls, {
   },
 
   orientCursor (intersection) {
-    const { cursorState, targetEntity } = this
-    const { face } = intersection
-    const index = face[FACE_INDEX]
+    const { cursorState } = this
+    const { face, point } = intersection
+    const { normal } = face
 
-    const geometry = targetEntity.pointerTarget.geometry
-    const positionAttr = geometry.getAttribute('position')
-    const normalAttr = geometry.getAttribute('normal')
-
-    copyAttributeToVector(cursorState.position, positionAttr, index)
-    copyAttributeToVector(cursorState.normal, normalAttr, index)
+    cursorState.position.copy(point)
+    cursorState.normal.copy(normal)
   },
 
-  skinCursor (index) {
+  // TODO: Select closest face index per intersection
+  skinCursor (face) {
     const { cursorEntity, targetEntity } = this
     const { skinIndex, skinWeight } = cursorEntity
+    const index = face.a
 
     const geometry = targetEntity.pointerTarget.geometry
     const skinIndexAttr = geometry.getAttribute('skinIndex')
