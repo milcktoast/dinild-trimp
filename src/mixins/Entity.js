@@ -12,6 +12,7 @@ export const Entity = {
 
   bind (skeleton) {
     const { item } = this
-    item.bind(skeleton)
+    item.updateMatrixWorld(true)
+    item.bind(skeleton, item.matrixWorld)
   }
 }
