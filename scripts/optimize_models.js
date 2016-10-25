@@ -37,6 +37,7 @@ function formatDestPath (basePath, key, ext) {
 }
 
 function writeFloatData (destPath, data) {
+  if (!data) return
   const writer = fs.createWriteStream(destPath)
   const floatBuffer = new Float32Array(data)
   const elementBytes = Float32Array.BYTES_PER_ELEMENT
@@ -49,6 +50,7 @@ function writeFloatData (destPath, data) {
 }
 
 function writeIntData (destPath, data) {
+  if (!data) return
   const writer = fs.createWriteStream(destPath)
   const intBuffer = new Uint16Array(data)
   const elementBytes = Uint16Array.BYTES_PER_ELEMENT
@@ -61,7 +63,9 @@ function writeIntData (destPath, data) {
 }
 
 function writeBoneData (destPath, data) {
-  fs.writeFileSync(destPath, JSON.stringify(data.bones), {
+  const { bones } = data
+  if (!bones) return
+  fs.writeFileSync(destPath, JSON.stringify(bones), {
     encoding: 'utf8'
   })
 }
@@ -69,6 +73,7 @@ function writeBoneData (destPath, data) {
 // TODO: Write animation data to float binary file
 function writeAnimationData (destPath, data) {
   const { animations } = data
+  if (!animations) return
   const boneFrames = animations[0].hierarchy
     .map((boneFrame) => boneFrame.keys.map(({pos, rot, scl}) => ({
       pos, rot, scl
@@ -83,13 +88,19 @@ function writeMetaData (destPath, json) {
     uvs: json.metadata.uvs,
     normals: json.metadata.normals,
     vertices: json.metadata.vertices,
-    faces: json.metadata.faces,
-    bones: json.metadata.bones,
-    boneFrames: json.animations[0].hierarchy.length,
-    animationFrames: json.animations[0].hierarchy[0].keys.length,
-    skinIndices: json.skinIndices.length / 4,
-    skinWeights: json.skinWeights.length / 4,
-    skinInfluencesPerVertex: json.influencesPerVertex
+    faces: json.metadata.faces
+  }
+  if (json.metadata.bones) {
+    metaData.bones = json.metadata.bones
+  }
+  if (json.animations) {
+    metaData.boneFrames = json.animations[0].hierarchy.length
+    metaData.animationFrames = json.animations[0].hierarchy[0].keys.length
+  }
+  if (json.skinIndices) {
+    metaData.skinIndices = json.skinIndices.length / 4
+    metaData.skinWeights = json.skinWeights.length / 4
+    metaData.skinInfluencesPerVertex = json.influencesPerVertex
   }
   fs.writeFileSync(destPath, JSON.stringify(metaData), {
     encoding: 'utf8'
@@ -97,3 +108,4 @@ function writeMetaData (destPath, json) {
 }
 
 optimizeModel('./assets/models/dinild')
+optimizeModel('./assets/models/needle')
