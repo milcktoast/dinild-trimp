@@ -23,50 +23,8 @@ nbproject
 *.sublime-project
 *.sublime-workspace
 
-# Translations
-*.mo
-
-# Folders to ignore
-.hg
-.svn
-.CVS
-.build
-
-# Python
-*.py[co]
-env
-
-# Django
-*.log
-*.pot
-*.pyc
-local_settings.py
-
-*.db
-collected-static/*
-uploads/*
-!collected-static/.gitkeep
-!uploads/README
-project/static/*
-
-# Installer logs
-pip-log.txt
-
-# Unit test / coverage reports
-.coverage
-.tox
-
-# npm
+# NPM
 node_modules
 
-# Sass
-.sass-cache
-.temp
-
-# CTags
-.tags
-.tags_sorted_by_file
-
-# webpack
-webpack-stats.json
-webpack-assets.json
+# Assets
+assets

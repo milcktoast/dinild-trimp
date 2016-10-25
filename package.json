@@ -5,6 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "sh ./scripts/start.sh",
+    "assets-copy": "sh ./scripts/copy_assets.sh",
+    "assets-optimize": "sh ./scripts/optimize_assets.sh",
+    "assets-update": "npm run assets-copy && npm run assets-optimize",
     "build": "sh ./scripts/build.sh",
     "test": "npm run test-lint && npm run test-unit",
     "test-lint": "sh ./scripts/test-lint.sh",
