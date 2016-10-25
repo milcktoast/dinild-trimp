@@ -3,6 +3,7 @@ import {
   RGBFormat,
   TextureLoader
 } from 'three'
+import { basename } from 'path'
 import { logger } from './logger'
 
 const FLOAT_ATTR_KEYS = [
@@ -21,20 +22,21 @@ const JSON_SKIN_ATTR_KEYS = [
 ]
 
 const LOG_KEYS = {
-  loadModel: '> load model',
-  loadSkin: '> load skin'
+  loadModel: 'load model',
+  loadSkin: 'load skin'
 }
 
 const fetchFloatBuffers = createBufferFetcher(Float32Array)
 const fetchIntBuffers = createBufferFetcher(Uint16Array)
 
 export function loadModel (baseUrl, modelJson) {
-  logger.time(LOG_KEYS.loadModel + baseUrl)
+  const timeKey = `${LOG_KEYS.loadModel} ${basename(baseUrl)}`
   const mapBufferUrl = (key) => ({
     key,
     url: formatDestPath(baseUrl, key, 'bin')
   })
 
+  logger.time(timeKey)
   return Promise.all([
     ...FLOAT_ATTR_KEYS
       .filter((key) => !!modelJson[key])
@@ -49,18 +51,19 @@ export function loadModel (baseUrl, modelJson) {
     props[data.key] = data.payload
     return props
   }, {})).then((props) => {
-    logger.timeEnd(LOG_KEYS.loadModel + baseUrl)
+    logger.timeEnd(timeKey)
     return props
   })
 }
 
 export function loadSkin (baseUrl, modelJson) {
-  logger.time(LOG_KEYS.loadSkin + baseUrl)
+  const timeKey = `${LOG_KEYS.loadSkin} ${basename(baseUrl)}`
   const mapJsonUrl = (key) => ({
     key,
     url: formatDestPath(baseUrl, key, 'json')
   })
 
+  logger.time(timeKey)
   return Promise.all([
     ...JSON_SKIN_ATTR_KEYS
       .filter((key) => !!modelJson[key])
@@ -70,40 +73,30 @@ export function loadSkin (baseUrl, modelJson) {
     props[data.key] = data.payload
     return props
   }, {})).then((props) => {
-    logger.timeEnd(LOG_KEYS.loadSkin + baseUrl)
+    logger.timeEnd(timeKey)
     return props
   })
 }
 
 function createBufferFetcher (BufferCtor) {
   return ({key, url}) => new Promise((resolve, reject) => {
-    const logKey = `-  fetch ${key} ${url}`
-    logger.time(logKey)
     fetch(url)
       .then((res) => res.arrayBuffer())
       .then((buffer) => resolve({
         key,
         payload: new BufferCtor(buffer)
-      })).then((resolution) => {
-        logger.timeEnd(logKey)
-        return resolution
-      })
+      }))
   })
 }
 
 function fetchJson ({key, url}) {
-  const logKey = `-  fetch ${key} ${url}`
   return new Promise((resolve, reject) => {
-    logger.time(logKey)
     fetch(url)
       .then((res) => res.json())
       .then((json) => resolve({
         key,
         payload: json
-      })).then((resolution) => {
-        logger.timeEnd(logKey)
-        return resolution
-      })
+      }))
   })
 }
 

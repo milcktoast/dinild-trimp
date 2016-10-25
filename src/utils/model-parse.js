@@ -10,13 +10,13 @@ import { logger } from './logger'
 import { Skeleton } from '../objects/Skeleton'
 
 const LOG_KEYS = {
-  createGeometry: '> create geometry',
-  parseBufferAttributes: '-  parse buffer attributes',
-  createBufferAttributes: '-  create buffer attributes',
-  createSkin: '> create skin',
-  parseBones: '-  parse bones',
-  parseBoneFrames: '-  parse bone frames',
-  createSkeleton: '-  create skeleton'
+  createGeometry: 'create geometry',
+  parseBufferAttributes: '|  parse buffer attributes',
+  createBufferAttributes: '|  create buffer attributes',
+  createSkin: 'create skin',
+  parseBones: '|  parse bones',
+  parseBoneFrames: '|  parse bone frames',
+  createSkeleton: '|  create skeleton'
 }
 
 export function parseModel (props, meta) {
