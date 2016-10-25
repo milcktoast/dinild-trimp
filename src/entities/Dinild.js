@@ -32,7 +32,7 @@ function easeInOut (k) {
   return -0.5 * (--k * (k - 2) - 1)
 }
 
-const ASSET_PATH = '../assets/models/dinild'
+const ASSET_PATH = './assets/models/dinild'
 const MODEL_META = JSON.parse(
   readFileSync(resolve(__dirname, '../../assets/models/dinild/meta.json'), 'utf8'))
 const PHRASE = {
@@ -75,12 +75,16 @@ inherit(null, Dinild, Entity, {
     ]).then(([model, skin]) => {
       const { mesh } = model
       const { skeleton } = skin
-      Object.assign(this, model, skin)
+
       // TODO: Optimize pointer target geometry
-      this.item = mesh
-      this.pointerTarget = mesh
+      Object.assign(this, model, skin, {
+        item: mesh,
+        pointerTarget: mesh
+      })
+
       mesh.add(skeleton)
       mesh.bind(skeleton)
+
       return this
     })
   },
