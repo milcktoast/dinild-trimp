@@ -211,7 +211,7 @@ inherit(EventDispatcher, SelectionControls, {
     const { face } = intersection
     const index = face[FACE_INDEX]
 
-    const geometry = targetEntity.getGeometry()
+    const geometry = targetEntity.pointerTarget.geometry
     const positionAttr = geometry.getAttribute('position')
     const normalAttr = geometry.getAttribute('normal')
 
@@ -223,7 +223,7 @@ inherit(EventDispatcher, SelectionControls, {
     const { cursorEntity, targetEntity } = this
     const { skinIndex, skinWeight } = cursorEntity
 
-    const geometry = targetEntity.getGeometry()
+    const geometry = targetEntity.pointerTarget.geometry
     const skinIndexAttr = geometry.getAttribute('skinIndex')
     const skinWeightAttr = geometry.getAttribute('skinWeight')
 

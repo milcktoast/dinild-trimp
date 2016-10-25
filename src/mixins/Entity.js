@@ -1,17 +1,17 @@
 export const Entity = {
   add (child) {
-    this.item.add(child)
+    const { item } = this
+    item.add(child)
   },
 
   addTo (parent) {
-    parent.add(this.item)
+    const { item, skeleton } = this
+    parent.add(item)
+    if (skeleton) item.bind(skeleton)
   },
 
   bind (skeleton) {
-    this.item.bind(skeleton)
-  },
-
-  getGeometry () {
-    return this.item.geometry
+    const { item } = this
+    item.bind(skeleton)
   }
 }

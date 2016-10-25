@@ -74,12 +74,14 @@ inherit(null, Dinild, Entity, {
       this.loadSkin()
     ]).then(([model, skin]) => {
       const { mesh } = model
-      const { skeleton } = skin
+      const { pose, skeleton } = skin
 
       // TODO: Optimize pointer target geometry
-      Object.assign(this, model, skin, {
+      Object.assign(this, {
         item: mesh,
-        pointerTarget: mesh
+        pointerTarget: mesh,
+        pose,
+        skeleton
       })
 
       mesh.add(skeleton)
