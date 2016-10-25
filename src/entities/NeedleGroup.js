@@ -2,11 +2,12 @@ import {
   BufferGeometry,
   BufferAttribute,
   Matrix3,
-  Mesh,
-  MeshPhongMaterial
+  MeshPhongMaterial,
+  SkinnedMesh
 } from 'three'
 
 import { inherit } from '../utils/ctor'
+import { copyVectorToAttribute } from '../utils/vector'
 import { Entity } from '../mixins/Entity'
 
 export function NeedleGroup () {
@@ -22,7 +23,7 @@ inherit(null, NeedleGroup, Entity, {
   createMaterial () {
     return new MeshPhongMaterial({
       color: 0xffffff,
-      // skinning: true,
+      skinning: true,
       transparent: true
     })
   },
@@ -30,36 +31,51 @@ inherit(null, NeedleGroup, Entity, {
   createItem () {
     const { material, maxInstances, verticesPerInstance } = this
     const vertsCount = maxInstances * verticesPerInstance
+
     const geometry = new BufferGeometry()
     const position = new BufferAttribute(new Float32Array(vertsCount * 3), 3)
     const normal = new BufferAttribute(new Float32Array(vertsCount * 3), 3)
     const uv = new BufferAttribute(new Float32Array(vertsCount * 2), 2)
+    const skinIndex = new BufferAttribute(new Float32Array(vertsCount * 4), 4)
+    const skinWeight = new BufferAttribute(new Float32Array(vertsCount * 4), 4)
+
     geometry.addAttribute('position', position)
     geometry.addAttribute('normal', normal)
     geometry.addAttribute('uv', uv)
-    return new Mesh(geometry, material)
+    geometry.addAttribute('skinIndex', skinIndex)
+    geometry.addAttribute('skinWeight', skinWeight)
+
+    return new SkinnedMesh(geometry, material)
   },
 
   addInstanceFrom (entity) {
     const instanceCount = this.instanceCount++
     const itemFrom = entity.item
+    const { skinIndex, skinWeight } = entity
     const { item, verticesPerInstance } = this
 
     const positionMatrix = itemFrom.matrixWorld
     const normalMatrix = this.normalMatrix.getNormalMatrix(itemFrom.matrixWorld)
 
-    const positionFrom = itemFrom.geometry.getAttribute('position')
-    const positionItem = item.geometry.getAttribute('position')
-    const normalFrom = itemFrom.geometry.getAttribute('normal')
-    const normalItem = item.geometry.getAttribute('normal')
-    const uvFrom = itemFrom.geometry.getAttribute('uv')
-    const uvItem = item.geometry.getAttribute('uv')
+    const geomFrom = itemFrom.geometry
+    const geomItem = item.geometry
+
+    const positionFrom = geomFrom.getAttribute('position')
+    const positionItem = geomItem.getAttribute('position')
+    const normalFrom = geomFrom.getAttribute('normal')
+    const normalItem = geomItem.getAttribute('normal')
+    const uvFrom = geomFrom.getAttribute('uv')
+    const uvItem = geomItem.getAttribute('uv')
+    const skinIndexItem = geomItem.getAttribute('skinIndex')
+    const skinWeightItem = geomItem.getAttribute('skinWeight')
 
     for (let i = 0; i < verticesPerInstance; i++) {
       const offset = instanceCount * verticesPerInstance + i
       positionItem.copyAt(offset, positionFrom, i)
       normalItem.copyAt(offset, normalFrom, i)
       uvItem.copyAt(offset, uvFrom, i)
+      copyVectorToAttribute(skinIndex, skinIndexItem, offset)
+      copyVectorToAttribute(skinWeight, skinWeightItem, offset)
     }
 
     positionMatrix.applyToBuffer(positionItem,
@@ -67,9 +83,11 @@ inherit(null, NeedleGroup, Entity, {
     normalMatrix.applyToBuffer(normalItem,
       instanceCount * verticesPerInstance, verticesPerInstance)
 
-    item.geometry.drawRange.count = (instanceCount + 1) * verticesPerInstance
+    geomItem.drawRange.count = (instanceCount + 1) * verticesPerInstance
     positionItem.needsUpdate = true
     normalItem.needsUpdate = true
     uvItem.needsUpdate = true
+    skinIndexItem.needsUpdate = true
+    skinWeightItem.needsUpdate = true
   }
 })

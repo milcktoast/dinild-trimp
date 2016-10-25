@@ -8,10 +8,14 @@ import { inherit } from '../utils/ctor'
 import { bindAll } from '../utils/function'
 import { clamp } from '../utils/math'
 import { pointOnLine } from '../utils/ray'
+import { copyAttributeToVector } from '../utils/vector'
 import { factorTween, factorTweenAll, KEYS } from '../utils/tween'
 
 const scratchVec3A = new Vector3()
 const scratchVec3B = new Vector3()
+
+// TODO: Select closest face index per intersection
+const FACE_INDEX = 'a'
 
 export function SelectionControls (camera, element) {
   this.camera = camera
@@ -152,6 +156,7 @@ inherit(EventDispatcher, SelectionControls, {
     if (isPointerDragging && cursorState.offset < 0) {
       const { start, end } = this.updateContext(event, 'end')
       const { face, point } = end.intersection
+      this.skinCursor(face[FACE_INDEX])
       this.resetCursor(point, face.normal, 2)
       this.pointerSelect(start)
     } else {
@@ -202,12 +207,28 @@ inherit(EventDispatcher, SelectionControls, {
   },
 
   orientCursor (intersection) {
-    const { cursorState } = this
-    const { face, point } = intersection
-    const { normal } = face
+    const { cursorState, targetEntity } = this
+    const { face } = intersection
+    const index = face[FACE_INDEX]
 
-    cursorState.position.copy(point)
-    cursorState.normal.copy(normal)
+    const geometry = targetEntity.getGeometry()
+    const positionAttr = geometry.getAttribute('position')
+    const normalAttr = geometry.getAttribute('normal')
+
+    copyAttributeToVector(cursorState.position, positionAttr, index)
+    copyAttributeToVector(cursorState.normal, normalAttr, index)
+  },
+
+  skinCursor (index) {
+    const { cursorEntity, targetEntity } = this
+    const { skinIndex, skinWeight } = cursorEntity
+
+    const geometry = targetEntity.getGeometry()
+    const skinIndexAttr = geometry.getAttribute('skinIndex')
+    const skinWeightAttr = geometry.getAttribute('skinWeight')
+
+    copyAttributeToVector(skinIndex, skinIndexAttr, index)
+    copyAttributeToVector(skinWeight, skinWeightAttr, index)
   },
 
   resetCursor (position, normal, offset) {

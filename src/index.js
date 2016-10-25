@@ -286,7 +286,7 @@ loadDinild.then(() => {
 
 Promise.all([loadDinild, loadNeedle]).then(() => {
   // needleCursor.bind(dinild.skeleton)
-  // needles.bind(dinild.skeleton)
+  needles.bind(dinild.skeleton)
 
   needleCursor.addTo(dinild)
   needles.addTo(dinild)
@@ -315,7 +315,7 @@ const index = new SceneState({
 function updateState (nextState) {
   index.updateCamera(nextState.camera)
   index.updateFog(nextState.fog)
-  // index.updatePose(dinild.pose, dinild.mesh, nextState.pose)
+  index.updatePose(dinild.pose, dinild.item, nextState.pose)
   index.updateSkinMaterial(dinild.material, nextState.skin)
   index.updateSpotLight(lights.top, nextState.lightTop)
   index.updateSpotLight(lights.bottom, nextState.lightBottom)

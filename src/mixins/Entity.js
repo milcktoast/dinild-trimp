@@ -9,5 +9,9 @@ export const Entity = {
 
   bind (skeleton) {
     this.item.bind(skeleton)
+  },
+
+  getGeometry () {
+    return this.item.geometry
   }
 }

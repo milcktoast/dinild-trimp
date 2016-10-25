@@ -222,8 +222,8 @@ function parseBufferAttributes (props, meta) {
       for (let i = 0; i < 3; i++) {
         const normalIndex = faces[fOffset++] * 3
         normal.push(
-          normals[normalIndex + 2],
           normals[normalIndex + 0],
+          -normals[normalIndex + 2],
           normals[normalIndex + 1])
       }
     }
