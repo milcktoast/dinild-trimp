@@ -2,16 +2,19 @@ export const RENDER_SETTINGS = {
   LOW: {
     useSubsurface: false,
     useShadow: false,
-    shadowMapSize: null
+    shadowMapSize: null,
+    textureQuality: 'low'
   },
   MED: {
     useSubsurface: false,
     useShadow: true,
-    shadowMapSize: 512
+    shadowMapSize: 512,
+    textureQuality: 'high'
   },
   HIGH: {
     useSubsurface: true,
     useShadow: true,
-    shadowMapSize: 1024
+    shadowMapSize: 1024,
+    textureQuality: 'high'
   }
 }

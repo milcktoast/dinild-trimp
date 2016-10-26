@@ -185,14 +185,16 @@ const loadNeedle = tasks.defer(Needle, 'load')
 function createEntities (settings) {
   const {
     useSubsurface,
-    useShadow
+    useShadow,
+    textureQuality
   } = settings
 
   loadDinild.then(() => {
     const dinild = new Dinild({
       castShadow: useShadow,
       receiveShadow: useShadow,
-      useSubsurface: useSubsurface
+      useSubsurface,
+      textureQuality
     })
     entities.dinild = dinild
     dinild.addTo(scene)

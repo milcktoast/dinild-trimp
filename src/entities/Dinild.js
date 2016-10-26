@@ -46,9 +46,8 @@ export function Dinild (params) {
   this.castShadow = params.castShadow
   this.receiveShadow = params.receiveShadow
   this.useSubsurface = params.useSubsurface
-  this.material = this.createMaterial({
-    useSubsurface: params.useSubsurface
-  })
+  this.textureQuality = params.textureQuality
+  this.material = this.createMaterial()
 }
 
 Object.assign(Dinild, {
@@ -79,13 +78,13 @@ Object.assign(Dinild, {
 
 inherit(null, Dinild, Entity, {
   createMaterial () {
-    const { useSubsurface } = this
+    const { useSubsurface, textureQuality } = this
     const MaterialCtor = useSubsurface
       ? SkinMaterial
       : MeshPhongMaterial
     const material = new MaterialCtor({
-      map: loadTexture(TEXTURE_ASSET_PATH + '/diffuse'),
-      normalMap: loadTexture(TEXTURE_ASSET_PATH + '/normal'),
+      map: loadTexture(`${TEXTURE_ASSET_PATH}/diffuse_${textureQuality}`),
+      normalMap: loadTexture(`${TEXTURE_ASSET_PATH}/normal_${textureQuality}`),
       // roughness: 0.25
       skinning: true
     })
