@@ -16,7 +16,6 @@ export function NeedleGroup () {
   this.verticesPerInstance = 36
   this.normalMatrix = new Matrix3()
   this.material = this.createMaterial()
-  this.item = this.createItem()
 }
 
 inherit(null, NeedleGroup, Entity, {
@@ -28,8 +27,8 @@ inherit(null, NeedleGroup, Entity, {
     })
   },
 
-  createItem () {
-    const { material, maxInstances, verticesPerInstance } = this
+  createGeometry () {
+    const { maxInstances, verticesPerInstance } = this
     const vertsCount = maxInstances * verticesPerInstance
 
     const geometry = new BufferGeometry()
@@ -45,7 +44,17 @@ inherit(null, NeedleGroup, Entity, {
     geometry.addAttribute('skinIndex', skinIndex)
     geometry.addAttribute('skinWeight', skinWeight)
 
-    return new SkinnedMesh(geometry, material)
+    return geometry
+  },
+
+  createItem () {
+    return Promise.resolve().then(() => {
+      const { material } = this
+      const geometry = this.createGeometry()
+      const item = new SkinnedMesh(geometry, material)
+      this.item = item
+      return this
+    })
   },
 
   addInstanceFrom (entity) {

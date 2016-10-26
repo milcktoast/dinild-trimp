@@ -5,9 +5,18 @@ export const Entity = {
   },
 
   addTo (parent) {
-    const { item, skeleton } = this
-    parent.add(item)
-    if (skeleton) item.bind(skeleton)
+    return this.createItem().then(() => {
+      const { item, skeleton } = this
+      parent.add(item)
+      if (skeleton) {
+        item.bind(skeleton)
+      }
+      if (parent.skeleton && item.isSkinnedMesh) {
+        item.updateMatrixWorld(true)
+        item.bind(parent.skeleton, item.matrixWorld)
+      }
+      return this
+    })
   },
 
   bind (skeleton) {

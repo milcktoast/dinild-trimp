@@ -32,7 +32,8 @@ function easeInOut (k) {
   return -0.5 * (--k * (k - 2) - 1)
 }
 
-const ASSET_PATH = './assets/models/dinild'
+const MODEL_ASSET_PATH = './assets/models/dinild'
+const TEXTURE_ASSET_PATH = './assets/textures/dinild'
 const MODEL_META = JSON.parse(
   readFileSync(resolve(__dirname, '../../assets/models/dinild/meta.json'), 'utf8'))
 const PHRASE = {
@@ -44,21 +45,47 @@ const PHRASE = {
 export function Dinild (params) {
   this.castShadow = params.castShadow
   this.receiveShadow = params.receiveShadow
-  this.item = null
-  this.material = this.createSkinMaterial({
+  this.useSubsurface = params.useSubsurface
+  this.material = this.createMaterial({
     useSubsurface: params.useSubsurface
   })
 }
 
+Object.assign(Dinild, {
+  load () {
+    if (!Dinild._load) {
+      Dinild._load = Promise.all([
+        Dinild.loadModel(),
+        Dinild.loadSkin()
+      ])
+    }
+    return Dinild._load
+  },
+
+  loadModel () {
+    return loadModel(MODEL_ASSET_PATH, MODEL_META).then((modelData) => {
+      return parseModel(modelData, MODEL_META)
+    })
+  },
+
+  loadSkin () {
+    return loadSkin(MODEL_ASSET_PATH, MODEL_META).then((skinData) => {
+      const { skeleton, frames } = parseSkin(skinData, MODEL_META)
+      const pose = new PoseAnimation(frames)
+      return { pose, skeleton }
+    })
+  }
+})
+
 inherit(null, Dinild, Entity, {
-  createSkinMaterial ({ useSubsurface }) {
-    const basePath = '../assets/textures/dinild'
+  createMaterial () {
+    const { useSubsurface } = this
     const MaterialCtor = useSubsurface
       ? SkinMaterial
       : MeshPhongMaterial
     const material = new MaterialCtor({
-      map: loadTexture(basePath + '/diffuse'),
-      normalMap: loadTexture(basePath + '/normal'),
+      map: loadTexture(TEXTURE_ASSET_PATH + '/diffuse'),
+      normalMap: loadTexture(TEXTURE_ASSET_PATH + '/normal'),
       // roughness: 0.25
       skinning: true
     })
@@ -68,45 +95,30 @@ inherit(null, Dinild, Entity, {
     return material
   },
 
-  load () {
-    return Promise.all([
-      this.loadModel(),
-      this.loadSkin()
-    ]).then(([model, skin]) => {
-      const { mesh } = model
+  createItem () {
+    return Dinild.load().then(([model, skin]) => {
+      const { material } = this
+      const { geometry } = model
       const { pose, skeleton } = skin
+      const item = new SkinnedMesh(geometry, material)
+
+      Object.assign(item, {
+        castShadow: this.castShadow,
+        receiveShadow: this.receiveShadow
+      })
 
       // TODO: Optimize pointer target geometry
       Object.assign(this, {
-        item: mesh,
-        pointerTarget: mesh,
+        item,
+        pointerTarget: item,
         pose,
         skeleton
       })
 
-      mesh.add(skeleton)
-      mesh.bind(skeleton)
+      item.add(skeleton)
+      item.bind(skeleton)
 
       return this
-    })
-  },
-
-  loadModel () {
-    const { castShadow, material, receiveShadow } = this
-    return loadModel(ASSET_PATH, MODEL_META).then((modelData) => {
-      const { geometry } = parseModel(modelData, MODEL_META)
-      const mesh = new SkinnedMesh(geometry, material)
-      mesh.castShadow = castShadow
-      mesh.receiveShadow = receiveShadow
-      return { mesh }
-    })
-  },
-
-  loadSkin () {
-    return loadSkin(ASSET_PATH, MODEL_META).then((skinData) => {
-      const { skeleton, frames } = parseSkin(skinData, MODEL_META)
-      const pose = new PoseAnimation(frames)
-      return { pose, skeleton }
     })
   },
 

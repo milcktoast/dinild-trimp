@@ -25,6 +25,21 @@ export function Needle () {
   this.offset = 0
 }
 
+Object.assign(Needle, {
+  load () {
+    if (!Needle._load) {
+      Needle._load = Needle.loadModel()
+    }
+    return Needle._load
+  },
+
+  loadModel () {
+    return loadModel(ASSET_PATH, MODEL_META).then((modelData) => {
+      return parseModel(modelData, MODEL_META)
+    })
+  }
+})
+
 inherit(null, Needle, Entity, {
   createMaterial () {
     return new MeshPhongMaterial({
@@ -34,20 +49,14 @@ inherit(null, Needle, Entity, {
     })
   },
 
-  load () {
-    return this.loadModel().then((model) => {
-      this.item = model.mesh
+  createItem () {
+    return Needle.load().then((model) => {
+      const { material } = this
+      const { geometry } = model
+      const item = new Mesh(geometry, material)
+      item.up.set(0, 0, 1)
+      this.item = item
       return this
-    })
-  },
-
-  loadModel () {
-    const { material } = this
-    return loadModel(ASSET_PATH, MODEL_META).then((modelData) => {
-      const { geometry } = parseModel(modelData, MODEL_META)
-      const mesh = new Mesh(geometry, material)
-      mesh.up.set(0, 0, 1)
-      return { mesh }
     })
   }
 })

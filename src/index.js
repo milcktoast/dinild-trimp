@@ -265,43 +265,53 @@ tasks.add(function animateLights (frame) {
     0.85, frame * 0.0020)
 }, 'update')
 
-// Dinild
+// Entities
 
-const dinild = new Dinild({
-  castShadow: RENDER_SETTINGS.useShadow,
-  receiveShadow: RENDER_SETTINGS.useShadow,
-  useSubsurface: RENDER_SETTINGS.useSubsurface
-})
-const needles = new NeedleGroup()
-const needleCursor = new Needle()
+const entities = {}
+const loadDinild = tasks.defer(Dinild, 'load')
+const loadNeedle = tasks.defer(Needle, 'load')
 
-const loadDinild = tasks.defer(dinild, 'load')
-const loadNeedle = tasks.defer(needleCursor, 'load')
+function createEntities (settings) {
+  const {
+    useSubsurface,
+    useShadow
+  } = settings
 
-loadDinild.then(() => {
-  dinild.addTo(scene)
-  // tasks.add(dinild, 'update')
-  tasks.add(dinild, 'render')
-})
-
-Promise.all([loadDinild, loadNeedle]).then(() => {
-  // needleCursor.bind(dinild.skeleton)
-  needles.bind(dinild.skeleton)
-
-  needleCursor.addTo(dinild)
-  needles.addTo(dinild)
-
-  Object.assign(camera.selection, {
-    cursorEntity: needleCursor,
-    targetEntity: dinild,
-    targetOptionUVs: WORD_LOCATIONS
+  loadDinild.then(() => {
+    const dinild = new Dinild({
+      castShadow: useShadow,
+      receiveShadow: useShadow,
+      useSubsurface: useSubsurface
+    })
+    entities.dinild = dinild
+    updateDinild(state)
+    dinild.addTo(scene)
+    // tasks.add(dinild, 'update')
+    tasks.add(dinild, 'render')
   })
 
-  camera.selection.addEventListener('add', (event) => {
-    console.log(event)
-    needles.addInstanceFrom(needleCursor)
+  Promise.all([loadDinild, loadNeedle]).then(() => {
+    const { dinild } = entities
+    const needles = new NeedleGroup()
+    const needleCursor = new Needle()
+    return Promise.all([
+      needleCursor.addTo(dinild),
+      needles.addTo(dinild)
+    ])
+  }).then(([needleCursor, needles]) => {
+    const { dinild } = entities
+    const { selection } = camera
+    entities.needleCursor = needleCursor
+    entities.needles = needles
+    selection.cursorEntity = needleCursor
+    selection.targetEntity = dinild
+    selection.targetOptionUVs = WORD_LOCATIONS
+    selection.addEventListener('add', (event) => {
+      console.log(event)
+      needles.addInstanceFrom(needleCursor)
+    })
   })
-})
+}
 
 // Link state to scene
 
@@ -315,11 +325,17 @@ const index = new SceneState({
 function updateState (nextState) {
   index.updateCamera(nextState.camera)
   index.updateFog(nextState.fog)
-  index.updatePose(dinild.pose, dinild.item, nextState.pose)
-  index.updateSkinMaterial(dinild.material, nextState.skin)
   index.updateSpotLight(lights.top, nextState.lightTop)
   index.updateSpotLight(lights.bottom, nextState.lightBottom)
   index.updateHemiLight(lights.ambient, nextState.lightAmbient)
+  updateDinild(nextState)
+}
+
+function updateDinild (nextState) {
+  const { dinild } = entities
+  if (!dinild) return
+  index.updatePose(dinild.pose, dinild.item, nextState.pose)
+  index.updateSkinMaterial(dinild.material, nextState.skin)
 }
 
 // Start
@@ -343,6 +359,7 @@ inject()
 setTimeout(() => {
   load()
   start()
+  createEntities(RENDER_SETTINGS.LOW)
 }, 0)
 
 // FIXME

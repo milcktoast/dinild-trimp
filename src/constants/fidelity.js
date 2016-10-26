@@ -1,5 +1,17 @@
 export const RENDER_SETTINGS = {
-  useSubsurface: false,
-  useShadow: false,
-  shadowMapSize: 1024
+  LOW: {
+    useSubsurface: false,
+    useShadow: false,
+    shadowMapSize: null
+  },
+  MED: {
+    useSubsurface: false,
+    useShadow: true,
+    shadowMapSize: 512
+  },
+  HIGH: {
+    useSubsurface: true,
+    useShadow: true,
+    shadowMapSize: 1024
+  }
 }
