@@ -41,7 +41,7 @@ export function SelectionControls (camera, element) {
   }
 }
 
-inherit(EventDispatcher, SelectionControls, {
+inherit(null, SelectionControls, EventDispatcher.prototype, {
   _events: {
     start: { type: 'start' },
     end: { type: 'end' },
@@ -150,7 +150,7 @@ inherit(EventDispatcher, SelectionControls, {
     this.isPointerDown = false
     this.isPointerDragging = false
 
-    if (isPointerDragging && cursorState.offset < 0) {
+    if (isPointerDragging && cursorState.offset < -1) {
       const { start, end } = this.updateContext(event, 'end')
       const { face, point } = end.intersection
       this.skinCursor(face)
@@ -252,7 +252,7 @@ inherit(EventDispatcher, SelectionControls, {
     const { cursorEntity, cursorState } = this
     if (!cursorEntity) return
 
-    factorTween('opacity', cursorEntity.item.material, cursorState, 0.1)
+    factorTween('opacity', cursorEntity.material, cursorState, 0.1)
     factorTween('offset', cursorEntity, cursorState, 0.15)
     factorTweenAll(KEYS.Vector3, cursorEntity.position, cursorState.position, 0.4)
     factorTweenAll(KEYS.Vector3, cursorEntity.normal, cursorState.normal, 0.4)
