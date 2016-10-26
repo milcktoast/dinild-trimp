@@ -16,13 +16,15 @@ const ASSET_PATH = './assets/models/needle'
 const MODEL_META = JSON.parse(
   readFileSync(resolve(__dirname, '../../assets/models/needle/meta.json'), 'utf8'))
 
-export function Needle () {
-  this.material = this.createMaterial()
+export function Needle (params) {
   this.position = new Vector3()
   this.normal = new Vector3()
   this.skinIndex = new Vector4()
   this.skinWeight = new Vector4()
   this.offset = 0
+  this.castShadow = params.castShadow
+  this.receiveShadow = params.receiveShadow
+  this.material = this.createMaterial()
 }
 
 Object.assign(Needle, {
@@ -51,10 +53,16 @@ inherit(null, Needle, Entity, {
 
   createItem () {
     return Needle.load().then((model) => {
-      const { material } = this
+      const { castShadow, material, receiveShadow } = this
       const { geometry } = model
       const item = new Mesh(geometry, material)
+
       item.up.set(0, 0, 1)
+      Object.assign(item, {
+        castShadow,
+        receiveShadow
+      })
+
       this.item = item
       return this
     })

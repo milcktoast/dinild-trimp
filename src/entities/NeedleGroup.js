@@ -10,11 +10,13 @@ import { inherit } from '../utils/ctor'
 import { copyVectorToAttribute } from '../utils/vector'
 import { Entity } from '../mixins/Entity'
 
-export function NeedleGroup () {
+export function NeedleGroup (params) {
   this.instanceCount = 0
   this.maxInstances = 50
   this.verticesPerInstance = 36
   this.normalMatrix = new Matrix3()
+  this.castShadow = params.castShadow
+  this.receiveShadow = params.receiveShadow
   this.material = this.createMaterial()
 }
 
@@ -49,9 +51,15 @@ inherit(null, NeedleGroup, Entity, {
 
   createItem () {
     return Promise.resolve().then(() => {
-      const { material } = this
+      const { castShadow, material, receiveShadow } = this
       const geometry = this.createGeometry()
       const item = new SkinnedMesh(geometry, material)
+
+      Object.assign(item, {
+        castShadow,
+        receiveShadow
+      })
+
       this.item = item
       return this
     })

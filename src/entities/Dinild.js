@@ -97,14 +97,14 @@ inherit(null, Dinild, Entity, {
 
   createItem () {
     return Dinild.load().then(([model, skin]) => {
-      const { material } = this
+      const { castShadow, material, receiveShadow } = this
       const { geometry } = model
       const { pose, skeleton } = skin
       const item = new SkinnedMesh(geometry, material)
 
       Object.assign(item, {
-        castShadow: this.castShadow,
-        receiveShadow: this.receiveShadow
+        castShadow,
+        receiveShadow
       })
 
       // TODO: Optimize pointer target geometry

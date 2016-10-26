@@ -140,7 +140,6 @@ function createRenderer () {
     antialias: true
   })
   renderer.autoClear = false
-  renderer.shadowMap.enabled = RENDER_SETTINGS.useShadow
   renderer.shadowMap.type = PCFSoftShadowMap
   tasks.add(() => {
     renderer.setSize(window.innerWidth, window.innerHeight)
@@ -219,9 +218,10 @@ window.addEventListener('resize', (event) => {
 
 // Lights
 
-function createSpotLight () {
+const lights = {}
+
+function createSpotLight ({ shadowMapSize }) {
   const light = new SpotLight()
-  const { shadowMapSize } = RENDER_SETTINGS
   light.shadow.mapSize.set(shadowMapSize, shadowMapSize)
   return light
 }
@@ -230,14 +230,16 @@ function createHemiLight () {
   return new HemisphereLight()
 }
 
-const lights = {
-  top: createSpotLight(),
-  bottom: createSpotLight(),
-  ambient: createHemiLight()
+function createLights (settings) {
+  lights.top = createSpotLight(settings)
+  lights.bottom = createSpotLight(settings)
+  lights.ambient = createHemiLight(settings)
+  tasks.add(animateLights, 'update')
+  Object.keys(lights).forEach((key) => {
+    scene.add(lights[key])
+  })
+  updateLights(state)
 }
-Object.keys(lights).forEach((key) => {
-  scene.add(lights[key])
-})
 
 function modulateSinPrime (t) {
   const { sin } = Math
@@ -256,14 +258,14 @@ function modulateIntensity (intensity, scaleMin, t) {
     modulateSinPrime(t))
 }
 
-tasks.add(function animateLights (frame) {
+function animateLights (frame) {
   lights.top.intensity = modulateIntensity(state.lightTop.intensity,
     0.65, frame * 0.0021)
   lights.bottom.intensity = modulateIntensity(state.lightBottom.intensity,
     0.75, frame * 0.0022)
   lights.ambient.intensity = modulateIntensity(state.lightAmbient.intensity,
     0.85, frame * 0.0020)
-}, 'update')
+}
 
 // Entities
 
@@ -292,8 +294,14 @@ function createEntities (settings) {
 
   Promise.all([loadDinild, loadNeedle]).then(() => {
     const { dinild } = entities
-    const needles = new NeedleGroup()
-    const needleCursor = new Needle()
+    const needles = new NeedleGroup({
+      castShadow: useShadow,
+      receiveShadow: false
+    })
+    const needleCursor = new Needle({
+      castShadow: useShadow,
+      receiveShadow: false
+    })
     return Promise.all([
       needleCursor.addTo(dinild),
       needles.addTo(dinild)
@@ -325,10 +333,15 @@ const index = new SceneState({
 function updateState (nextState) {
   index.updateCamera(nextState.camera)
   index.updateFog(nextState.fog)
+  updateLights(nextState)
+  updateDinild(nextState)
+}
+
+function updateLights (nextState) {
+  if (!lights.top) return
   index.updateSpotLight(lights.top, nextState.lightTop)
   index.updateSpotLight(lights.bottom, nextState.lightBottom)
   index.updateHemiLight(lights.ambient, nextState.lightAmbient)
-  updateDinild(nextState)
 }
 
 function updateDinild (nextState) {
@@ -357,9 +370,12 @@ function start () {
 
 inject()
 setTimeout(() => {
+  const settings = RENDER_SETTINGS.MED
+  renderer.shadowMap.enabled = settings.useShadow
   load()
   start()
-  createEntities(RENDER_SETTINGS.LOW)
+  createLights(settings)
+  createEntities(settings)
 }, 0)
 
 // FIXME
