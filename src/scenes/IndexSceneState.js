@@ -5,7 +5,7 @@ import {
 import { MOUTH_FRAMES_MAP } from '../constants/animation'
 import { inherit } from '../utils/ctor'
 import { createVector, copyVector } from '../utils/vector'
-import { SceneState } from './SceneState'
+import { SceneState } from '../state/SceneState'
 
 // TODO: Create plain object
 function createColor (...args) {

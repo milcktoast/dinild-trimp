@@ -1,30 +1,23 @@
 import {
   Fog,
   Group,
-  HemisphereLight,
   PCFSoftShadowMap,
-  PerspectiveCamera,
   Scene,
-  SpotLight,
   WebGLRenderer
 } from 'three'
 
 import { RENDER_SETTINGS } from './constants/fidelity'
-import { WORD_LOCATIONS } from './constants/phrase'
-
 import { createTaskManager } from './utils/task'
 import { createLoop } from './utils/loop'
-import { TrackballControls } from './controls/TrackballControls'
-import { SelectionControls } from './controls/SelectionControls'
-import { mapLinear } from './utils/math'
-import { IndexSceneState } from './state/IndexSceneState'
-import { Dinild } from './entities/Dinild'
-import { Needle } from './entities/Needle'
-import { NeedleGroup } from './entities/NeedleGroup'
+import { IndexCamera } from './scenes/IndexCamera'
+import { IndexLights } from './scenes/IndexLights'
+import { IndexEntities } from './scenes/IndexEntities'
+import { IndexSceneState } from './scenes/IndexSceneState'
 
 const container = createContainer()
 const tasks = createTaskManager(
-  'load', 'syncState', 'update', 'render', 'resize')
+  'load', 'populate', 'syncState',
+  'update', 'render', 'resize')
 const renderer = createRenderer()
 const scene = createScene()
 const camera = createCamera()
@@ -64,32 +57,8 @@ function createScene () {
 }
 
 function createCamera () {
-  const camera = new PerspectiveCamera(1, 1, 0.1, 100)
-  const controls = new TrackballControls(camera, container)
-  const selection = new SelectionControls(camera, container)
-
-  Object.assign(camera, {
-    controls,
-    selection
-  })
-  Object.assign(controls, {
-    rotateSpeed: 1,
-    zoomSpeed: 0.8,
-    panSpeed: 0.1,
-    noZoom: false,
-    noPan: false,
-    dynamicDampingFactor: 0.3,
-    minDistance: 18,
-    maxDistance: 30
-  })
-
-  selection.addEventListener('start', () => {
-    controls.enabled = false
-  })
-  selection.addEventListener('end', () => {
-    controls.enabled = true
-  })
-
+  const camera = new IndexCamera()
+  const { controls, selection } = camera
   tasks.add((frame) => {
     controls.update(frame)
     selection.update(frame)
@@ -100,7 +69,6 @@ function createCamera () {
     controls.resize()
     selection.resize()
   }, 'resize')
-
   return camera
 }
 
@@ -108,7 +76,7 @@ function createAnimationLoop () {
   const loop = createLoop(null, update, render)
   let animationFrame = 0
   function update () {
-    tasks.run('update', animationFrame++)
+    tasks.run('update', animationFrame++, index.state)
   }
   function render () {
     renderer.clear()
@@ -126,115 +94,23 @@ window.addEventListener('resize', (event) => {
 
 // Lights
 
-const lights = {}
-
-function createSpotLight ({ shadowMapSize }) {
-  const light = new SpotLight()
-  light.shadow.mapSize.set(shadowMapSize, shadowMapSize)
-  return light
-}
-
-function createHemiLight () {
-  return new HemisphereLight()
-}
-
-function createLights (settings) {
-  lights.top = createSpotLight(settings)
-  lights.bottom = createSpotLight(settings)
-  lights.ambient = createHemiLight(settings)
-  tasks.add(animateLights, 'update')
-  Object.keys(lights).forEach((key) => {
-    scene.add(lights[key])
-  })
-  tasks.run('syncState')
-}
-
-function modulateSinPrime (t) {
-  const { sin } = Math
-  return sin(
-    sin(17 * t) +
-    sin(23 * t) +
-    sin(41 * t) +
-    sin(59 * t) +
-    sin(127 * t))
-}
-
-function modulateIntensity (intensity, scaleMin, t) {
-  const base = 1// Math.min(1, t * t * 200)
-  return base * mapLinear(-1, 1,
-    intensity * scaleMin, intensity,
-    modulateSinPrime(t))
-}
-
-function animateLights (frame) {
-  const { state } = index
-  lights.top.intensity = modulateIntensity(state.lightTop.intensity,
-    0.65, frame * 0.0021)
-  lights.bottom.intensity = modulateIntensity(state.lightBottom.intensity,
-    0.75, frame * 0.0022)
-  lights.ambient.intensity = modulateIntensity(state.lightAmbient.intensity,
-    0.85, frame * 0.0020)
-}
+const lights = IndexLights.create()
+tasks.defer(lights, 'populate').then(() => {
+  tasks.add(lights, 'update')
+})
 
 // Entities
 
-const entities = {}
-const loadDinild = tasks.defer(Dinild, 'load')
-const loadNeedle = tasks.defer(Needle, 'load')
-
-function createEntities (settings) {
-  const {
-    useSubsurface,
-    useShadow,
-    textureQuality
-  } = settings
-
-  loadDinild.then(() => {
-    const dinild = new Dinild({
-      castShadow: useShadow,
-      receiveShadow: useShadow,
-      useSubsurface,
-      textureQuality
-    })
-    entities.dinild = dinild
-    dinild.addTo(scene)
-    // tasks.add(dinild, 'update')
-    tasks.add(dinild, 'render')
-    tasks.run('syncState')
-  })
-
-  Promise.all([loadDinild, loadNeedle]).then(() => {
-    const { dinild } = entities
-    const needles = new NeedleGroup({
-      castShadow: useShadow,
-      receiveShadow: false
-    })
-    const needleCursor = new Needle({
-      castShadow: useShadow,
-      receiveShadow: false
-    })
-    return Promise.all([
-      needleCursor.addTo(dinild),
-      needles.addTo(dinild)
-    ])
-  }).then(([needleCursor, needles]) => {
-    const { dinild } = entities
-    const { selection } = camera
-    entities.needleCursor = needleCursor
-    entities.needles = needles
-    selection.cursorEntity = needleCursor
-    selection.targetEntity = dinild
-    selection.targetOptionUVs = WORD_LOCATIONS
-    selection.addEventListener('add', (event) => {
-      console.log(event)
-      needles.addInstanceFrom(needleCursor)
-    })
-  })
-}
+const entities = IndexEntities.create()
+tasks.defer(entities, 'load')
+tasks.defer(entities, 'populate').then(() => {
+  tasks.add(entities, 'update')
+  tasks.add(entities, 'render')
+})
 
 // Link state to scene
 
-const index = new IndexSceneState({
+const index = IndexSceneState.create({
   camera,
   renderer,
   scene,
@@ -260,14 +136,19 @@ function start () {
   loop.start()
 }
 
+function populate (settings) {
+  tasks.flush('populate', scene, camera, settings).then(() => {
+    tasks.run('syncState')
+  })
+}
+
 inject()
 setTimeout(() => {
   const settings = RENDER_SETTINGS.LOW
   renderer.shadowMap.enabled = settings.useShadow
   load()
   start()
-  createLights(settings)
-  createEntities(settings)
+  populate(settings)
 }, 0)
 
 // FIXME
