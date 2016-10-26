@@ -1,5 +1,4 @@
 import {
-  Color,
   Fog,
   Group,
   HemisphereLight,
@@ -11,112 +10,21 @@ import {
 } from 'three'
 
 import { RENDER_SETTINGS } from './constants/fidelity'
-import { MOUTH_FRAMES_MAP } from './constants/animation'
 import { WORD_LOCATIONS } from './constants/phrase'
 
 import { createTaskManager } from './utils/task'
 import { createLoop } from './utils/loop'
-import { createVector, copyVector } from './utils/vector'
 import { TrackballControls } from './controls/TrackballControls'
 import { SelectionControls } from './controls/SelectionControls'
 import { mapLinear } from './utils/math'
-import { SceneState } from './state/SceneState'
+import { IndexSceneState } from './state/IndexSceneState'
 import { Dinild } from './entities/Dinild'
 import { Needle } from './entities/Needle'
 import { NeedleGroup } from './entities/NeedleGroup'
 
-function createColor (...args) {
-  return new Color(...args)
-}
-
-const cameraOptions = [{
-  position: createVector(6, 3, 23),
-  target: createVector(3, 0, 1),
-  up: createVector(0, 1, 0),
-  fov: 92
-}, {
-  position: createVector(-4.5, 2.5, 22.5),
-  target: createVector(3, 0, 1),
-  up: createVector(0, 1, 0),
-  fov: 92
-}, {
-  position: createVector(-4, 3.5, 25.5),
-  target: createVector(2, 0, 1),
-  up: createVector(0, 1, 0),
-  fov: 80.5
-}]
-const cameraStart = cameraOptions[0]
-
-const state = {
-  camera: {
-    position: createVector(cameraStart.position),
-    target: createVector(cameraStart.target),
-    up: createVector(cameraStart.up),
-    fov: cameraStart.fov,
-    reset: () => {
-      copyVector(state.camera.position, cameraStart.position)
-      copyVector(state.camera.target, cameraStart.target)
-      copyVector(state.camera.up, cameraStart.up)
-      state.camera.fov = cameraStart.fov
-      updateState(state)
-    }
-  },
-  fog: {
-    color: createColor(0x11001D),
-    near: 11.2,
-    far: 15.6
-  },
-  skin: {
-    shininess: 30,
-    normalScale: 1,
-    textureAnisotropy: 4
-  },
-  pose: {
-    frames: MOUTH_FRAMES_MAP,
-    startFrame: 0,
-    targetFrame: 1,
-    activeFrameWeight: 0
-  },
-  phrase: {
-    words: [],
-    preview: {
-      position: createVector(0, 0, 0),
-      normal: createVector(0, 0, 0),
-      visible: false
-    }
-  },
-  lightTop: {
-    position: createVector(-13, 21.5, 20.5),
-    target: createVector(4.5, -1.5, 5),
-    color: createColor(0xCAFF7C),
-    intensity: 2.3,
-    distance: 35,
-    angle: 0.62,
-    penumbra: 0.2,
-    decay: 0.9,
-    castShadow: true
-  },
-  lightBottom: {
-    position: createVector(2, -14, 24.5),
-    target: createVector(0, 5.5, 1),
-    color: createColor(0xD1F08A),
-    intensity: 2.4,
-    distance: 40,
-    angle: 0.59,
-    penumbra: 0.2,
-    decay: 0.75,
-    castShadow: true
-  },
-  lightAmbient: {
-    skyColor: createColor(0xBCADFF),
-    groundColor: createColor(0xDBFFF4),
-    intensity: 0.6
-  }
-}
-
 const container = createContainer()
 const tasks = createTaskManager(
-  'load', 'update', 'render', 'resize')
+  'load', 'syncState', 'update', 'render', 'resize')
 const renderer = createRenderer()
 const scene = createScene()
 const camera = createCamera()
@@ -238,7 +146,7 @@ function createLights (settings) {
   Object.keys(lights).forEach((key) => {
     scene.add(lights[key])
   })
-  updateLights(state)
+  tasks.run('syncState')
 }
 
 function modulateSinPrime (t) {
@@ -259,6 +167,7 @@ function modulateIntensity (intensity, scaleMin, t) {
 }
 
 function animateLights (frame) {
+  const { state } = index
   lights.top.intensity = modulateIntensity(state.lightTop.intensity,
     0.65, frame * 0.0021)
   lights.bottom.intensity = modulateIntensity(state.lightBottom.intensity,
@@ -286,10 +195,10 @@ function createEntities (settings) {
       useSubsurface: useSubsurface
     })
     entities.dinild = dinild
-    updateDinild(state)
     dinild.addTo(scene)
     // tasks.add(dinild, 'update')
     tasks.add(dinild, 'render')
+    tasks.run('syncState')
   })
 
   Promise.all([loadDinild, loadNeedle]).then(() => {
@@ -323,33 +232,14 @@ function createEntities (settings) {
 
 // Link state to scene
 
-const index = new SceneState({
+const index = new IndexSceneState({
   camera,
   renderer,
   scene,
-  tasks
+  lights,
+  entities
 })
-
-function updateState (nextState) {
-  index.updateCamera(nextState.camera)
-  index.updateFog(nextState.fog)
-  updateLights(nextState)
-  updateDinild(nextState)
-}
-
-function updateLights (nextState) {
-  if (!lights.top) return
-  index.updateSpotLight(lights.top, nextState.lightTop)
-  index.updateSpotLight(lights.bottom, nextState.lightBottom)
-  index.updateHemiLight(lights.ambient, nextState.lightAmbient)
-}
-
-function updateDinild (nextState) {
-  const { dinild } = entities
-  if (!dinild) return
-  index.updatePose(dinild.pose, dinild.item, nextState.pose)
-  index.updateSkinMaterial(dinild.material, nextState.skin)
-}
+tasks.add(index, 'syncState')
 
 // Start
 
@@ -364,13 +254,13 @@ function load () {
 }
 
 function start () {
-  updateState(state)
+  tasks.run('syncState')
   loop.start()
 }
 
 inject()
 setTimeout(() => {
-  const settings = RENDER_SETTINGS.MED
+  const settings = RENDER_SETTINGS.LOW
   renderer.shadowMap.enabled = settings.useShadow
   load()
   start()
@@ -385,7 +275,7 @@ require('./index-debug').createDebug({
   scene,
   camera,
   loop,
-  state,
-  updateState
+  state: index.state,
+  updateState: index.updateState.bind(index)
 })
 // #endif
