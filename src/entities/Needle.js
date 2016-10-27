@@ -43,6 +43,7 @@ Object.assign(Needle, {
 })
 
 inherit(null, Needle, Entity, {
+  // TODO: Sync Needle and NeedleGroup materials
   createMaterial () {
     return new MeshPhongMaterial({
       color: 0xffffff,

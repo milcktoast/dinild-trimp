@@ -65,6 +65,7 @@ inherit(null, NeedleGroup, Entity, {
     })
   },
 
+  // TODO: Fix skin weight / pose jitter when adding instance
   addInstanceFrom (entity) {
     const instanceCount = this.instanceCount++
     const itemFrom = entity.item

@@ -12,8 +12,8 @@ import { createLoop } from './utils/loop'
 import { IndexCamera } from './scenes/IndexCamera'
 import { IndexLights } from './scenes/IndexLights'
 import { IndexEntities } from './scenes/IndexEntities'
-import { IndexPhraseState } from './scenes/IndexPhraseState'
 import { IndexSceneState } from './scenes/IndexSceneState'
+import { IndexPhraseState } from './scenes/IndexPhraseState'
 
 const container = createContainer()
 const tasks = createTaskManager(
@@ -123,7 +123,8 @@ tasks.add(index, 'syncState')
 // Phrase
 
 const phrase = IndexPhraseState.create({
-  camera
+  camera,
+  entities
 })
 tasks.add(phrase, 'syncState')
 

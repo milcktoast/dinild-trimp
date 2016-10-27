@@ -9,7 +9,7 @@ export const RENDER_SETTINGS = {
     useSubsurface: false,
     useShadow: true,
     shadowMapSize: 512,
-    textureQuality: 'high'
+    textureQuality: 'med'
   },
   HIGH: {
     useSubsurface: true,
