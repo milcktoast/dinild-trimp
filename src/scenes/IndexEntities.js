@@ -52,11 +52,15 @@ inherit(null, IndexEntities, {
       selection.targetEntity = dinild
       selection.targetOptionUVs = WORD_LOCATIONS
 
-      selection.addEventListener('add', (event) => {
-        console.log(event)
-        needles.addInstanceFrom(needleCursor)
-      })
+      selection.addEventListener('add', this.onSelectionAdd.bind(this))
+
+      return this
     })
+  },
+
+  onSelectionAdd (event) {
+    const { needles, needleCursor } = this
+    needles.addInstanceFrom(needleCursor)
   },
 
   update (frame, state) {

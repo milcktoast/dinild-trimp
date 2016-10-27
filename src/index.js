@@ -12,6 +12,7 @@ import { createLoop } from './utils/loop'
 import { IndexCamera } from './scenes/IndexCamera'
 import { IndexLights } from './scenes/IndexLights'
 import { IndexEntities } from './scenes/IndexEntities'
+import { IndexPhraseState } from './scenes/IndexPhraseState'
 import { IndexSceneState } from './scenes/IndexSceneState'
 
 const container = createContainer()
@@ -119,6 +120,13 @@ const index = IndexSceneState.create({
 })
 tasks.add(index, 'syncState')
 
+// Phrase
+
+const phrase = IndexPhraseState.create({
+  camera
+})
+tasks.add(phrase, 'syncState')
+
 // Start
 
 function inject () {
@@ -131,7 +139,8 @@ function load () {
   tasks.flush('load')
 }
 
-function start () {
+function start (settings) {
+  renderer.shadowMap.enabled = settings.useShadow // FIXME
   tasks.run('syncState')
   loop.start()
 }
@@ -145,9 +154,8 @@ function populate (settings) {
 inject()
 setTimeout(() => {
   const settings = RENDER_SETTINGS.LOW
-  renderer.shadowMap.enabled = settings.useShadow
   load()
-  start()
+  start(settings)
   populate(settings)
 }, 0)
 

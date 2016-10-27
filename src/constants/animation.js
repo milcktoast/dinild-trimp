@@ -16,3 +16,15 @@ export const MOUTH_FRAMES_MAP = MOUTH_FRAMES
     map[v] = i
     return map
   }, {})
+
+export const MOUTH_FRAMES_CHAR_MAP = expandFrameKeys(MOUTH_FRAMES)
+
+function expandFrameKeys (frames) {
+  const expanded = {}
+  frames.forEach((key, index) => {
+    key.split('').forEach((char) => {
+      expanded[char] = index
+    })
+  })
+  return expanded
+}

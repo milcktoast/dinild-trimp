@@ -174,7 +174,7 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     eventAdd.face = face
     eventAdd.point = point
     eventAdd.uv = uv
-    eventAdd.value = this.findSelectionAt(uv)
+    eventAdd.which = this.findSelectionAt(uv)
     this.dispatchEvent(eventAdd)
   },
 
