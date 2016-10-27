@@ -1,8 +1,18 @@
+ARR="\x1b[32m>>>\x1b[0m"
+OK="\x1b[32m... OK\x1b[0m\n"
+
 optimize_track () {
-  ffmpeg -loglevel quiet -y -i $1 -c:a libmp3lame -q:a 5 "${1/%ogg/mp3}"
-  echo "Optimized track: $(basename $1 .ogg)"
+  name=$1
+  echo "$ARR Optimize track: $(basename $name .ogg)"
+  ffmpeg -loglevel quiet -y -i $name.ogg -c:a libmp3lame -q:a 5 $name.mp3
+  echo "$OK"
 }
 
 cd ./assets/audio
-export -f optimize_track
-find . -type f -name '*.ogg' | xargs -n 1 -I {} bash -c 'optimize_track "$@"' _ {}
+optimize_track childhood
+optimize_track deal
+optimize_track honestly
+optimize_track love
+optimize_track people
+optimize_track pussy
+optimize_track strict

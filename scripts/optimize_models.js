@@ -1,6 +1,9 @@
 const fs = require('fs')
 const path = require('path')
 
+const ARR = '\x1b[32m>>>\x1b[0m'
+const OK = '\x1b[32m... OK\x1b[0m'
+
 const FLOAT_ATTR_KEYS = [
   'normals',
   'skinWeights',
@@ -12,7 +15,12 @@ const INT_ATTR_KEYS = [
   'skinIndices'
 ]
 
+function writeLn (str) {
+  process.stdout.write(str + '\n')
+}
+
 function optimizeModel (src) {
+  writeLn(ARR + ' Optimize model: ' + path.basename(src))
   const basePath = path.join(process.cwd(), src)
   const data = fs.readFileSync(basePath + '/full.json', 'utf8')
   const json = JSON.parse(data)
@@ -29,7 +37,7 @@ function optimizeModel (src) {
   writeBoneData(formatDestPath(basePath, 'bones', 'json'), json)
   writeAnimationData(formatDestPath(basePath, 'boneFrames', 'json'), json)
   writeMetaData(formatDestPath(basePath, 'meta', 'json'), json)
-  console.log('Optimized model: ' + path.basename(src))
+  writeLn(OK + '\n')
 }
 
 function formatDestPath (basePath, key, ext) {
