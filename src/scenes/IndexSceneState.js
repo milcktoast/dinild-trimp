@@ -19,26 +19,39 @@ export function IndexSceneState (context) {
 
 inherit(SceneState, IndexSceneState, {
   createState () {
-    const cameraOptions = [{
-      position: createVector(6, 3, 23),
-      target: createVector(3, 0, 1),
-      up: createVector(0, 1, 0),
-      fov: 92
-    }, {
-      position: createVector(-4.5, 2.5, 22.5),
-      target: createVector(3, 0, 1),
-      up: createVector(0, 1, 0),
-      fov: 92
-    }, {
-      position: createVector(-4, 3.5, 25.5),
-      target: createVector(2, 0, 1),
-      up: createVector(0, 1, 0),
-      fov: 80.5
-    }]
-    const cameraStart = cameraOptions[0]
-
+    const { defaults } = this
     return {
-      camera: {
+      camera: defaults.camera(),
+      fog: defaults.fog(),
+      skin: defaults.skin(),
+      pose: defaults.pose(),
+      lightTop: defaults.lightTop(),
+      lightBottom: defaults.lightBottom(),
+      lightAmbient: defaults.lightAmbient()
+    }
+  },
+
+  defaults: {
+    camera () {
+      const cameraOptions = [{
+        position: createVector(6, 3, 23),
+        target: createVector(3, 0, 1),
+        up: createVector(0, 1, 0),
+        fov: 92
+      }, {
+        position: createVector(-4.5, 2.5, 22.5),
+        target: createVector(3, 0, 1),
+        up: createVector(0, 1, 0),
+        fov: 92
+      }, {
+        position: createVector(-4, 3.5, 25.5),
+        target: createVector(2, 0, 1),
+        up: createVector(0, 1, 0),
+        fov: 80.5
+      }]
+      const cameraStart = cameraOptions[0]
+
+      return {
         position: createVector(cameraStart.position),
         target: createVector(cameraStart.target),
         up: createVector(cameraStart.up),
@@ -51,24 +64,36 @@ inherit(SceneState, IndexSceneState, {
           state.camera.fov = cameraStart.fov
           this.syncState()
         }
-      },
-      fog: {
+      }
+    },
+
+    fog () {
+      return {
         color: createColor(0x11001D),
         near: 11.2,
         far: 15.6
-      },
-      skin: {
+      }
+    },
+
+    skin () {
+      return {
         shininess: 30,
         normalScale: 1,
         textureAnisotropy: 4
-      },
-      pose: {
+      }
+    },
+
+    pose () {
+      return {
         frames: MOUTH_FRAMES_MAP,
         startFrame: 0,
         targetFrame: 1,
         activeFrameWeight: 0
-      },
-      lightTop: {
+      }
+    },
+
+    lightTop () {
+      return {
         position: createVector(-13, 21.5, 20.5),
         target: createVector(4.5, -1.5, 5),
         color: createColor(0xCAFF7C),
@@ -78,8 +103,11 @@ inherit(SceneState, IndexSceneState, {
         penumbra: 0.2,
         decay: 0.9,
         castShadow: true
-      },
-      lightBottom: {
+      }
+    },
+
+    lightBottom () {
+      return {
         position: createVector(2, -14, 24.5),
         target: createVector(0, 5.5, 1),
         color: createColor(0xD1F08A),
@@ -89,8 +117,11 @@ inherit(SceneState, IndexSceneState, {
         penumbra: 0.2,
         decay: 0.75,
         castShadow: true
-      },
-      lightAmbient: {
+      }
+    },
+
+    lightAmbient () {
+      return {
         skyColor: createColor(0xBCADFF),
         groundColor: createColor(0xDBFFF4),
         intensity: 0.6
@@ -120,7 +151,7 @@ inherit(SceneState, IndexSceneState, {
   updateDinild (nextState) {
     const { dinild } = this.context.entities
     if (!dinild) return
-    this.updatePose(dinild.pose, dinild.item, nextState.pose)
+    // this.updatePose(dinild.pose, dinild.item, nextState.pose)
     this.updateSkinMaterial(dinild.material, nextState.skin)
   }
 })
