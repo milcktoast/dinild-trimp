@@ -11,12 +11,7 @@ export function IndexPhraseState (context) {
 inherit(null, IndexPhraseState, {
   createState () {
     return {
-      phrase: {
-        frame: 0,
-        framesPerLetter: 12,
-        chars: null,
-        charFrames: null
-      },
+      phrase: null,
       words: []
     }
   },
@@ -28,7 +23,7 @@ inherit(null, IndexPhraseState, {
 
   onSelectionAdd (event) {
     const { state } = this
-    const { phrase, words } = state
+    const { words } = state
     const { which } = event
 
     const nextWords = words.concat(WORDS[which])
@@ -36,9 +31,13 @@ inherit(null, IndexPhraseState, {
     const charFrames = mapCharsToFrames(chars, MOUTH_FRAMES_CHAR_MAP)
 
     state.words = nextWords
-    phrase.frame = 0
-    phrase.chars = chars
-    phrase.charFrames = charFrames
+    state.phrase = {
+      loop: false,
+      frame: 0,
+      framesPerChar: 12,
+      chars,
+      charFrames
+    }
 
     this.syncState()
   },
@@ -48,10 +47,12 @@ inherit(null, IndexPhraseState, {
   },
 
   updateState (nextState) {
-    console.log(nextState)
+    const { dinild } = this.context.entities
+    if (!dinild) return
+    dinild.phrase = this.state.phrase
   }
 })
 
 function mapCharsToFrames (chars, frames) {
-  return chars.split('').map((letter) => frames[letter])
+  return chars.split('').map((letter) => frames[letter] || 0)
 }

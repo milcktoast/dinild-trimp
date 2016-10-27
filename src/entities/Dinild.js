@@ -21,11 +21,6 @@ const MODEL_ASSET_PATH = './assets/models/dinild'
 const TEXTURE_ASSET_PATH = './assets/textures/dinild'
 const MODEL_META = JSON.parse(
   readFileSync(resolve(__dirname, '../../assets/models/dinild/meta.json'), 'utf8'))
-// const PHRASE = {
-//   frame: 0,
-//   framesPerLetter: 12,
-//   letters: mapWordToFrames('__YOU_HAVE_A_MOUF__', expandFrameKeys(MOUTH_FRAMES))
-// }
 
 export function Dinild (params) {
   this.castShadow = params.castShadow
@@ -107,39 +102,41 @@ inherit(null, Dinild, Entity, {
   },
 
   update () {
-    const { pose } = this
-    if (!pose) return
+    const { pose, phrase } = this
+    if (!(pose && phrase)) return
     pose.resetWeights()
-    // this.updateMouthWeights(pose, PHRASE)
+    this.updateMouthWeights(pose, phrase)
   },
 
   // TODO: Fix intermittent glitches - occur when `frame` isn't reset
   updateMouthWeights (pose, phrase) {
     const { weights } = pose
-    const { letters, framesPerLetter } = phrase
+    const { charFrames, framesPerChar } = phrase
 
     let frame = phrase.frame++
-    const end = letters.length * framesPerLetter
-    if (frame > end) frame = phrase.frame = 0
+    const end = charFrames.length * framesPerChar
+    if (frame > end) {
+      if (phrase.loop) frame = phrase.frame = 0
+      else return
+    }
 
     const wordProgress = (frame / end) % 1
-    const letterProgress = (frame % framesPerLetter) / framesPerLetter
-    const letterAtIndex = Math.floor(wordProgress * letters.length)
-    const letterToIndex = (letterAtIndex + 1) % letters.length
+    const charProgress = (frame % framesPerChar) / framesPerChar
+    const charAtIndex = Math.floor(wordProgress * charFrames.length)
+    const charToIndex = (charAtIndex + 1) % charFrames.length
 
-    const letterAtPoseIndex = letters[letterAtIndex]
-    const letterToPoseIndex = letters[letterToIndex]
-    const letterProgressEased = easeInOut(letterProgress)
+    const charAtPoseIndex = charFrames[charAtIndex]
+    const charToPoseIndex = charFrames[charToIndex]
+    const charProgressEased = easeInOut(charProgress)
 
-    weights[letterAtPoseIndex] += 1 - letterProgressEased
-    weights[letterToPoseIndex] += letterProgressEased
+    weights[charAtPoseIndex] += 1 - charProgressEased
+    weights[charToPoseIndex] += charProgressEased
 
-    // console.log(`${letterAtIndex} ${letterToIndex} - ${letterProgress}`)
-    // console.log(letterAtPoseIndex, letterToPoseIndex)
+    // console.log(`${charAtIndex} ${charToIndex} - ${charProgress}`)
+    // console.log(charAtPoseIndex, charToPoseIndex)
   },
 
   updateBones () {
-    if (!this.mesh) return
     this.pose.applyWeights(this.skeleton.bones)
   },
 
