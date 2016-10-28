@@ -76,54 +76,54 @@ test('PhraseAnimation - update state', (t) => {
   const animTick = createTick(anim, 'update')
   const phraseState = createPhraseState(words)
 
-  anim.phrase = phrase
+  anim.sequence = phrase
 
   animTick(3)
-  t.deepEqual(anim.statePrev, phraseState(0, 0, 0, 0, 0),
+  t.deepEqual(anim.statePrev, phraseState(0, 0, 0, 0, 1),
     'should update statePrev at 3 iterations')
-  t.deepEqual(anim.state, phraseState(0, 0, 1, 1),
+  t.deepEqual(anim.state, phraseState(0, 0, 1, 1, 1),
     'should update state at 3 iterations')
 
   animTick(4)
-  t.deepEqual(anim.statePrev, phraseState(0, 0, 0, 0, 0),
+  t.deepEqual(anim.statePrev, phraseState(0, 0, 0, 0, 1),
     'should update statePrev at 4 iterations')
-  t.deepEqual(anim.state, phraseState(0, 0, 1, 1),
+  t.deepEqual(anim.state, phraseState(0, 0, 1, 1, 1),
     'should update state at 4 iterations')
 
   animTick(5)
-  t.deepEqual(anim.statePrev, phraseState(0, 0, 1, 1),
+  t.deepEqual(anim.statePrev, phraseState(0, 0, 1, 1, 1),
     'should update statePrev at 5 iterations')
-  t.deepEqual(anim.state, phraseState(0, 1, 0, 0),
+  t.deepEqual(anim.state, phraseState(0, 1, 0, 0, 0.5),
     'should update state at 5 iterations')
 
   animTick(11)
-  t.deepEqual(anim.statePrev, phraseState(0, 0, 1, 1),
+  t.deepEqual(anim.statePrev, phraseState(0, 0, 1, 1, 1),
     'should update statePrev at 11 iterations')
-  t.deepEqual(anim.state, phraseState(1, 1, 0, 0),
+  t.deepEqual(anim.state, phraseState(1, 1, 0, 0, 0.5),
     'should update state at 11 iterations')
 
   animTick(12)
-  t.deepEqual(anim.statePrev, phraseState(0, 0, 0, 0),
+  t.deepEqual(anim.statePrev, phraseState(0, 0, 0, 0, 0.5),
     'should update statePrev at 12 iterations')
-  t.deepEqual(anim.state, phraseState(1, 1, 1, 2),
+  t.deepEqual(anim.state, phraseState(1, 1, 1, 2, 0.5),
     'should update state at 12 iterations')
 
   animTick(13)
-  t.deepEqual(anim.statePrev, phraseState(1, 1, 1, 2),
+  t.deepEqual(anim.statePrev, phraseState(1, 1, 1, 2, 0.5),
     'should update statePrev at 13 iterations')
-  t.deepEqual(anim.state, phraseState(2, 0, 0, 0),
+  t.deepEqual(anim.state, phraseState(2, 0, 0, 0, 1),
     'should update state at 13 iterations')
 
   animTick(18)
-  t.deepEqual(anim.statePrev, phraseState(1, 0, 0, 0),
+  t.deepEqual(anim.statePrev, phraseState(1, 0, 0, 0, 0.5),
     'should update statePrev at 18 iterations')
-  t.deepEqual(anim.state, phraseState(2, 1, 1, 2),
+  t.deepEqual(anim.state, phraseState(2, 1, 1, 2, 0.5),
     'should update state at 18 iterations')
 
   animTick(19)
-  t.deepEqual(anim.statePrev, phraseState(2, 1, 1, 2),
+  t.deepEqual(anim.statePrev, phraseState(2, 1, 1, 2, 0.5),
     'should update statePrev at 19 iterations and loop')
-  t.deepEqual(anim.state, phraseState(0, 0, 0, 0),
+  t.deepEqual(anim.state, phraseState(0, 0, 0, 0, 1),
     'should update state at 19 iterations and loop')
 
   t.end()
@@ -135,7 +135,7 @@ test('PhraseAnimation - update progress', (t) => {
   const anim = new PhraseAnimation()
   const animTick = createTick(anim, 'update')
 
-  anim.phrase = phrase
+  anim.sequence = phrase
 
   animTick(10)
   t.deepEqual(anim.progress, phraseProgress(9 / 34, 9 / 19, 9 / 9),
@@ -167,7 +167,7 @@ test('PhraseAnimation - apply shape weights', (t) => {
   const weights = createWeights(6)
   const animTick = createTick(anim, 'update')
 
-  anim.phrase = phrase
+  anim.sequence = phrase
 
   animTick(10)
   resetWeights(weights)
@@ -190,13 +190,13 @@ test('PhraseAnimation - apply shape weights', (t) => {
   animTick(30)
   resetWeights(weights)
   anim.applyToWeights(weights)
-  t.deepEqual(weights, [0, 0, 2 / 6.5, 0, 0, 1 - 2 / 6.5],
+  t.deepEqual(weights, [0, 0, (2 / 6.5) * 0.5, 0, 0, (1 - 2 / 6.5) * 0.5],
     'should apply weights for 30 iterations')
 
   animTick(35)
   resetWeights(weights)
   anim.applyToWeights(weights)
-  t.deepEqual(weights, [0, 0, 1, 0, 0, 0],
+  t.deepEqual(weights, [0, 0, 1 * 0.5, 0, 0, 0],
     'should apply weights for 35 iterations')
 
   t.end()
@@ -228,12 +228,9 @@ function resetWeights (weights) {
 }
 
 function createPhraseState (words) {
-  return (indexWord, indexSyllable, indexShape, frameShape, weightSyllable_) => {
-    const weightSyllable = weightSyllable_ != null
-      ? weightSyllable_
-      : words[indexWord].syllables[indexSyllable].weight
+  return (indexWord, indexSyllable, indexShape, frameShape, weightShape) => {
     return {
-      indexWord, indexSyllable, indexShape, frameShape, weightSyllable
+      indexWord, indexSyllable, indexShape, frameShape, weightShape
     }
   }
 }

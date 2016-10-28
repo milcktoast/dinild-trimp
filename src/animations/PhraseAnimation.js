@@ -9,7 +9,7 @@ import { clamp } from '../utils/math'
 // }
 
 export function PhraseAnimation () {
-  this.phrase = null
+  this.sequence = null
   this.frame = 0
   this.progress = this.createProgress()
   this.state = this.createState()
@@ -62,7 +62,7 @@ inherit(null, PhraseAnimation, {
       indexSyllable: 0,
       indexShape: 0,
       frameShape: 0,
-      weightSyllable: 0
+      weightShape: 0
     }
   },
 
@@ -75,15 +75,15 @@ inherit(null, PhraseAnimation, {
   },
 
   update () {
-    const { phrase, progress, state, statePrev } = this
-    if (!phrase) return
+    const { sequence, progress, state, statePrev } = this
+    if (!sequence) return
 
-    const { duration, loop, words } = phrase
+    const { duration, loop, words } = sequence
     const indexWordPrev = state.indexWord
     const indexSyllablePrev = state.indexSyllable
     const indexShapePrev = state.indexShape
     const frameShapePrev = state.frameShape
-    const weightSyllablePrev = state.weightSyllable
+    const weightShapePrev = state.weightShape
 
     let frame = this.frame++
     if (frame > duration - 1) {
@@ -125,7 +125,7 @@ inherit(null, PhraseAnimation, {
 
     state.indexShape = indexShape
     state.frameShape = shapeFrames[indexShape]
-    state.weightSyllable = syllable.weight
+    state.weightShape = syllable.weight
 
     if (state.indexWord !== indexWordPrev) {
       statePrev.indexWord = indexWordPrev
@@ -135,29 +135,23 @@ inherit(null, PhraseAnimation, {
       statePrev.indexSyllable = indexSyllablePrev
     }
 
-    if (state.weightSyllable !== weightSyllablePrev) {
-      statePrev.weightSyllable = weightSyllablePrev
-    }
-
     if (indexShape !== indexShapePrev) {
       statePrev.indexShape = indexShapePrev
       statePrev.frameShape = frameShapePrev
+      statePrev.weightShape = weightShapePrev
     }
-  },
-
-  getShape (phrase, state) {
-    const { indexWord, indexSyllable, indexShape } = state
-    return phrase.words[indexWord].syllables[indexSyllable].shapeFrames[indexShape]
   },
 
   applyToWeights (weights) {
     const { progress, state, statePrev } = this
     const shapeProgress = clamp(0, 1, progress.shape)
+    const weightPrev = statePrev.weightShape
+    const weightNext = state.weightShape
     const framePrev = statePrev.frameShape
     const frameNext = state.frameShape
 
-    weights[framePrev] += 1 - shapeProgress
-    weights[frameNext] += shapeProgress
+    weights[framePrev] += (1 - shapeProgress) * weightPrev
+    weights[frameNext] += shapeProgress * weightNext
   }
 })
 
