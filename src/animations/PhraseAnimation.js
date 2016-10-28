@@ -65,15 +65,13 @@ inherit(null, PhraseAnimation, {
     const { duration, loop, words } = phrase
 
     let frame = this.frame++
-    if (frame > duration) {
-      if (loop) {
-        frame = this.frame = 0
-        phraseState.indexWord = phraseState.indexWordNext = 0
-        phraseState.indexSyllable = phraseState.indexSyllableNext = 0
-        phraseState.indexShape = phraseState.indexShapeNext = 0
-      } else {
-        return
-      }
+    if (frame > duration - 1) {
+      if (!loop) return
+      frame = this.frame = 0
+      phraseState.indexWord = 0
+      phraseState.indexSyllable = 0
+      phraseState.indexShape = 0
+      Object.assign(phraseStatePrev, phraseState)
     }
 
     let word = words[phraseState.indexWord]

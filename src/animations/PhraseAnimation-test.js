@@ -73,12 +73,12 @@ test('PhraseAnimation - parse phrase', (t) => {
 
 test('PhraseAnimation - step words', (t) => {
   const words = [WORDS[0], WORDS[0], WORDS[0]]
-  const phrase = PhraseAnimation.parsePhrase(words, false, SHAPE_MAP)
+  const phrase = PhraseAnimation.parsePhrase(words, true, SHAPE_MAP)
   const anim = new PhraseAnimation()
   const animTick = createTick(anim, 'update')
 
   anim.phrase = phrase
-  t.plan(16)
+  t.plan(18)
 
   animTick(3)
   t.deepEqual(anim.phraseStatePrev, phraseState(0, 0, 0),
@@ -127,6 +127,12 @@ test('PhraseAnimation - step words', (t) => {
     'should update phraseStatePrev at 15 frames')
   t.deepEqual(anim.phraseState, phraseState(2, 1, 1),
     'should update phraseState at 15 frames')
+
+  animTick(16)
+  t.deepEqual(anim.phraseStatePrev, phraseState(0, 0, 0),
+    'should update phraseStatePrev at 16 frames and loop')
+  t.deepEqual(anim.phraseState, phraseState(0, 0, 0),
+    'should update phraseState at 16 frames and loop')
 })
 
 test('PhraseAnimation - weight shapes', (t) => {
