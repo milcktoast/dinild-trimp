@@ -16,45 +16,6 @@ export function PhraseAnimation () {
   this.statePrev = this.createState()
 }
 
-Object.assign(PhraseAnimation, {
-  parseWord (word, shapeMap_) {
-    const shapeMap = shapeMap_ || MOUTH_FRAMES_SHAPE_MAP
-    const syllables = word.syllables
-      .map((syllable) => {
-        const { duration, shape, weight } = syllable
-        const shapeFrames = mapShapeToFrames(shape, shapeMap)
-        return {
-          duration,
-          shapeFrames,
-          weight
-        }
-      })
-      .map(mapStart)
-    const duration = syllables
-      .reduce((total, syllable) => total + syllable.duration, 0)
-
-    return {
-      duration,
-      name: word.name,
-      syllables
-    }
-  },
-
-  parsePhrase (words, loop, shapeMap) {
-    const phraseWords = words
-      .map((word) => PhraseAnimation.parseWord(word, shapeMap))
-      .map(mapStart)
-    const duration = phraseWords
-      .reduce((total, word) => total + word.duration, 0)
-
-    return {
-      duration,
-      loop,
-      words: phraseWords
-    }
-  }
-})
-
 inherit(null, PhraseAnimation, {
   createState () {
     return {
@@ -154,6 +115,79 @@ inherit(null, PhraseAnimation, {
     weights[frameNext] += shapeProgress * weightNext
   }
 })
+
+export function parseWord (word, shapeMap_) {
+  const shapeMap = shapeMap_ || MOUTH_FRAMES_SHAPE_MAP
+  const syllables = word.syllables
+    .map((syllable) => {
+      const { duration, shape, weight } = syllable
+      const shapeFrames = mapShapeToFrames(shape, shapeMap)
+      return {
+        duration,
+        shapeFrames,
+        weight
+      }
+    })
+    .map(mapStart)
+  const duration = syllables
+    .reduce((total, syllable) => total + syllable.duration, 0)
+
+  return {
+    duration,
+    name: word.name,
+    syllables
+  }
+}
+
+export function parsePhrase (words, loop = false, shapeMap) {
+  const phraseWords = words
+    .map((word) => parseWord(word, shapeMap))
+    .map(mapStart)
+  const duration = phraseWords
+    .reduce((total, word) => total + word.duration, 0)
+
+  return {
+    duration,
+    loop,
+    words: phraseWords
+  }
+}
+
+function createSpacerWord (duration, weight = 1) {
+  return {
+    name: 'spacer',
+    duration,
+    syllables: [{
+      duration,
+      shapeFrames: [0],
+      start: 0,
+      weight
+    }]
+  }
+}
+
+export function spacePhrase (sequence) {
+  const { loop, words } = sequence
+
+  let allWords = []
+  for (let i = 0; i < words.length; i++) {
+    const duration = Math.round(Math.random() * 8 + 4)
+    allWords.push(
+      createSpacerWord(duration),
+      words[i])
+  }
+  allWords.push(createSpacerWord(10))
+  allWords = allWords.map(mapStart)
+
+  const duration = allWords
+    .reduce((total, word) => total + word.duration, 0)
+
+  return {
+    duration,
+    loop,
+    words: allWords
+  }
+}
 
 function mapShapeToFrames (shape, frames) {
   return shape.split('-').map((sound) => frames[sound] || 0)

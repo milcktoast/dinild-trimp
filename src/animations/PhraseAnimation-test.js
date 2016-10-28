@@ -1,5 +1,10 @@
 import test from 'tape'
-import { PhraseAnimation } from './PhraseAnimation'
+import {
+  parseWord,
+  parsePhrase,
+  spacePhrase,
+  PhraseAnimation
+} from './PhraseAnimation'
 
 const WORDS = [{
   name: 'dude',
@@ -35,7 +40,7 @@ const SHAPE_MAP = {
 
 test('PhraseAnimation - parse word', (t) => {
   const data = WORDS[0]
-  const word = PhraseAnimation.parseWord(data, SHAPE_MAP)
+  const word = parseWord(data, SHAPE_MAP)
   const expectedSyllables = [{
     start: 0,
     duration: 4,
@@ -58,7 +63,7 @@ test('PhraseAnimation - parse word', (t) => {
 
 test('PhraseAnimation - parse phrase', (t) => {
   const words = [WORDS[0], WORDS[0], WORDS[0]]
-  const phrase = PhraseAnimation.parsePhrase(words, true, SHAPE_MAP)
+  const phrase = parsePhrase(words, true, SHAPE_MAP)
   const wordStarts = phrase.words.map((item) => item.start)
   t.plan(3)
   t.equal(phrase.loop, true,
@@ -69,9 +74,24 @@ test('PhraseAnimation - parse phrase', (t) => {
     'should calculate total duration')
 })
 
+test('PhraseAnimation - inject spacer words', (t) => {
+  const words = [WORDS[0], WORDS[0], WORDS[0]]
+  const phrase = parsePhrase(words, true, SHAPE_MAP)
+  const spaced = spacePhrase(phrase)
+  t.plan(4)
+  t.equal(spaced.loop, phrase.loop,
+    'should copy loop prop')
+  t.notEqual(spaced.duration, phrase.duration,
+    'should update duration prop')
+  t.deepEqual([spaced.words[1], spaced.words[3], spaced.words[5]], phrase.words,
+    'should equally space phrase words')
+  t.equal(spaced.words.length, words.length * 2 + 1,
+    'should space words throughout')
+})
+
 test('PhraseAnimation - update state', (t) => {
   const words = [WORDS[0], WORDS[0], WORDS[0]]
-  const phrase = PhraseAnimation.parsePhrase(words, true, SHAPE_MAP)
+  const phrase = parsePhrase(words, true, SHAPE_MAP)
   const anim = new PhraseAnimation()
   const animTick = createTick(anim, 'update')
   const phraseState = createPhraseState(words)
@@ -131,7 +151,7 @@ test('PhraseAnimation - update state', (t) => {
 
 test('PhraseAnimation - update progress', (t) => {
   const words = [WORDS[1]]
-  const phrase = PhraseAnimation.parsePhrase(words, false, SHAPE_MAP)
+  const phrase = parsePhrase(words, false, SHAPE_MAP)
   const anim = new PhraseAnimation()
   const animTick = createTick(anim, 'update')
 
@@ -162,7 +182,7 @@ test('PhraseAnimation - update progress', (t) => {
 
 test('PhraseAnimation - apply shape weights', (t) => {
   const words = [WORDS[1]]
-  const phrase = PhraseAnimation.parsePhrase(words, false, SHAPE_MAP)
+  const phrase = parsePhrase(words, false, SHAPE_MAP)
   const anim = new PhraseAnimation()
   const weights = createWeights(6)
   const animTick = createTick(anim, 'update')
