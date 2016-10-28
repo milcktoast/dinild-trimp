@@ -29,16 +29,13 @@ export function Needle (params) {
 
 Object.assign(Needle, {
   load () {
-    if (!Needle._load) {
-      Needle._load = Needle.loadModel()
-    }
+    if (!Needle._load) Needle._load = Needle.loadModel()
     return Needle._load
   },
 
   loadModel () {
-    return loadModel(ASSET_PATH, MODEL_META).then((modelData) => {
-      return parseModel(modelData, MODEL_META)
-    })
+    return loadModel(ASSET_PATH, MODEL_META)
+      .then((modelData) => parseModel(modelData, MODEL_META))
   }
 })
 
