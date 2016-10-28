@@ -7,15 +7,12 @@ import { resolve } from 'path'
 import { inherit } from '../utils/ctor'
 import { loadModel, loadSkin, loadTexture } from '../utils/model-load'
 import { parseModel, parseSkin } from '../utils/model-parse'
+import { easeCubicInOut } from '../utils/tween'
 import { Entity } from '../mixins/Entity'
 import { PoseAnimation } from '../animations/PoseAnimation'
+import { PhraseAnimation } from '../animations/PhraseAnimation'
 import { SkinnedMesh } from '../objects/SkinnedMesh'
 import { SkinMaterial } from '../materials/SkinMaterial'
-
-function easeInOut (k) {
-  if ((k *= 2) < 1) return 0.5 * k * k
-  return -0.5 * (--k * (k - 2) - 1)
-}
 
 const MODEL_ASSET_PATH = './assets/models/dinild'
 const TEXTURE_ASSET_PATH = './assets/textures/dinild'
@@ -42,17 +39,13 @@ Object.assign(Dinild, {
   },
 
   loadModel () {
-    return loadModel(MODEL_ASSET_PATH, MODEL_META).then((modelData) => {
-      return parseModel(modelData, MODEL_META)
-    })
+    return loadModel(MODEL_ASSET_PATH, MODEL_META)
+      .then((modelData) => parseModel(modelData, MODEL_META))
   },
 
   loadSkin () {
-    return loadSkin(MODEL_ASSET_PATH, MODEL_META).then((skinData) => {
-      const { skeleton, frames } = parseSkin(skinData, MODEL_META)
-      const pose = new PoseAnimation(frames)
-      return { pose, skeleton }
-    })
+    return loadSkin(MODEL_ASSET_PATH, MODEL_META)
+      .then((skinData) => parseSkin(skinData, MODEL_META))
   }
 })
 
@@ -78,8 +71,10 @@ inherit(null, Dinild, Entity, {
     return Dinild.load().then(([model, skin]) => {
       const { castShadow, material, receiveShadow } = this
       const { geometry } = model
-      const { pose, skeleton } = skin
+      const { frames, skeleton } = skin
       const item = new SkinnedMesh(geometry, material)
+      const pose = new PoseAnimation(frames)
+      const phrase = new PhraseAnimation()
 
       Object.assign(item, {
         castShadow,
@@ -89,6 +84,7 @@ inherit(null, Dinild, Entity, {
       // TODO: Optimize pointer target geometry
       Object.assign(this, {
         item,
+        phrase,
         pointerTarget: item,
         pose,
         skeleton
@@ -102,42 +98,16 @@ inherit(null, Dinild, Entity, {
   },
 
   update () {
-    const { pose, phrase } = this
-    if (!(pose && phrase)) return
-    pose.resetWeights()
-    this.updateMouthWeights(pose, phrase)
-  },
-
-  // TODO: Fix intermittent glitches - occur when `frame` isn't reset
-  updateMouthWeights (pose, phrase) {
-    const { weights } = pose
-    const { charFrames, framesPerChar } = phrase
-
-    let frame = phrase.frame++
-    const end = charFrames.length * framesPerChar
-    if (frame > end) {
-      if (phrase.loop) frame = phrase.frame = 0
-      else return
-    }
-
-    const wordProgress = (frame / end) % 1
-    const charProgress = (frame % framesPerChar) / framesPerChar
-    const charAtIndex = Math.floor(wordProgress * charFrames.length)
-    const charToIndex = (charAtIndex + 1) % charFrames.length
-
-    const charAtPoseIndex = charFrames[charAtIndex]
-    const charToPoseIndex = charFrames[charToIndex]
-    const charProgressEased = easeInOut(charProgress)
-
-    weights[charAtPoseIndex] += 1 - charProgressEased
-    weights[charToPoseIndex] += charProgressEased
-
-    // console.log(`${charAtIndex} ${charToIndex} - ${charProgress}`)
-    // console.log(charAtPoseIndex, charToPoseIndex)
+    const { phrase } = this
+    if (!phrase) return
+    phrase.update()
   },
 
   updateBones () {
-    this.pose.applyWeights(this.skeleton.bones)
+    const { phrase, pose, skeleton } = this
+    pose.resetWeights()
+    phrase.applyToWeights(pose.weights, easeCubicInOut)
+    pose.applyWeights(skeleton.bones)
   },
 
   renderSkin () {},

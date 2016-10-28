@@ -96,7 +96,7 @@ test('PhraseAnimation - update state', (t) => {
   const animTick = createTick(anim, 'update')
   const phraseState = createPhraseState(words)
 
-  anim.sequence = phrase
+  anim.setSequence(phrase)
 
   animTick(3)
   t.deepEqual(anim.statePrev, phraseState(0, 0, 0, 0, 1),
@@ -155,7 +155,7 @@ test('PhraseAnimation - update progress', (t) => {
   const anim = new PhraseAnimation()
   const animTick = createTick(anim, 'update')
 
-  anim.sequence = phrase
+  anim.setSequence(phrase)
 
   animTick(10)
   t.deepEqual(anim.progress, phraseProgress(9 / 34, 9 / 19, 9 / 9),
@@ -187,7 +187,7 @@ test('PhraseAnimation - apply shape weights', (t) => {
   const weights = createWeights(6)
   const animTick = createTick(anim, 'update')
 
-  anim.sequence = phrase
+  anim.setSequence(phrase)
 
   animTick(10)
   resetWeights(weights)

@@ -1,19 +1,8 @@
-import { MOUTH_FRAMES_SHAPE_MAP } from '../constants/animation'
 import { inherit } from '../utils/ctor'
 import { clamp } from '../utils/math'
 
-// TODO: Add easings to tween utils
-// function easeInOut (k) {
-//   if ((k *= 2) < 1) return 0.5 * k * k
-//   return -0.5 * (--k * (k - 2) - 1)
-// }
-
-export function PhraseAnimation () {
-  this.sequence = null
-  this.frame = 0
-  this.progress = this.createProgress()
-  this.state = this.createState()
-  this.statePrev = this.createState()
+export function PhraseAnimation (sequence) {
+  if (sequence) this.setSequence(sequence)
 }
 
 inherit(null, PhraseAnimation, {
@@ -33,6 +22,15 @@ inherit(null, PhraseAnimation, {
       syllable: 0,
       shape: 0
     }
+  },
+
+  setSequence (sequence) {
+    if (sequence === this.sequence) return
+    this.sequence = sequence
+    this.frame = 0
+    this.progress = this.createProgress()
+    this.state = this.createState()
+    this.statePrev = this.createState()
   },
 
   update () {
@@ -103,9 +101,11 @@ inherit(null, PhraseAnimation, {
     }
   },
 
-  applyToWeights (weights) {
+  applyToWeights (weights, easing = easingNone) {
     const { progress, state, statePrev } = this
-    const shapeProgress = clamp(0, 1, progress.shape)
+    if (!progress) return
+
+    const shapeProgress = easing(clamp(0, 1, progress.shape))
     const weightPrev = statePrev.weightShape
     const weightNext = state.weightShape
     const framePrev = statePrev.frameShape
@@ -116,8 +116,7 @@ inherit(null, PhraseAnimation, {
   }
 })
 
-export function parseWord (word, shapeMap_) {
-  const shapeMap = shapeMap_ || MOUTH_FRAMES_SHAPE_MAP
+export function parseWord (word, shapeMap) {
   const syllables = word.syllables
     .map((syllable) => {
       const { duration, shape, weight } = syllable
@@ -159,7 +158,7 @@ function createSpacerWord (duration, weight = 1) {
     duration,
     syllables: [{
       duration,
-      shapeFrames: [0],
+      shapeFrames: [0, 0],
       start: 0,
       weight
     }]
@@ -171,7 +170,7 @@ export function spacePhrase (sequence) {
 
   let allWords = []
   for (let i = 0; i < words.length; i++) {
-    const duration = Math.round(Math.random() * 8 + 4)
+    const duration = Math.round(Math.random() * 8 + 8)
     allWords.push(
       createSpacerWord(duration),
       words[i])
@@ -187,6 +186,10 @@ export function spacePhrase (sequence) {
     loop,
     words: allWords
   }
+}
+
+function easingNone (v) {
+  return v
 }
 
 function mapShapeToFrames (shape, frames) {
