@@ -1,24 +1,19 @@
 import { MOUTH_FRAMES_SHAPE_MAP } from '../constants/animation'
 import { inherit } from '../utils/ctor'
+import { clamp } from '../utils/math'
+
+// TODO: Add easings to tween utils
+// function easeInOut (k) {
+//   if ((k *= 2) < 1) return 0.5 * k * k
+//   return -0.5 * (--k * (k - 2) - 1)
+// }
 
 export function PhraseAnimation () {
   this.phrase = null
   this.frame = 0
-  this.progress = {
-    word: 0,
-    syllable: 0,
-    shape: 0
-  }
-  this.state = {
-    indexWord: 0,
-    indexSyllable: 0,
-    indexShape: 0
-  }
-  this.statePrev = {
-    indexWord: 0,
-    indexSyllable: 0,
-    indexShape: 0
-  }
+  this.progress = this.createProgress()
+  this.state = this.createState()
+  this.statePrev = this.createState()
 }
 
 Object.assign(PhraseAnimation, {
@@ -61,18 +56,39 @@ Object.assign(PhraseAnimation, {
 })
 
 inherit(null, PhraseAnimation, {
+  createState () {
+    return {
+      indexWord: 0,
+      indexSyllable: 0,
+      indexShape: 0,
+      frameShape: 0,
+      weightSyllable: 0
+    }
+  },
+
+  createProgress () {
+    return {
+      word: 0,
+      syllable: 0,
+      shape: 0
+    }
+  },
+
   update () {
     const { phrase, progress, state, statePrev } = this
     if (!phrase) return
 
     const { duration, loop, words } = phrase
+    const indexWordPrev = state.indexWord
+    const indexSyllablePrev = state.indexSyllable
     const indexShapePrev = state.indexShape
+    const frameShapePrev = state.frameShape
+    const weightSyllablePrev = state.weightSyllable
 
     let frame = this.frame++
     if (frame > duration - 1) {
       if (!loop) return
       frame = this.frame = 0
-      Object.assign(statePrev, state)
       state.indexWord = 0
       state.indexSyllable = 0
       state.indexShape = 0
@@ -80,7 +96,6 @@ inherit(null, PhraseAnimation, {
 
     let word = words[state.indexWord]
     if (frame > word.start + word.duration - 1) {
-      Object.assign(statePrev, state)
       word = words[++state.indexWord]
       state.indexSyllable = 0
       state.indexShape = 0
@@ -88,7 +103,6 @@ inherit(null, PhraseAnimation, {
 
     let syllable = word.syllables[state.indexSyllable]
     if (frame > word.start + syllable.start + syllable.duration - 1) {
-      Object.assign(statePrev, state)
       syllable = word.syllables[++state.indexSyllable]
       state.indexShape = 0
     }
@@ -109,8 +123,26 @@ inherit(null, PhraseAnimation, {
     progress.syllable = syllableProgress
     progress.shape = shapeProgress
 
-    statePrev.indexShape = indexShapePrev
     state.indexShape = indexShape
+    state.frameShape = shapeFrames[indexShape]
+    state.weightSyllable = syllable.weight
+
+    if (state.indexWord !== indexWordPrev) {
+      statePrev.indexWord = indexWordPrev
+    }
+
+    if (state.indexSyllable !== indexSyllablePrev) {
+      statePrev.indexSyllable = indexSyllablePrev
+    }
+
+    if (state.weightSyllable !== weightSyllablePrev) {
+      statePrev.weightSyllable = weightSyllablePrev
+    }
+
+    if (indexShape !== indexShapePrev) {
+      statePrev.indexShape = indexShapePrev
+      statePrev.frameShape = frameShapePrev
+    }
   },
 
   getShape (phrase, state) {
@@ -118,12 +150,19 @@ inherit(null, PhraseAnimation, {
     return phrase.words[indexWord].syllables[indexSyllable].shapeFrames[indexShape]
   },
 
-  // TODO: Apply phrase state to pose weights
-  applyToWeights (weights) {}
+  applyToWeights (weights) {
+    const { progress, state, statePrev } = this
+    const shapeProgress = clamp(0, 1, progress.shape)
+    const framePrev = statePrev.frameShape
+    const frameNext = state.frameShape
+
+    weights[framePrev] += 1 - shapeProgress
+    weights[frameNext] += shapeProgress
+  }
 })
 
 function mapShapeToFrames (shape, frames) {
-  return shape.split(',').map((sound) => frames[sound] || 0)
+  return shape.split('-').map((sound) => frames[sound] || 0)
 }
 
 function mapStart (item, index, list) {
