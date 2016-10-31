@@ -74,6 +74,8 @@ inherit(null, PhraseAnimation, {
     const syllableProgress = (frame - syllableStart) / (syllable.duration - 1)
 
     const indexShape = Math.round(syllableProgress * (shapeFrames.length - 1))
+    const frameShape = shapeFrames[indexShape]
+
     const shapeDuration = syllable.duration / shapeFrames.length
     const shapeStart = syllableStart + Math.floor(indexShape * shapeDuration)
     const shapeProgress = (frame - shapeStart) / (shapeDuration - 1)
@@ -83,7 +85,7 @@ inherit(null, PhraseAnimation, {
     progress.shape = shapeProgress
 
     state.indexShape = indexShape
-    state.frameShape = shapeFrames[indexShape]
+    state.frameShape = frameShape
     state.weightShape = syllable.weight
 
     if (state.indexWord !== indexWordPrev) {
@@ -94,7 +96,7 @@ inherit(null, PhraseAnimation, {
       statePrev.indexSyllable = indexSyllablePrev
     }
 
-    if (indexShape !== indexShapePrev) {
+    if (frameShape !== frameShapePrev || indexShape !== indexShapePrev) {
       statePrev.indexShape = indexShapePrev
       statePrev.frameShape = frameShapePrev
       statePrev.weightShape = weightShapePrev
@@ -158,7 +160,7 @@ function createSpacerWord (duration, weight = 1) {
     duration,
     syllables: [{
       duration,
-      shapeFrames: [0, 0],
+      shapeFrames: [0],
       start: 0,
       weight
     }]
@@ -170,7 +172,7 @@ export function spacePhrase (sequence) {
 
   let allWords = []
   for (let i = 0; i < words.length; i++) {
-    const duration = Math.round(Math.random() * 8 + 8)
+    const duration = Math.round(Math.random() * 4 + 8)
     allWords.push(
       createSpacerWord(duration),
       words[i])

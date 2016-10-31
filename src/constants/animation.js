@@ -2,10 +2,10 @@
 export const MOUTH_FRAMES = [
   '_', // Create blank frame
   'A-I',
-  'L-N-D-T', // Probably add unique frames for N, D, T
+  'L-N-D-T', // Probably add frames for N, D, T
   'EE',
-  'S',
-  'O-R', // Add unique frome for R
+  'CH-S', // Add frame for CH
+  'O-R', // Add frame for R
   'OO-U',
   'W-Q',
   'M-B-P',

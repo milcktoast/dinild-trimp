@@ -7,7 +7,7 @@ import { resolve } from 'path'
 import { inherit } from '../utils/ctor'
 import { loadModel, loadSkin, loadTexture } from '../utils/model-load'
 import { parseModel, parseSkin } from '../utils/model-parse'
-import { easeCubicInOut } from '../utils/tween'
+import { easeQuadraticInOut } from '../utils/tween'
 import { Entity } from '../mixins/Entity'
 import { PoseAnimation } from '../animations/PoseAnimation'
 import { PhraseAnimation } from '../animations/PhraseAnimation'
@@ -106,7 +106,7 @@ inherit(null, Dinild, Entity, {
   updateBones () {
     const { phrase, pose, skeleton } = this
     pose.resetWeights()
-    phrase.applyToWeights(pose.weights, easeCubicInOut)
+    phrase.applyToWeights(pose.weights, easeQuadraticInOut)
     pose.applyWeights(skeleton.bones)
   },
 

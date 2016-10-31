@@ -37,6 +37,19 @@ export function stepTween (context, defaultStep) {
   }
 }
 
+export function easeQuadraticInOut (k) {
+  if ((k *= 2) < 1) return 0.5 * k * k
+  return -0.5 * (--k * (k - 2) - 1)
+}
+
+export function easeCubicIn (k) {
+  return k * k * k
+}
+
+export function easeCubicOut (k) {
+  return --k * k * k + 1
+}
+
 export function easeCubicInOut (k) {
   if ((k *= 2) < 1) return 0.5 * k * k
   return -0.5 * (--k * (k - 2) - 1)

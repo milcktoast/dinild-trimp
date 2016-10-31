@@ -15,17 +15,17 @@ export const WORDS = [
   {
     name: 'deal',
     syllables: [{
-      duration: 24,
+      duration: 27,
       shape: 'D-EE-L',
-      weight: 1
+      weight: 0.7
     }]
   },
 
   {
     name: 'honestly',
     syllables: [{
-      duration: 8,
-      shape: 'A-A',
+      duration: 6,
+      shape: 'A',
       weight: 0.7
     }, {
       duration: 12,
@@ -33,7 +33,7 @@ export const WORDS = [
       weight: 0.7
     }, {
       duration: 18,
-      shape: 'T-EE',
+      shape: 'T-L-EE',
       weight: 1
     }]
   },
