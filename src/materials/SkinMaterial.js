@@ -19,7 +19,7 @@ import { RenderPass } from '../post-processing/RenderPass'
 import { ShaderPass } from '../post-processing/ShaderPass'
 import { TexturePass } from '../post-processing/TexturePass'
 
-export function SkinMaterial (params) {
+export function SkinMaterial (params = {}) {
   ShaderMaterial.call(this)
 
   this.color = new Color(0xffffff)
@@ -47,18 +47,18 @@ export function SkinMaterial (params) {
   })
 }
 
-const UNIFORM_KEYS = [
-  'color',
-  'map',
-  'normalMap',
-  'normalScale',
-  'roughness',
-  'specular',
-  'specularBrightness',
-  'passID'
-]
-
 extendShaderMaterial(SkinMaterial, {
+  _uniformKeys: [
+    'color',
+    'map',
+    'normalMap',
+    'normalScale',
+    'roughness',
+    'specular',
+    'specularBrightness',
+    'passID'
+  ],
+
   createMaterialUV (params) {
     return new SkinMaterial({
       ...params,
@@ -124,7 +124,7 @@ extendShaderMaterial(SkinMaterial, {
   },
 
   refreshUniforms () {
-    UNIFORM_KEYS.forEach((key) => {
+    this._uniformKeys.forEach((key) => {
       this.uniforms[key].value = this[key]
     })
   },
