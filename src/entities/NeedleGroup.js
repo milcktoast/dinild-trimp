@@ -2,28 +2,30 @@ import {
   BufferGeometry,
   BufferAttribute,
   Matrix3,
-  MeshPhongMaterial,
   SkinnedMesh
 } from 'three'
 
 import { inherit } from '../utils/ctor'
 import { copyVectorToAttribute } from '../utils/vector'
 import { Entity } from '../mixins/Entity'
+import { CrystalMaterial } from '../materials/CrystalMaterial'
 
 export function NeedleGroup (params) {
   this.instanceCount = 0
   this.maxInstances = 50
   this.verticesPerInstance = 36
   this.normalMatrix = new Matrix3()
+
   this.castShadow = params.castShadow
   this.receiveShadow = params.receiveShadow
   this.material = this.createMaterial()
+  this.renderMaterial = this.material.render.bind(this.material)
 }
 
 inherit(null, NeedleGroup, Entity, {
   createMaterial () {
-    return new MeshPhongMaterial({
-      color: 0xffffff,
+    return new CrystalMaterial({
+      // color: 0xffffff,
       skinning: true,
       transparent: true
     })
@@ -107,5 +109,11 @@ inherit(null, NeedleGroup, Entity, {
     uvItem.needsUpdate = true
     skinIndexItem.needsUpdate = true
     skinWeightItem.needsUpdate = true
+  },
+
+  renderMaterial () {},
+
+  render (renderer, scene, camera) {
+    this.renderMaterial(renderer, scene, camera)
   }
 })
