@@ -1,7 +1,6 @@
 import {
   BufferGeometry,
   BufferAttribute,
-  Matrix3,
   SkinnedMesh
 } from 'three'
 
@@ -14,7 +13,6 @@ export function NeedleGroup (params) {
   this.instanceCount = 0
   this.maxInstances = 50
   this.verticesPerInstance = 36
-  this.normalMatrix = new Matrix3()
 
   this.castShadow = params.castShadow
   this.receiveShadow = params.receiveShadow
@@ -73,9 +71,7 @@ inherit(null, NeedleGroup, Entity, {
     const itemFrom = entity.item
     const { skinIndex, skinWeight } = entity
     const { item, verticesPerInstance } = this
-
-    const positionMatrix = itemFrom.matrixWorld
-    const normalMatrix = this.normalMatrix.getNormalMatrix(itemFrom.matrixWorld)
+    const { matrixWorld } = itemFrom
 
     const geomFrom = itemFrom.geometry
     const geomItem = item.geometry
@@ -98,9 +94,7 @@ inherit(null, NeedleGroup, Entity, {
       copyVectorToAttribute(skinWeight, skinWeightItem, offset)
     }
 
-    positionMatrix.applyToBuffer(positionItem,
-      instanceCount * verticesPerInstance, verticesPerInstance)
-    normalMatrix.applyToBuffer(normalItem,
+    matrixWorld.applyToBuffer(positionItem,
       instanceCount * verticesPerInstance, verticesPerInstance)
 
     geomItem.drawRange.count = (instanceCount + 1) * verticesPerInstance
