@@ -1,4 +1,7 @@
-import { ShaderMaterial } from 'three'
+import {
+  ShaderChunk,
+  ShaderMaterial
+} from 'three'
 
 export function extendShaderMaterial (Ctor, proto = {}) {
   Ctor.prototype = Object.create(ShaderMaterial.prototype)
@@ -13,4 +16,9 @@ export function createUniforms (uniforms) {
     wrapped[key] = { value: uniforms[key] }
   })
   return wrapped
+}
+
+export function injectShaderChunk (name, source) {
+  if (ShaderChunk[name] !== undefined) return
+  ShaderChunk[name] = source
 }

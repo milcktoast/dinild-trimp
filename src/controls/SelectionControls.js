@@ -153,7 +153,7 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     if (isPointerDragging && cursorState.offset < -1) {
       const { start, end } = this.updateContext(event, 'end')
       const { face, point } = end.intersection
-      this.skinCursor(face)
+      this.skinCursor(face, point)
       this.resetCursor(point, face.normal, 2)
       this.pointerSelect(start)
     } else {
@@ -212,11 +212,32 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     cursorState.normal.copy(normal)
   },
 
-  // TODO: Select closest face index per intersection
-  skinCursor (face) {
+  _faceNames: ['a', 'b', 'c'],
+
+  findClosestFaceIndex (face, point) {
+    const { targetEntity } = this
+    const { geometry } = targetEntity.pointerTarget
+    const positionAttr = geometry.getAttribute('position')
+
+    let dist = Infinity
+    let closestIndex = -1
+    this._faceNames.forEach((key) => {
+      const index = face[key]
+      const fPoint = copyAttributeToVector(scratchVec3A, positionAttr, index)
+      const fDist = point.distanceToSquared(fPoint)
+      if (fDist < dist) {
+        dist = fDist
+        closestIndex = index
+      }
+    })
+
+    return closestIndex
+  },
+
+  skinCursor (face, point) {
     const { cursorEntity, targetEntity } = this
     const { skinIndex, skinWeight } = cursorEntity
-    const index = face.a
+    const index = this.findClosestFaceIndex(face, point)
 
     const geometry = targetEntity.pointerTarget.geometry
     const skinIndexAttr = geometry.getAttribute('skinIndex')

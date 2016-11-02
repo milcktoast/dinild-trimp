@@ -1,29 +1,28 @@
 import {
   BufferGeometry,
   BufferAttribute,
-  Matrix3,
-  MeshPhongMaterial,
   SkinnedMesh
 } from 'three'
 
 import { inherit } from '../utils/ctor'
-import { copyVectorToAttribute } from '../utils/vector'
 import { Entity } from '../mixins/Entity'
+import { CrystalMaterial } from '../materials/CrystalMaterial'
 
 export function NeedleGroup (params) {
   this.instanceCount = 0
   this.maxInstances = 50
   this.verticesPerInstance = 36
-  this.normalMatrix = new Matrix3()
+
   this.castShadow = params.castShadow
   this.receiveShadow = params.receiveShadow
   this.material = this.createMaterial()
+  this.renderMaterial = this.material.render.bind(this.material)
 }
 
 inherit(null, NeedleGroup, Entity, {
   createMaterial () {
-    return new MeshPhongMaterial({
-      color: 0xffffff,
+    return new CrystalMaterial({
+      // color: 0xffffff,
       skinning: true,
       transparent: true
     })
@@ -71,9 +70,7 @@ inherit(null, NeedleGroup, Entity, {
     const itemFrom = entity.item
     const { skinIndex, skinWeight } = entity
     const { item, verticesPerInstance } = this
-
-    const positionMatrix = itemFrom.matrixWorld
-    const normalMatrix = this.normalMatrix.getNormalMatrix(itemFrom.matrixWorld)
+    const { matrixWorld } = itemFrom
 
     const geomFrom = itemFrom.geometry
     const geomItem = item.geometry
@@ -92,13 +89,11 @@ inherit(null, NeedleGroup, Entity, {
       positionItem.copyAt(offset, positionFrom, i)
       normalItem.copyAt(offset, normalFrom, i)
       uvItem.copyAt(offset, uvFrom, i)
-      copyVectorToAttribute(skinIndex, skinIndexItem, offset)
-      copyVectorToAttribute(skinWeight, skinWeightItem, offset)
+      skinIndexItem.setXYZW(offset, skinIndex.x, skinIndex.y, skinIndex.z, skinIndex.w)
+      skinWeightItem.setXYZW(offset, skinWeight.x, skinWeight.y, skinWeight.z, skinWeight.w)
     }
 
-    positionMatrix.applyToBuffer(positionItem,
-      instanceCount * verticesPerInstance, verticesPerInstance)
-    normalMatrix.applyToBuffer(normalItem,
+    matrixWorld.applyToBuffer(positionItem,
       instanceCount * verticesPerInstance, verticesPerInstance)
 
     geomItem.drawRange.count = (instanceCount + 1) * verticesPerInstance
@@ -107,5 +102,11 @@ inherit(null, NeedleGroup, Entity, {
     uvItem.needsUpdate = true
     skinIndexItem.needsUpdate = true
     skinWeightItem.needsUpdate = true
+  },
+
+  renderMaterial () {},
+
+  render (renderer, scene, camera) {
+    this.renderMaterial(renderer, scene, camera)
   }
 })

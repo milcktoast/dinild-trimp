@@ -54,6 +54,11 @@ function createScene () {
   scene.fog = new Fog()
   scene.helpers = new Group()
   scene.add(scene.helpers)
+  tasks.add(() => {
+    scene.helpers.children.forEach((child) => {
+      child.update()
+    })
+  }, 'update')
   return scene
 }
 

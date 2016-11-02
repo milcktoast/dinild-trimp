@@ -12,18 +12,10 @@ export function copyVector (a, b) {
   return a
 }
 
-export function copyVectorToAttribute (vector, attr, attrIndex = 0) {
-  const attrOffset = attrIndex * attr.itemSize
-  for (let i = 0; i < attr.itemSize; i++) {
-    attr.array[attrOffset + i] = vector.getComponent(i)
-  }
-  return attr
-}
-
 export function copyAttributeToVector (vector, attr, attrIndex = 0) {
   const attrOffset = attrIndex * attr.itemSize
   for (let i = 0; i < attr.itemSize; i++) {
     vector.setComponent(i, attr.array[attrOffset + i])
   }
-  return attr
+  return vector
 }

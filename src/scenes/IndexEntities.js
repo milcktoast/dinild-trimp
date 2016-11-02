@@ -68,6 +68,8 @@ inherit(null, IndexEntities, {
   },
 
   render (renderer, scene, camera) {
+    this.needles.render(renderer, scene, camera)
+    this.needleCursor.render(renderer, scene, camera)
     this.dinild.render(renderer, scene, camera)
   }
 })
