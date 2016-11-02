@@ -5,7 +5,6 @@ import {
 } from 'three'
 
 import { inherit } from '../utils/ctor'
-import { copyVectorToAttribute } from '../utils/vector'
 import { Entity } from '../mixins/Entity'
 import { CrystalMaterial } from '../materials/CrystalMaterial'
 
@@ -90,8 +89,8 @@ inherit(null, NeedleGroup, Entity, {
       positionItem.copyAt(offset, positionFrom, i)
       normalItem.copyAt(offset, normalFrom, i)
       uvItem.copyAt(offset, uvFrom, i)
-      copyVectorToAttribute(skinIndex, skinIndexItem, offset)
-      copyVectorToAttribute(skinWeight, skinWeightItem, offset)
+      skinIndexItem.setXYZW(offset, skinIndex.x, skinIndex.y, skinIndex.z, skinIndex.w)
+      skinWeightItem.setXYZW(offset, skinWeight.x, skinWeight.y, skinWeight.z, skinWeight.w)
     }
 
     matrixWorld.applyToBuffer(positionItem,
