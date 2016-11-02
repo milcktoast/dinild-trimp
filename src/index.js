@@ -10,6 +10,7 @@ import { RENDER_SETTINGS } from './constants/fidelity'
 import { createTaskManager } from './utils/task'
 import { createLoop } from './utils/loop'
 import { IndexCamera } from './scenes/IndexCamera'
+import { IndexInterface } from './scenes/IndexInterface'
 import { IndexLights } from './scenes/IndexLights'
 import { IndexEntities } from './scenes/IndexEntities'
 import { IndexSceneState } from './scenes/IndexSceneState'
@@ -17,8 +18,8 @@ import { IndexPhraseState } from './scenes/IndexPhraseState'
 
 const container = createContainer()
 const tasks = createTaskManager(
-  'load', 'populate', 'syncState',
-  'update', 'render', 'resize')
+  'load', 'inject', 'populate',
+  'syncState', 'update', 'render', 'resize')
 const renderer = createRenderer()
 const scene = createScene()
 const camera = createCamera()
@@ -43,9 +44,15 @@ function createRenderer () {
   })
   renderer.autoClear = false
   renderer.shadowMap.type = PCFSoftShadowMap
-  tasks.add(() => {
+  function resize () {
     renderer.setSize(window.innerWidth, window.innerHeight)
-  }, 'resize')
+  }
+  tasks.defer((container) => {
+    container.appendChild(renderer.domElement)
+    resize()
+    return Promise.resolve()
+  }, 'inject')
+  tasks.add(resize, 'resize')
   return renderer
 }
 
@@ -98,6 +105,12 @@ window.addEventListener('resize', (event) => {
   tasks.run('resize', event)
 }, false)
 
+// Interface
+
+const components = IndexInterface.create()
+tasks.defer(components, 'inject')
+tasks.add(components, 'render')
+
 // Lights
 
 const lights = IndexLights.create()
@@ -136,13 +149,16 @@ tasks.add(phrase, 'syncState')
 // Start
 
 function inject () {
-  container.appendChild(renderer.domElement)
   document.body.appendChild(container)
-  tasks.run('resize')
+  tasks.flush('inject', container).then(() => {
+    tasks.run('resize')
+  })
 }
 
 function load () {
-  tasks.flush('load')
+  tasks.flush('load').then(() => {
+    components.hideLoader()
+  })
 }
 
 function start (settings) {
@@ -159,7 +175,7 @@ function populate (settings) {
 
 inject()
 setTimeout(() => {
-  const settings = RENDER_SETTINGS.LOW
+  const settings = RENDER_SETTINGS.MED
   load()
   start(settings)
   populate(settings)
