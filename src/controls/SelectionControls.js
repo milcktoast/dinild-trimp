@@ -153,7 +153,6 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     if (isPointerDragging && cursorState.offset < -1) {
       const { start, end } = this.updateContext(event, 'end')
       const { face, point } = end.intersection
-      this.skinCursor(face, point)
       this.resetCursor(point, face.normal, 2)
       this.pointerSelect(start)
     } else {
@@ -175,6 +174,8 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     eventAdd.point = point
     eventAdd.uv = uv
     eventAdd.which = this.findSelectionAt(uv)
+
+    this.skinCursor(face, point)
     this.dispatchEvent(eventAdd)
   },
 
