@@ -24,6 +24,7 @@ export function CrystalMaterial (params = {}) {
 
 extendShaderMaterial(CrystalMaterial, {
   _uniformKeys: [
+    'color',
     'opacity',
     'time'
   ],
