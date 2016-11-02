@@ -16,6 +16,7 @@
   "author": "Jay Weeks <jay.patrick.weeks@gmail.com> (http://jayweeks.com)",
   "license": "Artistic-2.0",
   "devDependencies": {
+    "audiosprite": "^0.6.0",
     "babel-eslint": "^7.1.0",
     "babel-plugin-external-helpers": "^6.8.0",
     "babel-plugin-static-fs": "^1.1.0",
@@ -39,6 +40,7 @@
   },
   "dependencies": {
     "es6-promise": "^4.0.5",
+    "howler": "^2.0.1",
     "isomorphic-fetch": "^2.2.1",
     "three": "^0.82.0"
   }

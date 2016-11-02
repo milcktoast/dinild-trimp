@@ -1,3 +1,4 @@
+import { EventDispatcher } from 'three'
 import { inherit } from '../utils/ctor'
 import { clamp } from '../utils/math'
 
@@ -5,7 +6,12 @@ export function PhraseAnimation (sequence) {
   if (sequence) this.setSequence(sequence)
 }
 
-inherit(null, PhraseAnimation, {
+inherit(null, PhraseAnimation, EventDispatcher.prototype, {
+  _events: {
+    wordStart: { type: 'wordStart' },
+    wordEnd: { type: 'wordEnd' }
+  },
+
   createState () {
     return {
       indexWord: 0,
@@ -89,7 +95,14 @@ inherit(null, PhraseAnimation, {
     state.weightShape = syllable.weight
 
     if (state.indexWord !== indexWordPrev) {
+      const wordStartEvent = this._events.wordStart
+      const wordEndEvent = this._events.wordEnd
+
       statePrev.indexWord = indexWordPrev
+      wordStartEvent.word = words[state.indexWord]
+      wordEndEvent.word = words[statePrev.indexWord]
+      this.dispatchEvent(wordEndEvent)
+      this.dispatchEvent(wordStartEvent)
     }
 
     if (state.indexSyllable !== indexSyllablePrev) {

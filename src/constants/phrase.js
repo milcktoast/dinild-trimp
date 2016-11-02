@@ -2,13 +2,13 @@ export const WORDS = [
   {
     name: 'childhood',
     syllables: [{
-      duration: 30,
+      duration: 14,
       shape: 'CH-I-L',
-      weight: 1
+      weight: 0.8
     }, {
-      duration: 24,
+      duration: 17,
       shape: 'H-OO-D',
-      weight: 0.7
+      weight: 0.6
     }]
   },
 

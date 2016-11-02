@@ -5,6 +5,7 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
 import { inherit } from '../utils/ctor'
+import { loadAudioSprite } from '../utils/audio-load'
 import { loadModel, loadSkin, loadTexture } from '../utils/model-load'
 import { parseModel, parseSkin } from '../utils/model-parse'
 import { easeQuadraticInOut } from '../utils/tween'
@@ -18,6 +19,8 @@ const MODEL_ASSET_PATH = './assets/models/dinild'
 const TEXTURE_ASSET_PATH = './assets/textures/dinild'
 const MODEL_META = JSON.parse(
   readFileSync(resolve(__dirname, '../../assets/models/dinild/meta.json'), 'utf8'))
+const WORDS_META = JSON.parse(
+  readFileSync(resolve(__dirname, '../../assets/audio_sprite/words.json'), 'utf8'))
 
 export function Dinild (params) {
   this.castShadow = params.castShadow
@@ -46,6 +49,13 @@ Object.assign(Dinild, {
   loadSkin () {
     return loadSkin(MODEL_ASSET_PATH, MODEL_META)
       .then((skinData) => parseSkin(skinData, MODEL_META))
+  },
+
+  loadAudio () {
+    if (!Dinild._loadAudio) {
+      Dinild._loadAudio = loadAudioSprite(WORDS_META)
+    }
+    return Dinild._loadAudio
   }
 })
 
@@ -94,7 +104,32 @@ inherit(null, Dinild, Entity, {
       item.bind(skeleton)
 
       return this
+    }).then(() => {
+      this.createAudio()
+      return this
     })
+  },
+
+  createAudio () {
+    Dinild.loadAudio().then((words) => {
+      this.words = words
+      this.phrase.addEventListener('wordStart', this.onPhraseWordStart.bind(this))
+      this.phrase.addEventListener('wordEnd', this.onPhraseWordEnd.bind(this))
+    })
+  },
+
+  onPhraseWordStart (event) {
+    const { word } = event
+    if (word.name === 'spacer') return
+    console.log('word start', word.name)
+    this.words.play(word.name)
+  },
+
+  onPhraseWordEnd (event) {
+    // const { word } = event
+    // if (word.name === 'spacer') return
+    // console.log('word end', word.name)
+    // this.words.stop(word.name)
   },
 
   update () {
