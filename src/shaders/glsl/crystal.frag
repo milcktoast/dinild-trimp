@@ -19,10 +19,12 @@ void main() {
   vec3 accumColor = color;
 
   vec2 coord = gl_FragCoord.xy;
-  float n0 = snoise(vec3(coord * 0.0025 + 0.5, time));
-  float n1 = snoise(vec3(coord * 0.005 + 0.2, time));
-  float n2 = snoise(vec3(coord * 0.01 + 0.1, time));
-  float n3 = snoise(vec3(coord * 0.02, time));
+  // TODO: Sync scale with camera control settings
+  float nScale = (smoothstep(18.0, 24.0, length(cameraPosition))) * 5.0;
+  float n0 = snoise(vec3(coord * nScale * 0.0025 + 0.5, time));
+  float n1 = snoise(vec3(coord * nScale * 0.005 + 0.2, time));
+  float n2 = snoise(vec3(coord * nScale * 0.01 + 0.1, time));
+  float n3 = snoise(vec3(coord * nScale * 0.02, time));
 
   accumColor += n0 * vec3(0.3, 0.3, 0.9);
   accumColor += n1 * vec3(0.4, 0.3, 0.7);
