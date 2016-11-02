@@ -76,18 +76,16 @@ inherit(null, SceneState, {
   },
 
   addSkeletonHelper (mesh) {
-    const { scene, tasks } = this.context
+    const { scene } = this.context
     const helper = new SkeletonHelper(mesh)
     mesh.skeletonHelper = helper
     scene.helpers.add(helper)
-    tasks.add(helper, 'update')
   },
 
   addSpotlightHelper (light) {
-    const { scene, tasks } = this.context
+    const { scene } = this.context
     const helper = new SpotLightHelper(light)
     light.helper = helper
     scene.helpers.add(helper)
-    tasks.add(helper, 'update')
   }
 })

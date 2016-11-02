@@ -151,7 +151,7 @@ inherit(SceneState, IndexSceneState, {
   updateDinild (nextState) {
     const { dinild } = this.context.entities
     if (!dinild) return
-    // this.updatePose(dinild.pose, dinild.item, nextState.pose)
+    this.updatePose(dinild.pose, dinild.item, nextState.pose)
     this.updateSkinMaterial(dinild.material, nextState.skin)
   }
 })
