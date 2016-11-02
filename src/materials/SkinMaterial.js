@@ -45,6 +45,7 @@ export function SkinMaterial (params = {}) {
     fog: true,
     ...params
   })
+  this.refreshUniforms()
 }
 
 extendShaderMaterial(SkinMaterial, {

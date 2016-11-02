@@ -20,6 +20,7 @@ export function CrystalMaterial (params = {}) {
     fog: true,
     ...params
   })
+  this.refreshUniforms()
 }
 
 extendShaderMaterial(CrystalMaterial, {
