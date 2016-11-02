@@ -49,19 +49,17 @@ inherit(null, NeedleGroup, Entity, {
   },
 
   createItem () {
-    return Promise.resolve().then(() => {
-      const { castShadow, material, receiveShadow } = this
-      const geometry = this.createGeometry()
-      const item = new SkinnedMesh(geometry, material)
+    const { castShadow, material, receiveShadow } = this
+    const geometry = this.createGeometry()
+    const item = new SkinnedMesh(geometry, material)
 
-      Object.assign(item, {
-        castShadow,
-        receiveShadow
-      })
-
-      this.item = item
-      return this
+    Object.assign(item, {
+      castShadow,
+      receiveShadow
     })
+
+    this.item = item
+    return Promise.resolve(this)
   },
 
   // TODO: Fix skin weight / pose jitter when adding instance

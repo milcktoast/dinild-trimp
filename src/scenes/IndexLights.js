@@ -10,13 +10,11 @@ export function IndexLights () {}
 
 inherit(null, IndexLights, {
   populate (scene, camera, settings) {
-    return Promise.resolve().then(() => {
-      this.top = createSpotLight(settings)
-      this.bottom = createSpotLight(settings)
-      this.ambient = createHemiLight(settings)
-      scene.add(this.top, this.bottom, this.ambient)
-      return this
-    })
+    this.top = createSpotLight(settings)
+    this.bottom = createSpotLight(settings)
+    this.ambient = createHemiLight(settings)
+    scene.add(this.top, this.bottom, this.ambient)
+    return Promise.resolve(this)
   },
 
   update (frame, state) {

@@ -45,7 +45,7 @@ inherit(null, LoadSpinner, {
 
   render () {
     const { ctx, pxRatio, rects, size, state } = this
-    if (state.opacity < 0) return
+    if (state.opacity < 0.001) return
 
     ctx.fillStyle = '#fff'
     ctx.setTransform(pxRatio, 0, 0, pxRatio, 0, 0)
