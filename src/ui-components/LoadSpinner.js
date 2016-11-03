@@ -26,6 +26,8 @@ inherit(null, LoadSpinner, {
     element.width = size * pxRatio
     element.height = size * pxRatio
 
+    ctx.fillStyle = '#fff'
+
     Object.assign(element.style, {
       position: 'absolute',
       top: offset + 'px',
@@ -47,7 +49,6 @@ inherit(null, LoadSpinner, {
     const { ctx, pxRatio, rects, size, state } = this
     if (state.opacity < 0.001) return
 
-    ctx.fillStyle = '#fff'
     ctx.setTransform(pxRatio, 0, 0, pxRatio, 0, 0)
     ctx.clearRect(0, 0, size, size)
 

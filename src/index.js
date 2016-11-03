@@ -135,7 +135,8 @@ tasks.add(index, 'syncState')
 
 const phrase = IndexPhraseState.create({
   camera,
-  entities
+  entities,
+  components
 })
 tasks.add(phrase, 'syncState')
 

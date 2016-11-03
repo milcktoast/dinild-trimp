@@ -16,7 +16,9 @@ inherit(null, IndexPhraseState, {
   createState () {
     return {
       activeWord: null,
+      activePosition: null,
       selectedWords: [],
+      selectedPositions: [],
       phraseSequence: null
     }
   },
@@ -34,16 +36,20 @@ inherit(null, IndexPhraseState, {
 
   onSelectionAdd (event) {
     const { state } = this
-    const { which } = event
+    const { uv, which } = event
 
     const activeWord = WORDS[which]
-    const selectedWords = state.selectedWords.concat(WORDS[which])
+    const activePosition = { x: uv.x, y: 1 - uv.y }
+    const selectedWords = state.selectedWords.concat(activeWord)
+    const selectedPositions = state.selectedPositions.concat(activePosition)
     const phraseSequence = spacePhrase(
       parsePhrase([activeWord], false, MOUTH_FRAMES_SHAPE_MAP))
 
     Object.assign(state, {
       activeWord,
+      activePosition,
       selectedWords,
+      selectedPositions,
       phraseSequence
     })
 
@@ -65,9 +71,18 @@ inherit(null, IndexPhraseState, {
   },
 
   updateState (nextState) {
-    const { dinild } = this.context.entities
+    const { state } = this
+    const { components, entities } = this.context
+    const { dinild } = entities
+    const { phraseMap } = components
     if (!dinild) return
-    if (!this.hasBoundPhrase) this.bindPhrase(dinild.phrase) // FIXME maybe
-    dinild.phrase.setSequence(this.state.phraseSequence)
+
+    // FIXME maybe
+    if (!this.hasBoundPhrase) {
+      this.bindPhrase(dinild.phrase)
+    }
+
+    dinild.phrase.setSequence(state.phraseSequence)
+    phraseMap.setPositions(state.selectedPositions)
   }
 })
