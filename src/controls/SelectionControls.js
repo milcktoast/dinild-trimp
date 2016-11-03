@@ -22,6 +22,7 @@ const scratchVec3B = new Vector3()
 
 export function SelectionControls (camera) {
   this.camera = camera
+  this.enableCursor = true
 
   this.cursorEntity = null
   this.targetEntity = null
@@ -172,9 +173,9 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
   },
 
   mouseMove (event) {
-    const { isPointerDown, isPointerDragging } = this
+    const { enableCursor, isPointerDown, isPointerDragging } = this
 
-    if (isPointerDown && isPointerDragging) {
+    if (enableCursor && isPointerDown && isPointerDragging) {
       const { start, drag } = this.updateContext(event, 'drag')
       this.dragCursorOffset(event, start, drag)
       event.preventDefault()

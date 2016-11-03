@@ -15,8 +15,9 @@ export function IndexPhraseState (context) {
 inherit(null, IndexPhraseState, {
   createState () {
     return {
-      phraseSequence: null,
-      words: []
+      activeWord: null,
+      selectedWords: [],
+      phraseSequence: null
     }
   },
 
@@ -25,18 +26,38 @@ inherit(null, IndexPhraseState, {
     controls.addEventListener('add', this.onSelectionAdd.bind(this))
   },
 
+  bindPhrase (phrase) {
+    phrase.addEventListener('sequenceStart', this.onSequenceStart.bind(this))
+    phrase.addEventListener('sequenceEnd', this.onSequenceEnd.bind(this))
+    this.hasBoundPhrase = true
+  },
+
   onSelectionAdd (event) {
     const { state } = this
-    const { words } = state
     const { which } = event
 
-    const nextWords = words.concat(WORDS[which])
-    state.phraseSequence = spacePhrase(parsePhrase(nextWords, false, MOUTH_FRAMES_SHAPE_MAP))
-    state.words = nextWords
+    const activeWord = WORDS[which]
+    const selectedWords = state.selectedWords.concat(WORDS[which])
+    const phraseSequence = spacePhrase(
+      parsePhrase([activeWord], false, MOUTH_FRAMES_SHAPE_MAP))
 
-    console.log(state.phraseSequence)
+    Object.assign(state, {
+      activeWord,
+      selectedWords,
+      phraseSequence
+    })
 
     this.syncState()
+  },
+
+  onSequenceStart (event) {
+    const { controls } = this.context.camera
+    controls.enableCursor = false
+  },
+
+  onSequenceEnd (event) {
+    const { controls } = this.context.camera
+    controls.enableCursor = true
   },
 
   syncState () {
@@ -46,6 +67,7 @@ inherit(null, IndexPhraseState, {
   updateState (nextState) {
     const { dinild } = this.context.entities
     if (!dinild) return
+    if (!this.hasBoundPhrase) this.bindPhrase(dinild.phrase) // FIXME maybe
     dinild.phrase.setSequence(this.state.phraseSequence)
   }
 })
