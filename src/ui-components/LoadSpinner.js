@@ -54,7 +54,9 @@ inherit(null, LoadSpinner, {
     const offset = state.frame++ * 0.25
     rects.forEach((pos, i) => {
       ctx.globalAlpha = (Math.sin(offset + i) * 0.5 + 0.5) * state.opacity
-      ctx.fillRect(pos[0], pos[1], 4, 4)
+      ctx.beginPath()
+      ctx.arc(pos[0] + 2, pos[1] + 2, 2, 0, Math.PI * 2)
+      ctx.fill()
     })
 
     factorTween('opacity', state, this, 0.2)
