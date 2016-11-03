@@ -9,6 +9,7 @@ import {
 import { RENDER_SETTINGS } from './constants/fidelity'
 import { createTaskManager } from './utils/task'
 import { createLoop } from './utils/loop'
+import { debounce } from './utils/function'
 import { IndexCamera } from './scenes/IndexCamera'
 import { IndexInterface } from './scenes/IndexInterface'
 import { IndexLights } from './scenes/IndexLights'
@@ -93,9 +94,9 @@ function createAnimationLoop () {
 
 // Events
 
-window.addEventListener('resize', (event) => {
+window.addEventListener('resize', debounce(50, (event) => {
   tasks.run('resize', event)
-}, false)
+}), false)
 
 // Interface
 
