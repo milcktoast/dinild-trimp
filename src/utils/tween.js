@@ -8,13 +8,14 @@ export function factorTween (name, context, target, factor) {
 }
 
 export const KEYS = {
-  Vector3: ['x', 'y', 'z']
+  Vector3: ['x', 'y', 'z'],
+  Spherical: ['radius', 'phi', 'theta']
 }
 
-export function factorTweenAll (keys, context, target, factor) {
+export function factorTweenAll (keys, name, context, target, factor) {
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i]
-    factorTween(key, context, target, factor)
+    factorTween(key, context[name], target[name], factor)
   }
 }
 
@@ -33,6 +34,18 @@ export function stepTween (name, context, target, step) {
 
   context[name] += step * dir
   return context[name]
+}
+
+// Easing funcs from https://github.com/tweenjs/tween.js
+// The MIT License
+// Copyright (c) 2010-2012 Tween.js authors.
+
+export function easeQuadraticIn (k) {
+  return k * k
+}
+
+export function easeQuadraticOut (k) {
+  return k * (2 - k)
 }
 
 export function easeQuadraticInOut (k) {

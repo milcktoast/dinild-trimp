@@ -1,47 +1,48 @@
 import {
   EventDispatcher,
   Raycaster,
+  Spherical,
   Vector2,
   Vector3
 } from 'three'
 
 import { inherit } from '../utils/ctor'
-import { bindAll } from '../utils/function'
-import { clamp } from '../utils/math'
+import { clamp, lerp } from '../utils/math'
 import { pointOnLine } from '../utils/ray'
 import { copyAttributeToVector } from '../utils/vector'
-import { factorTween, factorTweenAll, KEYS } from '../utils/tween'
+import {
+  easeQuadraticOut,
+  factorTween,
+  factorTweenAll,
+  KEYS
+} from '../utils/tween'
 
 const scratchVec3A = new Vector3()
 const scratchVec3B = new Vector3()
 
-export function SelectionControls (camera, element) {
+export function SelectionControls (camera) {
   this.camera = camera
-  this.bindElement(element)
 
   this.cursorEntity = null
   this.targetEntity = null
   this.targetOptionUVs = null
-
   this.targetCenter = new Vector3()
 
   this.size = new Vector2()
   this.raycaster = new Raycaster()
   this.context = {
-    move: this.createEventContext(),
     start: this.createEventContext(),
+    move: this.createEventContext(),
     drag: this.createEventContext(),
     end: this.createEventContext()
   }
 
   this.isPointerDown = false
   this.isPointerDragging = false
-  this.cursorState = {
-    position: new Vector3(),
-    normal: new Vector3(),
-    offset: 2,
-    opacity: 0
-  }
+
+  this.cursorStateTarget = this.createCursorState()
+  this.cameraState = this.createCameraState()
+  this.cameraStateTarget = this.createCameraState()
 }
 
 inherit(null, SelectionControls, EventDispatcher.prototype, {
@@ -51,17 +52,16 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     add: { type: 'add' }
   },
 
-  _elementEvents: [
+  _documentEvents: [
     'mouseDown', 'mouseMove', 'mouseUp'
   ],
 
-  bindElement (element_) {
-    const element = element_ || document
+  bindElement (element) {
     this.element = element
-    bindAll(this, ...this._elementEvents)
-    this._elementEvents.forEach((name) => {
-      element.addEventListener(name.toLowerCase(), this[name], false)
+    this._documentEvents.forEach((name) => {
+      document.addEventListener(name.toLowerCase(), this[name].bind(this), false)
     })
+    this.resize()
   },
 
   createEventContext () {
@@ -72,7 +72,24 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     }
   },
 
-  resize (event) {
+  createCursorState () {
+    return {
+      position: new Vector3(),
+      normal: new Vector3(),
+      offset: 2,
+      opacity: 0,
+      visible: false
+    }
+  },
+
+  createCameraState () {
+    return {
+      orientation: new Spherical(20),
+      target: new Vector3()
+    }
+  },
+
+  resize () {
     const { size } = this
     size.x = window.innerWidth
     size.y = window.innerHeight
@@ -93,6 +110,22 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
       const { face, point } = start.intersection
       pointOnLine(raycaster.ray, point, face.normal, currentContext.point)
     } else if (pointerTarget) {
+      const intersections = raycaster.intersectObject(pointerTarget)
+      currentContext.intersection = intersections[0]
+    }
+
+    return context
+  },
+
+  refreshContext (name) {
+    const { camera, context, raycaster, targetEntity } = this
+    const pointerTarget = targetEntity && targetEntity.pointerTarget // FIXME
+    const currentContext = context[name]
+    const { screen } = currentContext
+
+    raycaster.setFromCamera(screen, camera)
+
+    if (pointerTarget) {
       const intersections = raycaster.intersectObject(pointerTarget)
       currentContext.intersection = intersections[0]
     }
@@ -147,24 +180,20 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
       event.preventDefault()
     } else if (!isPointerDown) {
       const { move } = this.updateContext(event, 'move')
-      const { intersection } = move
-      if (intersection) {
-        this.showCursor()
-        this.orientCursor(intersection)
-      } else {
-        this.hideCursor()
-      }
+      const { screen } = move
+      this.orientCamera(screen)
+      this.targetCamera(screen)
     }
   },
 
   mouseUp (event) {
-    const { cursorState, isPointerDragging } = this
+    const { cursorStateTarget, isPointerDragging } = this
     const eventEnd = this._events.end
 
     this.isPointerDown = false
     this.isPointerDragging = false
 
-    if (isPointerDragging && cursorState.offset < -1) {
+    if (isPointerDragging && cursorStateTarget.offset < -1) {
       const { start, end } = this.updateContext(event, 'end')
       const { face, point } = end.intersection
       this.dispatchCursorSelection(start)
@@ -179,12 +208,47 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     }
   },
 
-  // Orientation
+  // Camera Orientation
+
+  orientCamera (screen) {
+    const { orientation } = this.cameraStateTarget
+    orientation.phi = screen.y * Math.PI * 0.1 + 0.25
+    orientation.theta = screen.x * Math.PI * 0.25
+  },
+
+  targetCamera (screen) {
+    const { targetCenter } = this
+    const { target } = this.cameraStateTarget
+
+    const tx = Math.abs(screen.x)
+    const ty = Math.abs(screen.y)
+
+    target.x = lerp(0, targetCenter.x * Math.sign(screen.x), tx)
+    target.y = lerp(0, targetCenter.y * Math.sign(screen.y), ty)
+    target.z = lerp(0, targetCenter.z, 1 - (tx + ty) / 2)
+  },
 
   updateOrientation () {
-    const { camera, targetCenter } = this
+    const { isPointerDown } = this
+    if (isPointerDown) return
 
-    camera.lookAt(targetCenter)
+    const { camera, cameraState, cameraStateTarget } = this
+    const { orientation, target } = cameraState
+
+    factorTweenAll(KEYS.Spherical, 'orientation', cameraState, cameraStateTarget, 0.1)
+    factorTweenAll(KEYS.Vector3, 'target', cameraState, cameraStateTarget, 0.1)
+
+    const thetaDir = Math.sign(orientation.theta)
+    const theta = thetaDir * easeQuadraticOut(Math.abs(orientation.theta))
+    const x = Math.sin(theta) * orientation.radius
+
+    const phiDir = Math.sin(orientation.phi)
+    const phi = phiDir * easeQuadraticOut(Math.abs(orientation.phi))
+    const y = Math.sin(phi) * orientation.radius
+
+    camera.position.x = target.x + x
+    camera.position.y = target.y + y
+    camera.lookAt(target)
   },
 
   // Cursor
@@ -237,17 +301,17 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
   },
 
   offsetCursor (offset) {
-    const { cursorState } = this
-    cursorState.offset = offset
+    const { cursorStateTarget } = this
+    cursorStateTarget.offset = offset
   },
 
   orientCursor (intersection) {
-    const { cursorState } = this
+    const { cursorStateTarget } = this
     const { face, point } = intersection
     const { normal } = face
 
-    cursorState.position.copy(point)
-    cursorState.normal.copy(normal)
+    cursorStateTarget.position.copy(point)
+    cursorStateTarget.normal.copy(normal)
   },
 
   skinCursor (face, point) {
@@ -264,35 +328,57 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
   },
 
   resetCursor (position, normal, offset) {
-    const { cursorEntity, cursorState } = this
+    const { cursorEntity, cursorStateTarget } = this
 
     cursorEntity.position.copy(normal)
       .multiplyScalar(10)
       .add(position)
 
-    cursorState.position.copy(position)
-    cursorState.normal.copy(normal)
-    cursorState.offset = offset
+    cursorStateTarget.position.copy(position)
+    cursorStateTarget.normal.copy(normal)
+    cursorStateTarget.offset = offset
   },
 
   showCursor () {
-    const { cursorState } = this
-    cursorState.opacity = 1
+    const { element, cursorStateTarget } = this
+    cursorStateTarget.opacity = 1
+    if (!cursorStateTarget.visible) {
+      cursorStateTarget.visible = true
+      element.style.cursor = 'crosshair'
+    }
   },
 
   hideCursor () {
-    const { cursorState } = this
-    cursorState.opacity = 0
+    const { element, cursorStateTarget } = this
+    cursorStateTarget.opacity = 0
+    if (cursorStateTarget.visible) {
+      cursorStateTarget.visible = false
+      element.style.cursor = ''
+    }
+  },
+
+  moveCursor () {
+    const { isPointerDown } = this
+    if (isPointerDown) return
+
+    const { move } = this.refreshContext('move')
+    const { intersection } = move
+    if (intersection) {
+      this.showCursor()
+      this.orientCursor(intersection)
+    } else {
+      this.hideCursor()
+    }
   },
 
   updateCursor () {
-    const { cursorEntity, cursorState } = this
+    const { cursorEntity, cursorStateTarget } = this
     if (!cursorEntity) return
 
-    factorTween('opacity', cursorEntity.material, cursorState, 0.1)
-    factorTween('offset', cursorEntity, cursorState, 0.15)
-    factorTweenAll(KEYS.Vector3, cursorEntity.position, cursorState.position, 0.4)
-    factorTweenAll(KEYS.Vector3, cursorEntity.normal, cursorState.normal, 0.4)
+    factorTween('opacity', cursorEntity.material, cursorStateTarget, 0.1)
+    factorTween('offset', cursorEntity, cursorStateTarget, 0.15)
+    factorTweenAll(KEYS.Vector3, 'position', cursorEntity, cursorStateTarget, 0.4)
+    factorTweenAll(KEYS.Vector3, 'normal', cursorEntity, cursorStateTarget, 0.1)
 
     // position, offset
     scratchVec3A
@@ -313,6 +399,7 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
 
   update (frame) {
     this.updateOrientation()
+    this.moveCursor()
     this.updateCursor()
   }
 })
