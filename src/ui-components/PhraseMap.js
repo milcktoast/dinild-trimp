@@ -1,7 +1,12 @@
+import {
+  EventDispatcher
+} from 'three'
+
 import { inherit } from '../utils/ctor'
 import { factorTween } from '../utils/tween'
 
 export function PhraseMap () {
+  this.isActive = false
   this.highlight = 0
   this.positions = []
   this.state = {
@@ -11,7 +16,12 @@ export function PhraseMap () {
   this.createElement(100, 0, 10)
 }
 
-inherit(null, PhraseMap, {
+inherit(null, PhraseMap, EventDispatcher.prototype, {
+  _events: {
+    activate: { type: 'activate' },
+    deactivate: { type: 'deactivate' }
+  },
+
   createElement (size, offset = 0, margin = 0) {
     const element = document.createElement('canvas')
     const ctx = element.getContext('2d')
@@ -29,7 +39,8 @@ inherit(null, PhraseMap, {
       bottom: offset + 'px',
       left: offset + 'px',
       width: size + 'px',
-      height: size + 'px'
+      height: size + 'px',
+      cursor: 'pointer'
     })
 
     Object.assign(this, {
@@ -47,6 +58,7 @@ inherit(null, PhraseMap, {
   bindEvents (element) {
     element.addEventListener('mouseover', this.onMouseOver.bind(this), false)
     element.addEventListener('mouseout', this.onMouseOut.bind(this), false)
+    element.addEventListener('click', this.onClick.bind(this), false)
   },
 
   appendTo (parent) {
@@ -58,11 +70,19 @@ inherit(null, PhraseMap, {
   },
 
   onMouseOut (event) {
+    if (this.isActive) return
     this.highlight = 0
   },
 
-  setPositions (positions) {
-    this.positions = positions
+  onClick (event) {
+    const { isActive } = this
+    const eventActive = isActive
+      ? this._events.deactivate
+      : this._events.activate
+
+    this.isActive = !isActive
+    this.highlight = !isActive ? 1 : 0
+    this.dispatchEvent(eventActive)
   },
 
   render () {

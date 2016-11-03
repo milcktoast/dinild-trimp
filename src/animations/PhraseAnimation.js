@@ -11,7 +11,8 @@ inherit(null, PhraseAnimation, EventDispatcher.prototype, {
     wordStart: { type: 'wordStart' },
     wordEnd: { type: 'wordEnd' },
     sequenceStart: { type: 'sequenceStart' },
-    sequenceEnd: { type: 'sequenceEnd' }
+    sequenceEnd: { type: 'sequenceEnd' },
+    sequenceLoop: { type: 'sequenceLoop' }
   },
 
   createState () {
@@ -36,12 +37,14 @@ inherit(null, PhraseAnimation, EventDispatcher.prototype, {
     if (sequence === this.sequence) return
     this.sequence = sequence
     this.sequenceDelay = delay
+    this.sequenceDidLoop = false
     this.frame = 0
     this.progress = this.createProgress()
     this.state = this.createState()
     this.statePrev = this.createState()
   },
 
+  // FIXME: Weird end frame glitch when looping
   update () {
     const { sequence, progress, state, statePrev } = this
     if (!sequence) return
@@ -50,13 +53,15 @@ inherit(null, PhraseAnimation, EventDispatcher.prototype, {
     let frame = this.frame++ - this.sequenceDelay
 
     if (frame < 0) return
-    if (frame === 0) {
+    if (frame === 0 && !this.sequenceDidLoop) {
       const startEvent = this._events.sequenceStart
       this.dispatchEvent(startEvent)
     }
     if (frame > duration - 1) {
       if (duration - frame === 0) {
-        const endEvent = this._events.sequenceEnd
+        const endEvent = loop
+          ? this._events.sequenceLoop
+          : this._events.sequenceEnd
         this.dispatchEvent(endEvent)
       }
       if (!loop) return
@@ -64,6 +69,7 @@ inherit(null, PhraseAnimation, EventDispatcher.prototype, {
       state.indexWord = 0
       state.indexSyllable = 0
       state.indexShape = 0
+      this.sequenceDidLoop = true
     }
 
     const indexWordPrev = state.indexWord
