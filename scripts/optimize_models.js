@@ -43,7 +43,7 @@ function optimizeModel (src) {
 
   writeBoneData(formatDestPath(basePath, 'bones', 'json'), json, skinningData)
   writeAnimationData(formatDestPath(basePath, 'boneFrames', 'json'), json, skinningData)
-  writeMetaData(formatDestPath(basePath, 'meta', 'json'), json)
+  writeMetaData(formatDestPath(basePath, 'meta', 'json'), json, skinningData)
   writeLn(OK + '\n')
 }
 
@@ -124,18 +124,17 @@ function writeAnimationData (destPath, data, skin) {
   })
 }
 
-function writeMetaData (destPath, json) {
+function writeMetaData (destPath, json, skin) {
   const metaData = {
     uvs: json.metadata.uvs,
     normals: json.metadata.normals,
     vertices: json.metadata.vertices,
     faces: json.metadata.faces
   }
-  if (json.metadata.bones) {
-    metaData.bones = json.metadata.bones
+  if (skin.bones) {
+    metaData.bones = skin.bones.length
   }
   if (json.animations) {
-    metaData.boneFrames = json.animations[0].hierarchy.length
     metaData.animationFrames = json.animations[0].hierarchy[0].keys.length
   }
   if (json.skinIndices) {
