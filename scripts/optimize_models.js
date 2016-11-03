@@ -24,20 +24,51 @@ function optimizeModel (src) {
   const basePath = path.join(process.cwd(), src)
   const data = fs.readFileSync(basePath + '/full.json', 'utf8')
   const json = JSON.parse(data)
+  const skinningData = filterSkinningBones(json)
+
   FLOAT_ATTR_KEYS.forEach((key) => {
     const attrJson = key === 'uvs'
       ? json[key][0]
       : json[key]
     writeFloatData(formatDestPath(basePath, key, 'bin'), attrJson)
   })
+
   INT_ATTR_KEYS.forEach((key) => {
     const attrJson = json[key]
-    writeIntData(formatDestPath(basePath, key, 'bin'), attrJson)
+    const mappedJson = attrJson && key === 'skinIndices'
+      ? mapSkinIndices(attrJson, skinningData)
+      : attrJson
+    writeIntData(formatDestPath(basePath, key, 'bin'), mappedJson)
   })
-  writeBoneData(formatDestPath(basePath, 'bones', 'json'), json)
-  writeAnimationData(formatDestPath(basePath, 'boneFrames', 'json'), json)
+
+  writeBoneData(formatDestPath(basePath, 'bones', 'json'), json, skinningData)
+  writeAnimationData(formatDestPath(basePath, 'boneFrames', 'json'), json, skinningData)
   writeMetaData(formatDestPath(basePath, 'meta', 'json'), json)
   writeLn(OK + '\n')
+}
+
+function filterSkinningBones (data) {
+  const { bones } = data
+  if (!bones) return {}
+  const indexMap = {'-1': -1}
+  const skinBones = bones
+    .filter((bone) => bone.name.indexOf('control') !== 0)
+  skinBones.forEach((bone, index) => {
+    const prevIndex = bones.indexOf(bone)
+    indexMap[prevIndex] = index
+  })
+  skinBones.forEach((bone) => {
+    bone.parent = indexMap[bone.parent]
+  })
+  return {
+    bones: skinBones,
+    indexMap
+  }
+}
+
+function mapSkinIndices (data, skin) {
+  const { indexMap } = skin
+  return data.map((v) => indexMap[v] || 0)
 }
 
 function formatDestPath (basePath, key, ext) {
@@ -70,8 +101,8 @@ function writeIntData (destPath, data) {
   writer.end()
 }
 
-function writeBoneData (destPath, data) {
-  const { bones } = data
+function writeBoneData (destPath, data, skin) {
+  const { bones } = skin
   if (!bones) return
   fs.writeFileSync(destPath, JSON.stringify(bones), {
     encoding: 'utf8'
@@ -79,10 +110,12 @@ function writeBoneData (destPath, data) {
 }
 
 // TODO: Write animation data to float binary file
-function writeAnimationData (destPath, data) {
+function writeAnimationData (destPath, data, skin) {
   const { animations } = data
+  const { indexMap } = skin
   if (!animations) return
   const boneFrames = animations[0].hierarchy
+    .filter((boneFrame, index) => indexMap[index] != null)
     .map((boneFrame) => boneFrame.keys.map(({pos, rot, scl}) => ({
       pos, rot, scl
     })))
