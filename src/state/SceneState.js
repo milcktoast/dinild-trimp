@@ -14,7 +14,7 @@ inherit(null, SceneState, {
     camera.position.copy(state.position)
     camera.up.copy(state.up).normalize()
     camera.fov = state.fov
-    camera.controls.target.copy(state.target)
+    camera.controls.targetCenter.copy(state.target)
     camera.updateProjectionMatrix()
   },
 

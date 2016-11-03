@@ -9,6 +9,7 @@ import {
 import { RENDER_SETTINGS } from './constants/fidelity'
 import { createTaskManager } from './utils/task'
 import { createLoop } from './utils/loop'
+import { debounce } from './utils/function'
 import { IndexCamera } from './scenes/IndexCamera'
 import { IndexInterface } from './scenes/IndexInterface'
 import { IndexLights } from './scenes/IndexLights'
@@ -71,17 +72,9 @@ function createScene () {
 
 function createCamera () {
   const camera = new IndexCamera()
-  const { controls, selection } = camera
-  tasks.add((frame) => {
-    controls.update(frame)
-    selection.update(frame)
-  }, 'update')
-  tasks.add(() => {
-    camera.aspect = window.innerWidth / window.innerHeight
-    camera.updateProjectionMatrix()
-    controls.resize()
-    selection.resize()
-  }, 'resize')
+  tasks.defer(camera, 'inject')
+  tasks.add(camera, 'update')
+  tasks.add(camera, 'resize')
   return camera
 }
 
@@ -101,9 +94,9 @@ function createAnimationLoop () {
 
 // Events
 
-window.addEventListener('resize', (event) => {
+window.addEventListener('resize', debounce(50, (event) => {
   tasks.run('resize', event)
-}, false)
+}), false)
 
 // Interface
 

@@ -42,17 +42,17 @@ inherit(null, IndexEntities, {
         needles.addTo(dinild)
       ])
     }).then(([dinild, needleCursor, needles]) => {
-      const { selection } = camera
+      const { controls } = camera
 
       this.dinild = dinild
       this.needleCursor = needleCursor
       this.needles = needles
 
-      selection.cursorEntity = needleCursor
-      selection.targetEntity = dinild
-      selection.targetOptionUVs = WORD_LOCATIONS
+      controls.cursorEntity = needleCursor
+      controls.targetEntity = dinild
+      controls.targetOptionUVs = WORD_LOCATIONS
 
-      selection.addEventListener('add', this.onSelectionAdd.bind(this))
+      controls.addEventListener('add', this.onSelectionAdd.bind(this))
 
       return this
     })

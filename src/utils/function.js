@@ -3,3 +3,52 @@ export function bindAll (context, ...names) {
     context[name] = context[name].bind(context)
   })
 }
+
+// Throttle and debounce funcs based on:
+// jQuery throttle / debounce - v1.1 - 3/7/2010
+// http://benalman.com/projects/jquery-throttle-debounce-plugin/
+//
+// Copyright (c) 2010 "Cowboy" Ben Alman
+// Dual licensed under the MIT and GPL licenses.
+// http://benalman.com/about/license/
+
+export function throttle (delay, noTrailing, fn, debounceMode) {
+  const state = {
+    id: null,
+    lastTime: 0
+  }
+
+  if (typeof noTrailing !== 'boolean') {
+    debounceMode = fn
+    fn = noTrailing
+    noTrailing = undefined
+  }
+
+  return (...args) => {
+    const elapsed = Date.now() - state.lastTime
+    const exec = () => {
+      state.lastTime = Date.now()
+      fn.apply(this, args)
+    }
+    const clear = () => {
+      state.id = null
+    }
+
+    if (debounceMode && !state.id) exec()
+    if (state.id) clearTimeout(state.id)
+
+    if (debounceMode == null && elapsed > delay) {
+      exec()
+    } else if (noTrailing !== true) {
+      const nextAction = debounceMode ? clear : exec
+      const nextDelay = debounceMode ? delay - elapsed : delay
+      state.id = setTimeout(nextAction, nextDelay)
+    }
+  }
+}
+
+export function debounce (delay, immediate, fn) {
+  return fn === undefined
+    ? throttle(delay, immediate, false)
+    : throttle(delay, fn, immediate !== false)
+}

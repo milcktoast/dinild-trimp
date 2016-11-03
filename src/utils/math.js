@@ -6,3 +6,7 @@ export function mapLinear (a1, a2, b1, b2, x) {
 export function clamp (min, max, x) {
   return Math.min(max, Math.max(min, x))
 }
+
+export function lerp (a, b, t) {
+  return (1 - t) * a + t * b
+}

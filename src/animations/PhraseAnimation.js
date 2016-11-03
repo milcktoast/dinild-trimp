@@ -9,7 +9,9 @@ export function PhraseAnimation (sequence) {
 inherit(null, PhraseAnimation, EventDispatcher.prototype, {
   _events: {
     wordStart: { type: 'wordStart' },
-    wordEnd: { type: 'wordEnd' }
+    wordEnd: { type: 'wordEnd' },
+    sequenceStart: { type: 'sequenceStart' },
+    sequenceEnd: { type: 'sequenceEnd' }
   },
 
   createState () {
@@ -30,9 +32,10 @@ inherit(null, PhraseAnimation, EventDispatcher.prototype, {
     }
   },
 
-  setSequence (sequence) {
+  setSequence (sequence, delay = 0) {
     if (sequence === this.sequence) return
     this.sequence = sequence
+    this.sequenceDelay = delay
     this.frame = 0
     this.progress = this.createProgress()
     this.state = this.createState()
@@ -44,20 +47,30 @@ inherit(null, PhraseAnimation, EventDispatcher.prototype, {
     if (!sequence) return
 
     const { duration, loop, words } = sequence
-    const indexWordPrev = state.indexWord
-    const indexSyllablePrev = state.indexSyllable
-    const indexShapePrev = state.indexShape
-    const frameShapePrev = state.frameShape
-    const weightShapePrev = state.weightShape
+    let frame = this.frame++ - this.sequenceDelay
 
-    let frame = this.frame++
+    if (frame < 0) return
+    if (frame === 0) {
+      const startEvent = this._events.sequenceStart
+      this.dispatchEvent(startEvent)
+    }
     if (frame > duration - 1) {
+      if (duration - frame === 0) {
+        const endEvent = this._events.sequenceEnd
+        this.dispatchEvent(endEvent)
+      }
       if (!loop) return
       frame = this.frame = 0
       state.indexWord = 0
       state.indexSyllable = 0
       state.indexShape = 0
     }
+
+    const indexWordPrev = state.indexWord
+    const indexSyllablePrev = state.indexSyllable
+    const indexShapePrev = state.indexShape
+    const frameShapePrev = state.frameShape
+    const weightShapePrev = state.weightShape
 
     let word = words[state.indexWord]
     if (frame > word.start + word.duration - 1) {

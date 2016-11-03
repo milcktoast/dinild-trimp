@@ -35,7 +35,7 @@ inherit(SceneState, IndexSceneState, {
     camera () {
       const cameraOptions = [{
         position: createVector(6, 3, 23),
-        target: createVector(3, 0, 1),
+        target: createVector(2, 4, 5),
         up: createVector(0, 1, 0),
         fov: 92
       }, {
