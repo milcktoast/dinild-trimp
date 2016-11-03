@@ -18,7 +18,7 @@ void main() {
 	#include <logdepthbuf_vertex>
 	#include <clipping_planes_vertex>
 
-	vViewPosition = - mvPosition.xyz;
+	vViewPosition = -mvPosition.xyz;
   vNormal = normalize(objectNormal);
 
 	#include <worldpos_vertex>

@@ -1,35 +1,31 @@
-// @author alteredq / http://alteredqualia.com/
-
-#ifdef VERTEX_TEXTURES
-  uniform sampler2D tDisplacement;
-  uniform float uDisplacementScale;
-  uniform float uDisplacementBias;
-#endif
-
+varying vec3 vViewPosition;
 varying vec3 vNormal;
 varying vec2 vUv;
-varying vec3 vViewPosition;
 
 #include <common>
+#include <skinning_pars_vertex>
 #include <shadowmap_pars_vertex>
 
 void main() {
-  vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-  vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+  #include <beginnormal_vertex>
+  #include <morphnormal_vertex>
+  #include <skinbase_vertex>
+  #include <skinnormal_vertex>
+  #include <defaultnormal_vertex>
+
+  #include <begin_vertex>
+  #include <displacementmap_vertex>
+  #include <morphtarget_vertex>
+  #include <skinning_vertex>
+  #include <project_vertex>
+  #include <logdepthbuf_vertex>
+  #include <clipping_planes_vertex>
 
   vViewPosition = -mvPosition.xyz;
-  vNormal = normalize(normalMatrix * normal);
+  vNormal = normalize(objectNormal);
   vUv = uv;
 
-  // displacement mapping
-  #ifdef VERTEX_TEXTURES
-    vec3 dv = texture2D(tDisplacement, uv).xyz;
-    float df = uDisplacementScale * dv.x + uDisplacementBias;
-    vec4 displacedPosition = vec4(vNormal.xyz * df, 0.0) + mvPosition;
-    gl_Position = projectionMatrix * displacedPosition;
-  #else
-    gl_Position = projectionMatrix * mvPosition;
-  #endif
-
+  #include <worldpos_vertex>
+  #include <envmap_vertex>
   #include <shadowmap_vertex>
 }
