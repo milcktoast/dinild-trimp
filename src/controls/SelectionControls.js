@@ -4,6 +4,7 @@ import {
   Vector2,
   Vector3
 } from 'three'
+
 import { inherit } from '../utils/ctor'
 import { bindAll } from '../utils/function'
 import { clamp } from '../utils/math'
@@ -21,6 +22,8 @@ export function SelectionControls (camera, element) {
   this.cursorEntity = null
   this.targetEntity = null
   this.targetOptionUVs = null
+
+  this.targetCenter = new Vector3()
 
   this.size = new Vector2()
   this.raycaster = new Raycaster()
@@ -97,6 +100,30 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     return context
   },
 
+  _faceNames: ['a', 'b', 'c'],
+
+  findClosestFaceIndex (face, point) {
+    const { targetEntity } = this
+    const { geometry } = targetEntity.pointerTarget
+    const positionAttr = geometry.getAttribute('position')
+
+    let dist = Infinity
+    let closestIndex = -1
+    this._faceNames.forEach((key) => {
+      const index = face[key]
+      const fPoint = copyAttributeToVector(scratchVec3A, positionAttr, index)
+      const fDist = point.distanceToSquared(fPoint)
+      if (fDist < dist) {
+        dist = fDist
+        closestIndex = index
+      }
+    })
+
+    return closestIndex
+  },
+
+  // Mouse
+
   mouseDown (event) {
     const { start } = this.updateContext(event, 'start')
     const { intersection } = start
@@ -130,6 +157,38 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     }
   },
 
+  mouseUp (event) {
+    const { cursorState, isPointerDragging } = this
+    const eventEnd = this._events.end
+
+    this.isPointerDown = false
+    this.isPointerDragging = false
+
+    if (isPointerDragging && cursorState.offset < -1) {
+      const { start, end } = this.updateContext(event, 'end')
+      const { face, point } = end.intersection
+      this.dispatchCursorSelection(start)
+      this.resetCursor(point, face.normal, 2)
+    } else {
+      this.offsetCursor(2)
+    }
+
+    if (isPointerDragging) {
+      this.dispatchEvent(eventEnd)
+      event.preventDefault()
+    }
+  },
+
+  // Orientation
+
+  updateOrientation () {
+    const { camera, targetCenter } = this
+
+    camera.lookAt(targetCenter)
+  },
+
+  // Cursor
+
   dragCursorOffset (event, start, drag) {
     const A = start.intersection.point
     const B = start.intersection.face.normal
@@ -143,29 +202,7 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     this.offsetCursor(t)
   },
 
-  mouseUp (event) {
-    const { cursorState, isPointerDragging } = this
-    const eventEnd = this._events.end
-
-    this.isPointerDown = false
-    this.isPointerDragging = false
-
-    if (isPointerDragging && cursorState.offset < -1) {
-      const { start, end } = this.updateContext(event, 'end')
-      const { face, point } = end.intersection
-      this.resetCursor(point, face.normal, 2)
-      this.pointerSelect(start)
-    } else {
-      this.offsetCursor(2)
-    }
-
-    if (isPointerDragging) {
-      this.dispatchEvent(eventEnd)
-      event.preventDefault()
-    }
-  },
-
-  pointerSelect (context) {
+  dispatchCursorSelection (context) {
     const { intersection } = context
     const { face, point, uv } = intersection
     const eventAdd = this._events.add
@@ -211,28 +248,6 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
 
     cursorState.position.copy(point)
     cursorState.normal.copy(normal)
-  },
-
-  _faceNames: ['a', 'b', 'c'],
-
-  findClosestFaceIndex (face, point) {
-    const { targetEntity } = this
-    const { geometry } = targetEntity.pointerTarget
-    const positionAttr = geometry.getAttribute('position')
-
-    let dist = Infinity
-    let closestIndex = -1
-    this._faceNames.forEach((key) => {
-      const index = face[key]
-      const fPoint = copyAttributeToVector(scratchVec3A, positionAttr, index)
-      const fDist = point.distanceToSquared(fPoint)
-      if (fDist < dist) {
-        dist = fDist
-        closestIndex = index
-      }
-    })
-
-    return closestIndex
   },
 
   skinCursor (face, point) {
@@ -297,6 +312,7 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
   },
 
   update (frame) {
+    this.updateOrientation()
     this.updateCursor()
   }
 })

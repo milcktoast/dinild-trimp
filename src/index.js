@@ -71,16 +71,12 @@ function createScene () {
 
 function createCamera () {
   const camera = new IndexCamera()
-  const { controls, selection } = camera
-  tasks.add((frame) => {
-    controls.update(frame)
-    selection.update(frame)
-  }, 'update')
+  const { controls } = camera
+  tasks.add(controls, 'update')
   tasks.add(() => {
     camera.aspect = window.innerWidth / window.innerHeight
     camera.updateProjectionMatrix()
     controls.resize()
-    selection.resize()
   }, 'resize')
   return camera
 }

@@ -21,8 +21,8 @@ inherit(null, IndexPhraseState, {
   },
 
   bindEvents (context) {
-    const { selection } = context.camera
-    selection.addEventListener('add', this.onSelectionAdd.bind(this))
+    const { controls } = context.camera
+    controls.addEventListener('add', this.onSelectionAdd.bind(this))
   },
 
   onSelectionAdd (event) {
