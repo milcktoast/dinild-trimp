@@ -8,10 +8,11 @@ import { inherit } from '../utils/ctor'
 export function Skeleton (bones, boneInverses, useVertexTexture) {
   Object3D.call(this)
 
+  this.type = 'Skeleton'
+
   this.applyHierarchy(bones)
   BaseSkeleton.call(this, bones, boneInverses, useVertexTexture)
-
-  this.type = 'Skeleton'
+  this.updateMatrixWorld(true)
 }
 
 inherit(Object3D, Skeleton, BaseSkeleton.prototype, {
