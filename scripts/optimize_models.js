@@ -135,6 +135,7 @@ function writeMetaData (destPath, json, skin) {
     metaData.bones = skin.bones.length
   }
   if (json.animations) {
+    metaData.boneFrames = skin.bones.length
     metaData.animationFrames = json.animations[0].hierarchy[0].keys.length
   }
   if (json.skinIndices) {
