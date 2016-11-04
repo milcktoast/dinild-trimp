@@ -11,7 +11,7 @@ export function SceneState (context) {
 inherit(null, SceneState, {
   updateCamera (state) {
     const { camera } = this.context
-    camera.position.copy(state.position)
+    // camera.position.copy(state.position)
     camera.up.copy(state.up).normalize()
     camera.fov = state.fov
     camera.controls.targetCenter.copy(state.target)
@@ -39,7 +39,8 @@ inherit(null, SceneState, {
   updateSkinMaterial (material, state) {
     if (!material) return
     const { map, normalMap } = material
-    material.shininess = state.shininess
+    material.roughness = state.roughness
+    material.metalness = state.metalness
     material.normalScale.set(state.normalScale, state.normalScale)
     if (map.anisotropy !== state.textureAnisotropy) {
       map.anisotropy = state.textureAnisotropy

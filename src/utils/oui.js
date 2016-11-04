@@ -21,7 +21,7 @@ function setupAnnotators () {
   addAnnotator(annotatePointLight, 'intensity', 'distance')
   addAnnotator(annotateCamera, 'position', 'target', 'up')
   addAnnotator(annotateFog, 'color', 'near', 'far')
-  addAnnotator(annotateSkinMaterial, 'shininess')
+  addAnnotator(annotateSkinMaterial, 'roughness')
   addAnnotator(annotatePose, 'activeFrameWeight')
   addAnnotator(annotateVector, 'x', 'y', 'z')
 }
@@ -92,14 +92,16 @@ function annotateFog ({
 }
 
 function annotateSkinMaterial ({
-  shininess,
+  roughness, metalness,
   normalScale, textureAnisotropy
 }) {
-  const shininessRange = annotate({ min: 10, max: 80, step: 0.1 })
+  const roughnessRange = annotate({ min: 0, max: 1, step: 0.01 })
+  const metalnessRange = annotate({ min: 0, max: 1, step: 0.01 })
   const normalScaleRange = annotate({ min: 0, max: 2, step: 0.05 })
   const textureAnisotropyRange = annotate({ min: 1, max: 8, step: 1 })
   return {
-    @shininessRange shininess,
+    @roughnessRange roughness,
+    @metalnessRange metalness,
     @normalScaleRange normalScale,
     @textureAnisotropyRange textureAnisotropy
   }

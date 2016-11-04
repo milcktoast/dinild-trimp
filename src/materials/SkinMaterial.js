@@ -22,6 +22,8 @@ import { TexturePass } from '../post-processing/TexturePass'
 export function SkinMaterial (params = {}) {
   ShaderMaterial.call(this)
 
+  this.type = 'SkinMaterial'
+
   this.color = new Color(0xffffff)
   this.map = null
   this.normalMap = null

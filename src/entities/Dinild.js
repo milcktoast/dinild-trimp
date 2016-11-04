@@ -1,5 +1,5 @@
 import {
-  MeshPhongMaterial
+  MeshStandardMaterial
 } from 'three'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
@@ -72,11 +72,10 @@ inherit(null, Dinild, Entity, {
   createMaterial (textures) {
     const MaterialCtor = this.useSubsurface
       ? SkinMaterial
-      : MeshPhongMaterial
+      : MeshStandardMaterial
     const material = new MaterialCtor({
       map: textures.map,
       normalMap: textures.normalMap,
-      // roughness: 0.25
       skinning: true
     })
     if (material.render) {

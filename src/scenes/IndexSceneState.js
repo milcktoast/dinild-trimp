@@ -23,6 +23,7 @@ inherit(SceneState, IndexSceneState, {
     return {
       camera: defaults.camera(),
       fog: defaults.fog(),
+      skinBasic: defaults.skinBasic(),
       skin: defaults.skin(),
       pose: defaults.pose(),
       lightTop: defaults.lightTop(),
@@ -75,9 +76,19 @@ inherit(SceneState, IndexSceneState, {
       }
     },
 
+    skinBasic () {
+      return {
+        roughness: 0.52,
+        metalness: 0.1,
+        normalScale: 1,
+        textureAnisotropy: 4
+      }
+    },
+
     skin () {
       return {
-        shininess: 30,
+        roughness: 0.24,
+        metalness: 0,
         normalScale: 1,
         textureAnisotropy: 4
       }
@@ -97,7 +108,7 @@ inherit(SceneState, IndexSceneState, {
         position: createVector(-13, 21.5, 20.5),
         target: createVector(4.5, -1.5, 5),
         color: createColor(0xCAFF7C),
-        intensity: 2.3,
+        intensity: 2.7,
         distance: 35,
         angle: 0.62,
         penumbra: 0.2,
@@ -122,9 +133,9 @@ inherit(SceneState, IndexSceneState, {
 
     lightAmbient () {
       return {
-        skyColor: createColor(0xBCADFF),
-        groundColor: createColor(0xDBFFF4),
-        intensity: 0.6
+        skyColor: createColor(0xB1FF29),
+        groundColor: createColor(0x58FFCC),
+        intensity: 0.4
       }
     }
   },
@@ -151,7 +162,11 @@ inherit(SceneState, IndexSceneState, {
   updateDinild (nextState) {
     const { dinild } = this.context.entities
     if (!dinild) return
+    const { material } = dinild
+    const materialState = material.type === 'SkinMaterial'
+      ? nextState.skin
+      : nextState.skinBasic
     this.updatePose(dinild.pose, dinild.item, nextState.pose)
-    this.updateSkinMaterial(dinild.material, nextState.skin)
+    this.updateSkinMaterial(material, materialState)
   }
 })

@@ -152,7 +152,7 @@ void main() {
     outgoingLight += ambientLightColor * color * colDiffuse.xyz;
 
     #ifndef VERSION1
-      outgoingLight = sqrt(outgoingLight + nonblurColor * 0.5);
+      outgoingLight = sqrt(outgoingLight + nonblurColor * 0.5); // FIXME
     #endif
   }
 
