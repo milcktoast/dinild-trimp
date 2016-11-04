@@ -85,9 +85,13 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
 
   createCameraState () {
     return {
-      orientation: new Spherical(20),
+      orientation: new Spherical(50),
       target: new Vector3()
     }
+  },
+
+  setDistance (distance) {
+    this.cameraStateTarget.orientation.radius = distance
   },
 
   resize () {
@@ -242,6 +246,7 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     const thetaDir = Math.sign(orientation.theta)
     const theta = thetaDir * easeQuadraticOut(Math.abs(orientation.theta))
     const x = Math.sin(theta) * orientation.radius
+    const z = Math.cos(theta) * orientation.radius
 
     const phiDir = Math.sin(orientation.phi)
     const phi = phiDir * easeQuadraticOut(Math.abs(orientation.phi))
@@ -249,6 +254,7 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
 
     camera.position.x = target.x + x
     camera.position.y = target.y + y
+    camera.position.z = target.z + z
     camera.lookAt(target)
   },
 

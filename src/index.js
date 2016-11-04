@@ -149,11 +149,16 @@ function inject () {
   })
 }
 
+// TODO: Cleanup loading flow
+let _load = null
 function load () {
-  components.showLoader()
-  tasks.flush('load').then(() => {
-    components.hideLoader()
-  })
+  if (!_load) {
+    components.showLoader()
+    _load = tasks.flush('load').then(() => {
+      components.hideLoader()
+    })
+  }
+  return _load
 }
 
 function start () {
@@ -174,6 +179,9 @@ setTimeout(load, 0)
 components.bindEnter((event) => {
   const settings = RENDER_SETTINGS[event.value]
   populate(settings)
+  load().then(() => {
+    camera.animateIn()
+  })
 })
 
 // FIXME

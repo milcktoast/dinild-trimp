@@ -29,22 +29,22 @@ inherit(null, IntroModal, EventDispatcher.prototype, {
     this.form.classList.remove('hidden')
   },
 
-  animateOut () {
+  animateOut (fn) {
     const { element } = this
     element.classList.add('hidden')
     setTimeout(() => {
       element.style.display = 'none'
-    }, 1000)
+      fn()
+    }, 400)
   },
 
   onEnter (event) {
     const eventEnter = this._events.enter
     const fidelity = this.fidelityInput.value
     eventEnter.value = fidelity
-    this.dispatchEvent(eventEnter)
     event.preventDefault()
-    setTimeout(() => {
-      this.animateOut()
-    }, 0)
+    this.animateOut(() => {
+      this.dispatchEvent(eventEnter)
+    })
   }
 })

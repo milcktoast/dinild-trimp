@@ -16,6 +16,10 @@ inherit(PerspectiveCamera, IndexCamera, {
     return Promise.resolve()
   },
 
+  animateIn () {
+    this.controls.setDistance(20)
+  },
+
   update () {
     this.controls.update()
   },

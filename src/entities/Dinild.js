@@ -27,7 +27,6 @@ export function Dinild (params) {
   this.receiveShadow = params.receiveShadow
   this.useSubsurface = params.useSubsurface
   this.textureQuality = params.textureQuality
-  this.material = this.createMaterial()
 }
 
 Object.assign(Dinild, {
@@ -51,6 +50,16 @@ Object.assign(Dinild, {
       .then((skinData) => parseSkin(skinData, MODEL_META))
   },
 
+  loadTextures (quality) {
+    if (!Dinild._loadTextures) {
+      Dinild._loadTextures = Promise.all([
+        loadTexture(`${TEXTURE_ASSET_PATH}/diffuse_${quality}`),
+        loadTexture(`${TEXTURE_ASSET_PATH}/normal_${quality}`)
+      ])
+    }
+    return Dinild._loadTextures
+  },
+
   loadAudio () {
     if (!Dinild._loadAudio) {
       Dinild._loadAudio = loadAudioSprite(WORDS_META)
@@ -60,14 +69,13 @@ Object.assign(Dinild, {
 })
 
 inherit(null, Dinild, Entity, {
-  createMaterial () {
-    const { useSubsurface, textureQuality } = this
-    const MaterialCtor = useSubsurface
+  createMaterial (textures) {
+    const MaterialCtor = this.useSubsurface
       ? SkinMaterial
       : MeshPhongMaterial
     const material = new MaterialCtor({
-      map: loadTexture(`${TEXTURE_ASSET_PATH}/diffuse_${textureQuality}`),
-      normalMap: loadTexture(`${TEXTURE_ASSET_PATH}/normal_${textureQuality}`),
+      map: textures.map,
+      normalMap: textures.normalMap,
       // roughness: 0.25
       skinning: true
     })
@@ -78,22 +86,33 @@ inherit(null, Dinild, Entity, {
   },
 
   createItem () {
-    return Dinild.load().then(([model, skin]) => {
-      const { castShadow, material, receiveShadow } = this
+    return Promise.all([
+      Dinild.load(),
+      Dinild.loadTextures(this.textureQuality)
+    ]).then(([main, textures]) => ({
+      model: main[0],
+      skin: main[1],
+      textures: {
+        map: textures[0],
+        normalMap: textures[1]
+      }
+    })).then(({ model, skin, textures }) => {
       const { geometry } = model
       const { frames, skeleton } = skin
+      const material = this.createMaterial(textures)
       const item = new SkinnedMesh(geometry, material)
       const pose = new PoseAnimation(frames)
       const phrase = new PhraseAnimation()
 
       Object.assign(item, {
-        castShadow,
-        receiveShadow
+        castShadow: this.castShadow,
+        receiveShadow: this.receiveShadow
       })
 
       // TODO: Optimize pointer target geometry
       Object.assign(this, {
         item,
+        material,
         phrase,
         pointerTarget: item,
         pose,
@@ -102,10 +121,8 @@ inherit(null, Dinild, Entity, {
 
       item.add(skeleton)
       item.bind(skeleton)
-
-      return this
-    }).then(() => {
       this.createAudio()
+
       return this
     })
   },

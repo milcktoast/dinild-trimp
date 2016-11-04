@@ -14,46 +14,44 @@ inherit(null, IndexEntities, {
     ])
   },
 
+  // TODO: Cleanup loading, promise chain
   populate (scene, camera, settings) {
-    const {
-      useSubsurface,
-      useShadow,
-      textureQuality
-    } = settings
-
-    return Promise.all([Dinild.load(), Needle.load()]).then(() => {
-      const dinild = new Dinild({
+    const { useSubsurface, useShadow, textureQuality } = settings
+    return Promise.all([
+      Dinild.load(),
+      Dinild.loadTextures(textureQuality)
+    ])
+    .then(() => {
+      this.dinild = new Dinild({
         castShadow: useShadow,
         receiveShadow: useShadow,
         useSubsurface,
         textureQuality
       })
-      const needles = new NeedleGroup({
+      return this.dinild.addTo(scene)
+    })
+    .then(Needle.load())
+    .then(() => {
+      this.needles = new NeedleGroup({
         castShadow: useShadow,
         receiveShadow: false
       })
-      const needleCursor = new Needle({
+      this.needleCursor = new Needle({
         castShadow: useShadow,
         receiveShadow: false
       })
       return Promise.all([
-        dinild.addTo(scene),
-        needleCursor.addTo(dinild),
-        needles.addTo(dinild)
+        this.needles.addTo(this.dinild),
+        this.needleCursor.addTo(this.dinild)
       ])
-    }).then(([dinild, needleCursor, needles]) => {
+    })
+    .then(() => {
+      const { dinild, needleCursor } = this
       const { controls } = camera
-
-      this.dinild = dinild
-      this.needleCursor = needleCursor
-      this.needles = needles
-
       controls.cursorEntity = needleCursor
       controls.targetEntity = dinild
       controls.targetOptionUVs = WORD_LOCATIONS
-
       controls.addEventListener('add', this.onSelectionAdd.bind(this))
-
       return this
     })
   },

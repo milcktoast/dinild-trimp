@@ -1,6 +1,5 @@
 import fetch from 'isomorphic-fetch'
 import {
-  RGBFormat,
   TextureLoader
 } from 'three'
 import { basename } from 'path'
@@ -108,7 +107,7 @@ function formatDestPath (baseUrl, key, ext) {
 let textureLoader
 export function loadTexture (src) {
   if (!textureLoader) textureLoader = new TextureLoader()
-  const texture = textureLoader.load(src + '.jpg')
-  texture.format = RGBFormat
-  return texture
+  return new Promise((resolve, reject) => {
+    textureLoader.load(src + '.jpg', resolve)
+  })
 }
