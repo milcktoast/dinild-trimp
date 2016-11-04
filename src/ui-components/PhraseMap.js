@@ -8,10 +8,12 @@ import { factorTween } from '../utils/tween'
 export function PhraseMap () {
   this.isActive = false
   this.highlight = 0
+  this.connect = 0
   this.positions = []
   this.state = {
     frame: 0,
-    highlight: this.highlight
+    highlight: this.highlight,
+    connect: this.connect
   }
   this.createElement(100, 0, 10)
 }
@@ -82,6 +84,7 @@ inherit(null, PhraseMap, EventDispatcher.prototype, {
 
     this.isActive = !isActive
     this.highlight = !isActive ? 1 : 0
+    this.connect = !isActive ? 1 : 0
     this.dispatchEvent(eventActive)
   },
 
@@ -91,10 +94,23 @@ inherit(null, PhraseMap, EventDispatcher.prototype, {
     const offset = state.frame++ * 0.05
 
     factorTween('highlight', state, this, 0.1)
+    factorTween('connect', state, this, 0.1)
 
     ctx.setTransform(pxRatio, 0, 0, pxRatio, 0, 0)
     ctx.clearRect(0, 0, size, size)
 
+    // Connectors
+    ctx.globalAlpha = 0.8 * state.connect
+    ctx.beginPath()
+    positions.forEach((pos, i) => {
+      const x = pos.x * sizeInner + margin
+      const y = pos.y * sizeInner + margin
+      if (i === 0) ctx.moveTo(x, y)
+      else ctx.lineTo(x, y)
+    })
+    ctx.stroke()
+
+    // Dots
     positions.forEach((pos, i) => {
       const x = pos.x * sizeInner + margin
       const y = pos.y * sizeInner + margin
