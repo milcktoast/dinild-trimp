@@ -20,8 +20,7 @@ inherit(null, IndexPhraseState, {
       activePosition: null,
       selectedWords: [],
       selectedPositions: [],
-      phraseSequence: null,
-      phraseDelay: 0
+      phraseSequence: null
     }
   },
 
@@ -54,8 +53,7 @@ inherit(null, IndexPhraseState, {
       activePosition,
       selectedWords,
       selectedPositions,
-      phraseSequence,
-      phraseDelay: 0
+      phraseSequence
     })
 
     this.syncState()
@@ -78,8 +76,7 @@ inherit(null, IndexPhraseState, {
 
     Object.assign(state, {
       enableSelection: false,
-      phraseSequence,
-      phraseDelay: 30
+      phraseSequence
     })
 
     this.syncState()
@@ -87,12 +84,11 @@ inherit(null, IndexPhraseState, {
 
   onSequenceDeactivate (event) {
     const { state } = this
-    const phraseSequence = null
+    const { phraseSequence } = state
 
+    phraseSequence.loop = false
     Object.assign(state, {
-      enableSelection: true,
-      phraseSequence,
-      phraseDelay: 0
+      phraseSequence
     })
 
     this.syncState()
@@ -116,6 +112,6 @@ inherit(null, IndexPhraseState, {
 
     camera.controls.enableCursor = state.enableSelection
     phraseMap.positions = state.selectedPositions
-    dinild.phrase.setSequence(state.phraseSequence, state.phraseDelay)
+    dinild.phrase.setSequence(state.phraseSequence)
   }
 })
