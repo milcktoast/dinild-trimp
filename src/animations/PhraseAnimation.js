@@ -33,44 +33,23 @@ inherit(null, PhraseAnimation, EventDispatcher.prototype, {
     }
   },
 
-  setSequence (sequence, delay = 0) {
+  setSequence (sequence) {
     if (sequence === this.sequence) return
     this.sequence = sequence
-    this.sequenceDelay = delay
-    this.sequenceDidLoop = false
+    this.didLoop = false
     this.frame = 0
     this.progress = this.createProgress()
     this.state = this.createState()
     this.statePrev = this.createState()
   },
 
-  // FIXME: Weird end frame glitch when looping
+  // FIXME: Loop not transitioning from last to first frame correctly
   update () {
     const { sequence, progress, state, statePrev } = this
     if (!sequence) return
 
     const { duration, loop, words } = sequence
-    let frame = this.frame++ - this.sequenceDelay
-
-    if (frame < 0) return
-    if (frame === 0 && !this.sequenceDidLoop) {
-      const startEvent = this._events.sequenceStart
-      this.dispatchEvent(startEvent)
-    }
-    if (frame > duration - 1) {
-      if (duration - frame === 0) {
-        const endEvent = loop
-          ? this._events.sequenceLoop
-          : this._events.sequenceEnd
-        this.dispatchEvent(endEvent)
-      }
-      if (!loop) return
-      frame = this.frame = 0
-      state.indexWord = 0
-      state.indexSyllable = 0
-      state.indexShape = 0
-      this.sequenceDidLoop = true
-    }
+    const frame = this.frame++
 
     const indexWordPrev = state.indexWord
     const indexSyllablePrev = state.indexSyllable
@@ -78,17 +57,38 @@ inherit(null, PhraseAnimation, EventDispatcher.prototype, {
     const frameShapePrev = state.frameShape
     const weightShapePrev = state.weightShape
 
+    if (frame > duration - 1) {
+      if (duration - frame === 0) {
+        const endEvent = loop
+          ? this._events.sequenceLoop
+          : this._events.sequenceEnd
+        this.dispatchEvent(endEvent)
+      }
+      if (loop) {
+        this.didLoop = true
+        this.frame = 0
+        this.progress = this.createProgress()
+        this.state = this.createState()
+        this.statePrev = this.createState()
+        this.update()
+      }
+      return
+    }
+
+    if (frame === 0 && !this.didLoop) {
+      const startEvent = this._events.sequenceStart
+      this.dispatchEvent(startEvent)
+    }
+
     let word = words[state.indexWord]
     if (frame > word.start + word.duration - 1) {
       word = words[++state.indexWord]
       state.indexSyllable = 0
-      state.indexShape = 0
     }
 
     let syllable = word.syllables[state.indexSyllable]
     if (frame > word.start + syllable.start + syllable.duration - 1) {
       syllable = word.syllables[++state.indexSyllable]
-      state.indexShape = 0
     }
 
     const { shapeFrames } = syllable
@@ -209,7 +209,7 @@ export function spacePhrase (sequence) {
       createSpacerWord(duration),
       words[i])
   }
-  allWords.push(createSpacerWord(10))
+  allWords.push(createSpacerWord(30))
   allWords = allWords.map(mapStart)
 
   const duration = allWords

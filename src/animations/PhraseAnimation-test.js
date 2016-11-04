@@ -146,6 +146,24 @@ test('PhraseAnimation - update state', (t) => {
   t.deepEqual(anim.state, phraseState(0, 0, 0, 0, 1),
     'should update state at 19 iterations and loop')
 
+  animTick(20)
+  t.deepEqual(anim.statePrev, phraseState(2, 1, 1, 2, 0.5),
+    'should update statePrev at 20 iterations and continue loop')
+  t.deepEqual(anim.state, phraseState(0, 0, 0, 0, 1),
+    'should update state at 20 iterations and continue loop')
+
+  animTick(22)
+  t.deepEqual(anim.statePrev, phraseState(0, 0, 0, 0, 1),
+    'should update statePrev at 22 iterations and continue loop')
+  t.deepEqual(anim.state, phraseState(0, 0, 1, 1, 1),
+    'should update state at 22 iterations and continue loop')
+
+  animTick(31)
+  t.deepEqual(anim.statePrev, phraseState(1, 1, 1, 2, 0.5),
+    'should update statePrev at 31 iterations')
+  t.deepEqual(anim.state, phraseState(2, 0, 0, 0, 1),
+    'should update state at 31 iterations')
+
   t.end()
 })
 
