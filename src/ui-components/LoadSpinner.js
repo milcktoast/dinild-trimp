@@ -2,7 +2,7 @@ import { inherit } from '../utils/ctor'
 import { factorTween } from '../utils/tween'
 
 export function LoadSpinner () {
-  this.opacity = 1
+  this.opacity = 0
   this.rects = [
     [0, 0],
     [6, 0],
@@ -47,6 +47,8 @@ inherit(null, LoadSpinner, {
 
   render () {
     const { ctx, pxRatio, rects, size, state } = this
+
+    factorTween('opacity', state, this, 0.2)
     if (state.opacity < 0.001) return
 
     ctx.setTransform(pxRatio, 0, 0, pxRatio, 0, 0)
@@ -59,7 +61,5 @@ inherit(null, LoadSpinner, {
       ctx.arc(pos[0] + 2, pos[1] + 2, 2, 0, Math.PI * 2)
       ctx.fill()
     })
-
-    factorTween('opacity', state, this, 0.2)
   }
 })

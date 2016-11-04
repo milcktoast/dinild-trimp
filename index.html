@@ -1,20 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Dinild Trimp</title>
+  <title>Trimp</title>
   <meta charset="utf-8">
-  <style>
-    body {
-      position: absolute;
-      top: 0;
-      left: 0;
-      margin: 0;
-      width: 100%;
-      height: 100%;
-    }
-  </style>
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="stylesheet" href="./styles/index.css">
 </head>
 <body>
-  <script src="./build/index.js"></script>
+<article id="intro" class="modal">
+  <blockquote class="intro-quote">
+    <p class="hidden">"I alone can fix it"</p>
+    <p class="hidden">"Check out the sex tape"</p>
+    <p class="hidden">"I just start kissing them"</p>
+  </blockquote>
+  <form id="intro-form" class="intro-form hidden">
+    <label>Graphics fidelity:
+      <select name="fidelity">
+        <option value="LOW">low</option>
+        <option value="MED" selected>mid</option>
+        <option value="HIGH">high</option>
+      </select>
+    </label>
+    <label>
+      <button type="submit">Enter</button>
+    </label>
+  </form>
+</article>
+<script>
+(function () {
+  var quotes = document.querySelectorAll('.intro-quote > p')
+  var quote = quotes[Math.round(Math.random() * (quotes.length - 1))]
+  setTimeout(function () {
+    quote.classList.remove('hidden')
+  }, 0)
+}())
+</script>
+<script src="./build/index.js"></script>
 </body>
 </html>

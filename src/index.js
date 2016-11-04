@@ -150,30 +150,31 @@ function inject () {
 }
 
 function load () {
+  components.showLoader()
   tasks.flush('load').then(() => {
     components.hideLoader()
   })
 }
 
-function start (settings) {
-  renderer.shadowMap.enabled = settings.useShadow // FIXME
+function start () {
   tasks.run('syncState')
   loop.start()
 }
 
 function populate (settings) {
+  renderer.shadowMap.enabled = settings.useShadow // FIXME
   tasks.flush('populate', scene, camera, settings).then(() => {
     tasks.run('syncState')
   })
 }
 
 inject()
-setTimeout(() => {
-  const settings = RENDER_SETTINGS.MED
-  load()
-  start(settings)
+start()
+setTimeout(load, 0)
+components.bindEnter((event) => {
+  const settings = RENDER_SETTINGS[event.value]
   populate(settings)
-}, 0)
+})
 
 // FIXME
 // #ifdef DEVELOPMENT
