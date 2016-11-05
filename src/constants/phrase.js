@@ -4,18 +4,22 @@ export const WORDS = [
     syllables: [{
       duration: 14,
       shape: 'CH-I-L',
-      weight: 0.8
+      weight: 0.7
     }, {
       duration: 17,
       shape: 'H-OO-D',
-      weight: 0.6
+      weight: 0.5
     }]
   },
 
   {
     name: 'deal',
     syllables: [{
-      duration: 27,
+      duration: 12,
+      shape: 'M-A',
+      weight: 0.6
+    }, {
+      duration: 16,
       shape: 'D-EE-L',
       weight: 0.7
     }]
@@ -26,40 +30,44 @@ export const WORDS = [
     syllables: [{
       duration: 6,
       shape: 'A',
+      weight: 0.5
+    }, {
+      duration: 15,
+      shape: 'N-S-T',
       weight: 0.7
     }, {
-      duration: 12,
-      shape: 'N-S',
+      duration: 16,
+      shape: 'L-EE',
       weight: 0.7
-    }, {
-      duration: 18,
-      shape: 'T-L-EE',
-      weight: 1
     }]
   },
 
   {
     name: 'love',
     syllables: [{
-      duration: 18,
+      duration: 10,
       shape: 'L-O',
-      weight: 1
+      weight: 0.6
     }, {
-      duration: 18,
-      shape: 'V-A',
+      duration: 8,
+      shape: 'V',
       weight: 0.7
+    }, {
+      duration: 6,
+      shape: 'E',
+      weight: 0.4
     }]
   },
 
   {
     name: 'people',
     syllables: [{
-      duration: 18,
-      shape: 'P-EE',
-      weight: 1
+      duration: 16,
+      shape: 'P-EE-P',
+      weight: 0.7
     }, {
-      duration: 18,
-      shape: 'P-L',
+      duration: 8,
+      shape: 'L',
       weight: 0.8
     }]
   },
@@ -67,21 +75,26 @@ export const WORDS = [
   {
     name: 'pussy',
     syllables: [{
-      duration: 18,
-      shape: 'P-O',
-      weight: 0.8
+      duration: 8,
+      shape: 'P-U',
+      weight: 0.6
     }, {
-      duration: 18,
+      duration: 12,
       shape: 'S-EE',
-      weight: 1
+      weight: 0.7
     }]
   },
 
   {
     name: 'strict',
     syllables: [{
-      duration: 30,
-      shape: 'S-T-R-I-C-T'
+      duration: 12,
+      shape: 'S-T-R',
+      weight: 0.6
+    }, {
+      duration: 9,
+      shape: 'T',
+      weight: 0.8
     }]
   }
 ]
