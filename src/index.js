@@ -9,7 +9,7 @@ import {
 import { RENDER_SETTINGS } from './constants/fidelity'
 import { createTaskManager } from './utils/task'
 import { createLoop } from './utils/loop'
-import { debounce } from './utils/function'
+import { delayResolution, debounce } from './utils/function'
 import { IndexCamera } from './scenes/IndexCamera'
 import { IndexInterface } from './scenes/IndexInterface'
 import { IndexLights } from './scenes/IndexLights'
@@ -149,16 +149,11 @@ function inject () {
   })
 }
 
-// TODO: Cleanup loading flow
-let _load = null
 function load () {
-  if (!_load) {
-    components.showLoader()
-    _load = tasks.flush('load').then(() => {
-      components.hideLoader()
-    })
-  }
-  return _load
+  components.showLoader()
+  return tasks.flush('load')
+    .then(delayResolution(50))
+    .then(() => components.hideLoader())
 }
 
 function start () {
@@ -168,9 +163,11 @@ function start () {
 
 function populate (settings) {
   renderer.shadowMap.enabled = settings.useShadow // FIXME
-  tasks.flush('populate', scene, camera, settings).then(() => {
-    tasks.run('syncState')
-  })
+  components.showLoader()
+  return tasks.flush('populate', scene, camera, settings)
+    .then(() => tasks.run('syncState'))
+    .then(delayResolution(50))
+    .then(() => components.hideLoader())
 }
 
 inject()
@@ -179,9 +176,8 @@ setTimeout(load, 0)
 components.bindEnter((event) => {
   const settings = RENDER_SETTINGS[event.value]
   populate(settings)
-  load().then(() => {
-    camera.animateIn()
-  })
+    .then(delayResolution(50))
+    .then(() => camera.animateIn())
 })
 
 // FIXME

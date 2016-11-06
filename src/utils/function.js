@@ -4,6 +4,18 @@ export function bindAll (context, ...names) {
   })
 }
 
+export function delayResolution (delay) {
+  return new Promise((resolve) => {
+    delayFrame(resolve, delay)
+  })
+}
+
+export function delayFrame (fn, delay) {
+  setTimeout(() => {
+    window.requestAnimationFrame(fn)
+  }, delay)
+}
+
 // Throttle and debounce funcs based on:
 // jQuery throttle / debounce - v1.1 - 3/7/2010
 // http://benalman.com/projects/jquery-throttle-debounce-plugin/
