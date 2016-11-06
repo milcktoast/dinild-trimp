@@ -1,10 +1,10 @@
 // TODO: Create generic consonant frame
 export const MOUTH_FRAMES = [
   '_', // Create blank frame
-  'A-E-I',
+  'A-E-I-C-G-H', // Add frame for C-G, H
   'L-N-D-T-TH', // Probably add frames for N, D, T, TH
   'EE',
-  'CH-S', // Add frame for CH
+  'CH-S-SH', // Add frame for CH, SH
   'O-U-R', // Add frame for R
   'OO',
   'W-Q',
