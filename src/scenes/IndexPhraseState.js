@@ -6,6 +6,8 @@ import {
   spacePhrase
 } from '../animations/PhraseAnimation'
 
+const DEBUG_WORD = null
+
 export function IndexPhraseState (context) {
   this.context = context
   this.state = this.createState()
@@ -41,7 +43,9 @@ inherit(null, IndexPhraseState, {
     const { state } = this
     const { uv, which } = event
 
-    const activeWord = WORDS[which]
+    const activeWord = DEBUG_WORD != null
+      ? WORDS.find((word) => word.name === DEBUG_WORD)
+      : WORDS[which]
     const activePosition = { x: uv.x, y: 1 - uv.y }
     const selectedWords = state.selectedWords.concat(activeWord)
     const selectedPositions = state.selectedPositions.concat(activePosition)
@@ -55,6 +59,10 @@ inherit(null, IndexPhraseState, {
       selectedPositions,
       phraseSequence
     })
+
+    if (DEBUG_WORD) {
+      window.__ACTIVE_WORD__ = activeWord
+    }
 
     this.syncState()
   },
