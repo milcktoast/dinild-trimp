@@ -12,6 +12,7 @@ optimize_image () {
 }
 
 DINILD=./assets/textures/dinild
+NEEDLE=./assets/textures/dinild
 
 optimize_image $DINILD/diffuse low 512x512
 optimize_image $DINILD/diffuse med 1024x1024
@@ -20,3 +21,7 @@ optimize_image $DINILD/diffuse high 2048x2048
 optimize_image $DINILD/normal low 1024x1024
 optimize_image $DINILD/normal med 2048x2048
 optimize_image $DINILD/normal high 2048x2048
+
+optimize_image $NEEDLE/normal low 512x512
+optimize_image $NEEDLE/normal med 1024x1024
+optimize_image $NEEDLE/normal high 1024x1024
