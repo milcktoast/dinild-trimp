@@ -131,16 +131,10 @@ inherit(null, Dinild, Entity, {
   onPhraseWordStart (event) {
     const { word } = event
     if (word.name === 'spacer') return
-    console.log('word start', word.name)
     this.words.play(word.name)
   },
 
-  onPhraseWordEnd (event) {
-    // const { word } = event
-    // if (word.name === 'spacer') return
-    // console.log('word end', word.name)
-    // this.words.stop(word.name)
-  },
+  onPhraseWordEnd (event) {},
 
   update () {
     const { phrase } = this

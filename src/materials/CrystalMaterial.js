@@ -16,8 +16,6 @@ export function CrystalMaterial (params = {}) {
   this.normalScale = new Vector2(1, 1)
   this.time = 0
 
-  console.log(params)
-
   this.setValues({
     fragmentShader: CrystalShader.fragmentShader,
     vertexShader: CrystalShader.vertexShader,
