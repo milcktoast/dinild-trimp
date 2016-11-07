@@ -7,9 +7,11 @@ AUDIO=./assets/audio
 
 create_sprite () {
   NAME=$1
+  LOOP=$2
   echo "$ARR Create audio sprite: $NAME"
-  node $AUDIOSPRITE --format howler --gap 0.25 --output $AUDIO"_sprite"/$NAME $AUDIO/$NAME/*.ogg
+  node $AUDIOSPRITE --format howler --gap 0.25 --loop $LOOP --output $AUDIO"_sprite"/$NAME $AUDIO/$NAME/*.ogg
   echo "$OK"
 }
 
 create_sprite words
+create_sprite background crowd

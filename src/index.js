@@ -19,7 +19,7 @@ import { IndexPhraseState } from './scenes/IndexPhraseState'
 
 const container = createContainer()
 const tasks = createTaskManager(
-  'preload', 'inject', 'populate',
+  'preload', 'inject', 'prepopulate', 'populate',
   'syncState', 'update', 'render', 'resize')
 const renderer = createRenderer()
 const scene = createScene()
@@ -115,10 +115,10 @@ tasks.defer(lights, 'populate').then(() => {
 
 const entities = IndexEntities.create()
 tasks.defer(entities, 'preload')
-tasks.defer(entities, 'populate').then(() => {
-  tasks.add(entities, 'update')
-  tasks.add(entities, 'render')
-})
+tasks.defer(entities, 'prepopulate')
+tasks.defer(entities, 'populate')
+tasks.add(entities, 'update')
+tasks.add(entities, 'render')
 
 // Link state to scene
 
@@ -161,6 +161,14 @@ function start () {
   loop.start()
 }
 
+function prepopulate () {
+  return tasks.flush('prepopulate')
+    .then(delayResolution(50))
+    .then(() => {
+      entities.startCrowd()
+    })
+}
+
 function populate (settings) {
   renderer.shadowMap.enabled = settings.useShadow // FIXME
   components.showLoader()
@@ -172,7 +180,10 @@ function populate (settings) {
 
 inject()
 start()
-setTimeout(preload, 0)
+setTimeout(() => {
+  preload()
+  prepopulate()
+}, 0)
 components.bindEnter((event) => {
   const settings = RENDER_SETTINGS[event.value]
   populate(settings)

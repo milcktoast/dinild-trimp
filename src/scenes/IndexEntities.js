@@ -1,17 +1,30 @@
 import { WORD_LOCATIONS } from '../constants/phrase'
 import { inherit } from '../utils/ctor'
+import { createTaskManager } from '../utils/task'
+
+import { Crowd } from '../entities/Crowd'
 import { Dinild } from '../entities/Dinild'
 import { Needle } from '../entities/Needle'
 import { NeedleGroup } from '../entities/NeedleGroup'
 
-export function IndexEntities () {}
+export function IndexEntities () {
+  this.tasks = createTaskManager('update', 'render')
+}
 
 inherit(null, IndexEntities, {
   preload () {
     return Promise.all([
       Dinild.preload(),
-      Needle.preload()
+      Needle.preload(),
+      Crowd.preload()
     ])
+  },
+
+  prepopulate (scene, camera, settings) {
+    return Crowd.load().then(() => {
+      this.crowd = new Crowd()
+      this.tasks.add(this.crowd, 'update')
+    })
   },
 
   populate (scene, camera, settings) {
@@ -46,14 +59,25 @@ inherit(null, IndexEntities, {
       ])
     })
     .then(() => {
-      const { dinild, needleCursor } = this
+      const { dinild, needles, needleCursor, tasks } = this
       const { controls } = camera
+
       controls.cursorEntity = needleCursor
       controls.targetEntity = dinild
       controls.targetOptionUVs = WORD_LOCATIONS
       controls.addEventListener('add', this.onSelectionAdd.bind(this))
+
+      tasks.add(dinild, 'update')
+      tasks.add(dinild, 'render')
+      tasks.add(needles, 'render')
+      tasks.add(needleCursor, 'render')
+
       return this
     })
+  },
+
+  startCrowd () {
+    this.crowd.playAudio()
   },
 
   onSelectionAdd (event) {
@@ -62,12 +86,10 @@ inherit(null, IndexEntities, {
   },
 
   update (frame, state) {
-    this.dinild.update()
+    this.tasks.run('update', frame, state)
   },
 
   render (renderer, scene, camera) {
-    this.needles.render(renderer, scene, camera)
-    this.needleCursor.render(renderer, scene, camera)
-    this.dinild.render(renderer, scene, camera)
+    this.tasks.run('render', renderer, scene, camera)
   }
 })
