@@ -1,7 +1,8 @@
 import {
   Color,
   ShaderMaterial,
-  UniformsUtils
+  UniformsUtils,
+  Vector2
 } from 'three'
 import { extendShaderMaterial } from '../utils/material'
 import { CrystalShader } from '../shaders/CrystalShader'
@@ -11,7 +12,11 @@ export function CrystalMaterial (params = {}) {
 
   // TODO: Set color from scene state
   this.color = new Color(0.4, 0.0, 1.0)
+  this.normalMap = null
+  this.normalScale = new Vector2(1, 1)
   this.time = 0
+
+  console.log(params)
 
   this.setValues({
     fragmentShader: CrystalShader.fragmentShader,
@@ -26,6 +31,8 @@ export function CrystalMaterial (params = {}) {
 extendShaderMaterial(CrystalMaterial, {
   _uniformKeys: [
     'color',
+    'normalMap',
+    'normalScale',
     'opacity',
     'time'
   ],

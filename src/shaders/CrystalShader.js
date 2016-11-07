@@ -1,6 +1,7 @@
 import {
   UniformsLib,
-  UniformsUtils
+  UniformsUtils,
+  Vector4
 } from 'three'
 import { readFileSync } from 'fs'
 import { join } from 'path'
@@ -22,6 +23,9 @@ export const CrystalShader = {
     createUniforms({
       color: null,
       opacity: 1,
+      normalScale: null,
+      normalMap: null,
+      offsetRepeat: new Vector4(0, 0, 1, 1),
       time: 0
     })
   ]),

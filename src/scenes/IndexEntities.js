@@ -7,19 +7,18 @@ import { NeedleGroup } from '../entities/NeedleGroup'
 export function IndexEntities () {}
 
 inherit(null, IndexEntities, {
-  load () {
+  preload () {
     return Promise.all([
-      Dinild.load(),
-      Needle.load()
+      Dinild.preload(),
+      Needle.preload()
     ])
   },
 
-  // TODO: Cleanup loading, promise chain
   populate (scene, camera, settings) {
     const { useSubsurface, useShadow, textureQuality } = settings
     return Promise.all([
-      Dinild.load(),
-      Dinild.loadTextures(textureQuality)
+      Dinild.load(textureQuality),
+      Needle.load(textureQuality)
     ])
     .then(() => {
       this.dinild = new Dinild({
@@ -30,15 +29,16 @@ inherit(null, IndexEntities, {
       })
       return this.dinild.addTo(scene)
     })
-    .then(Needle.load())
     .then(() => {
       this.needles = new NeedleGroup({
         castShadow: useShadow,
-        receiveShadow: false
+        receiveShadow: false,
+        textureQuality
       })
       this.needleCursor = new Needle({
         castShadow: useShadow,
-        receiveShadow: false
+        receiveShadow: false,
+        textureQuality
       })
       return Promise.all([
         this.needles.addTo(this.dinild),

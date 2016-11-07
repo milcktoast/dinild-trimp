@@ -5,16 +5,21 @@ uniform float time;
 varying vec3 vViewPosition;
 varying vec3 vNormal;
 
+#include <uv_pars_fragment>
 #include <fog_pars_fragment>
+#include <normalmap_pars_fragment>
 #include <simplex_noise_3d>
 
 void main() {
+  #include <normal_flip>
+  #include <normal_fragment>
+
   mat3 viewMatrix3 = mat3(viewMatrix);
-  vec3 n = normalize(viewMatrix3 * vNormal);
+  vec3 n = normalize(viewMatrix3 * normal);
   vec3 p = vec3(viewMatrix3 * vViewPosition);
   vec3 v = normalize(-p);
   float vdn = 1.0 - max(dot(v, n), 0.0);
-  float rim = smoothstep(0.4, 1.0, vdn);
+  float rim = smoothstep(0.0, 1.0, vdn);
 
   vec3 accumColor = color;
 
@@ -31,7 +36,7 @@ void main() {
   accumColor += n2 * vec3(0.2, 0.2, 0.6);
   accumColor += n3 * vec3(0.1);
 
-  accumColor += vec3(rim) * 0.8;
+  accumColor += vec3(rim * rim);
 
   gl_FragColor = vec4(accumColor, opacity);
 
