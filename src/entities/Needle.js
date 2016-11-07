@@ -7,6 +7,7 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
 import { inherit } from '../utils/ctor'
+import { memoizeAll } from '../utils/function'
 import { loadModel } from '../utils/model-load'
 import { parseModel } from '../utils/model-parse'
 import { Entity } from '../mixins/Entity'
@@ -29,17 +30,16 @@ export function Needle (params) {
   this.renderMaterial = this.material.render.bind(this.material)
 }
 
-Object.assign(Needle, {
+Object.assign(Needle, memoizeAll({
   load () {
-    if (!Needle._load) Needle._load = Needle.loadModel()
-    return Needle._load
+    return Needle.loadModel()
   },
 
   loadModel () {
     return loadModel(ASSET_PATH, MODEL_META)
       .then((modelData) => parseModel(modelData, MODEL_META))
   }
-})
+}))
 
 inherit(null, Needle, Entity, {
   createMaterial () {

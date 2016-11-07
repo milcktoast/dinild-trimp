@@ -5,6 +5,7 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
 import { inherit } from '../utils/ctor'
+import { memoizeAll } from '../utils/function'
 import { loadAudioSprite } from '../utils/audio-load'
 import { loadModel, loadSkin, loadTexture } from '../utils/model-load'
 import { parseModel, parseSkin } from '../utils/model-parse'
@@ -29,15 +30,12 @@ export function Dinild (params) {
   this.textureQuality = params.textureQuality
 }
 
-Object.assign(Dinild, {
+Object.assign(Dinild, memoizeAll({
   load () {
-    if (!Dinild._load) {
-      Dinild._load = Promise.all([
-        Dinild.loadModel(),
-        Dinild.loadSkin()
-      ])
-    }
-    return Dinild._load
+    return Promise.all([
+      Dinild.loadModel(),
+      Dinild.loadSkin()
+    ])
   },
 
   loadModel () {
@@ -51,22 +49,16 @@ Object.assign(Dinild, {
   },
 
   loadTextures (quality) {
-    if (!Dinild._loadTextures) {
-      Dinild._loadTextures = Promise.all([
-        loadTexture(`${TEXTURE_ASSET_PATH}/diffuse_${quality}`),
-        loadTexture(`${TEXTURE_ASSET_PATH}/normal_${quality}`)
-      ])
-    }
-    return Dinild._loadTextures
+    return Promise.all([
+      loadTexture(`${TEXTURE_ASSET_PATH}/diffuse_${quality}`),
+      loadTexture(`${TEXTURE_ASSET_PATH}/normal_${quality}`)
+    ])
   },
 
   loadAudio () {
-    if (!Dinild._loadAudio) {
-      Dinild._loadAudio = loadAudioSprite(WORDS_META)
-    }
-    return Dinild._loadAudio
+    return loadAudioSprite(WORDS_META)
   }
-})
+}))
 
 inherit(null, Dinild, Entity, {
   createMaterial (textures) {

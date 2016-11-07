@@ -16,6 +16,24 @@ export function delayFrame (fn, delay) {
   }, delay)
 }
 
+export function memoize (fn) {
+  const cache = {}
+  return (...args) => {
+    const hash = args.map((v) => '' + v).join('') || '_'
+    const value = cache[hash]
+    if (value !== undefined) return value
+    return (cache[hash] = fn.apply(null, args))
+  }
+}
+
+export function memoizeAll (object) {
+  const nextObject = {}
+  Object.keys(object).forEach((key) => {
+    nextObject[key] = memoize(object[key])
+  })
+  return nextObject
+}
+
 // Throttle and debounce funcs based on:
 // jQuery throttle / debounce - v1.1 - 3/7/2010
 // http://benalman.com/projects/jquery-throttle-debounce-plugin/
