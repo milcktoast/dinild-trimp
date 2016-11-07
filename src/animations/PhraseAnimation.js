@@ -33,14 +33,34 @@ inherit(null, PhraseAnimation, EventDispatcher.prototype, {
     }
   },
 
-  setSequence (sequence) {
+  setSequence (sequence, frame = 0) {
     if (sequence === this.sequence) return
     this.sequence = sequence
     this.didLoop = false
-    this.frame = 0
+    this.frame = frame
     this.progress = this.createProgress()
     this.state = this.createState()
     this.statePrev = this.createState()
+  },
+
+  trimSequenceDuration (wordCount, loop) {
+    const { sequence, state } = this
+    if (!wordCount || sequence.length <= wordCount - 1) return
+
+    const { indexWord } = state
+    let nextDuration
+    for (let i = wordCount + 2; i >= 0; i--) {
+      const word = sequence.words[indexWord + i]
+      if (word && word.name === 'spacer') {
+        nextDuration = word.start + word.duration
+        break
+      }
+    }
+
+    Object.assign(sequence, {
+      duration: nextDuration,
+      loop
+    })
   },
 
   // FIXME: Loop not transitioning from last to first frame correctly
@@ -173,16 +193,19 @@ export function parseWord (word, shapeMap) {
 }
 
 export function parsePhrase (words, loop = false, shapeMap) {
-  const phraseWords = words
-    .map((word) => parseWord(word, shapeMap))
-    .map(mapStart)
-  const duration = phraseWords
+  const phraseWords = words.map((word) => parseWord(word, shapeMap))
+  return mapPhrase(phraseWords, loop)
+}
+
+function mapPhrase (phraseWords, loop = false) {
+  const nextWords = phraseWords.map(mapStart)
+  const duration = nextWords
     .reduce((total, word) => total + word.duration, 0)
 
   return {
     duration,
     loop,
-    words: phraseWords
+    words: nextWords
   }
 }
 

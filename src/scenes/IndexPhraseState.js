@@ -58,23 +58,25 @@ inherit(null, IndexPhraseState, {
       activePosition,
       selectedWords,
       selectedPositions,
-      phraseSequence
+      phraseSequence,
+      phraseMaxWords: null
     })
-
-    if (DEBUG_WORD) {
-      window.__ACTIVE_WORD__ = activeWord
-    }
-
     this.syncState()
   },
 
   onSequenceStart (event) {
-    this.state.enableSelection = false
+    Object.assign(this.state, {
+      enableSelection: false,
+      phraseMaxWords: null
+    })
     this.syncState()
   },
 
   onSequenceEnd (event) {
-    this.state.enableSelection = true
+    Object.assign(this.state, {
+      enableSelection: true,
+      phraseMaxWords: null
+    })
     this.syncState()
   },
 
@@ -85,21 +87,18 @@ inherit(null, IndexPhraseState, {
 
     Object.assign(state, {
       enableSelection: false,
-      phraseSequence
+      phraseSequence,
+      phraseMaxWords: null
     })
-
     this.syncState()
   },
 
   onSequenceDeactivate (event) {
     const { state } = this
-    const { phraseSequence } = state
 
-    phraseSequence.loop = false
     Object.assign(state, {
-      phraseSequence
+      phraseMaxWords: 1
     })
-
     this.syncState()
   },
 
@@ -122,5 +121,6 @@ inherit(null, IndexPhraseState, {
     camera.controls.enableCursor = state.enableSelection
     phraseMap.positions = state.selectedPositions
     dinild.phrase.setSequence(state.phraseSequence)
+    dinild.phrase.trimSequenceDuration(state.phraseMaxWords, false)
   }
 })
