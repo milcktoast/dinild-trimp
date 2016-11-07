@@ -12,7 +12,7 @@ optimize_image () {
 }
 
 DINILD=./assets/textures/dinild
-NEEDLE=./assets/textures/dinild
+NEEDLE=./assets/textures/needle
 
 optimize_image $DINILD/diffuse low 512x512
 optimize_image $DINILD/diffuse med 1024x1024
