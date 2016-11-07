@@ -53,6 +53,7 @@ inherit(null, IndexPhraseState, {
       parsePhrase([activeWord], false, MOUTH_FRAMES_SHAPE_MAP))
 
     Object.assign(state, {
+      enableSelection: false,
       activeWord,
       activePosition,
       selectedWords,

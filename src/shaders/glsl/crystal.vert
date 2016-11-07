@@ -1,9 +1,12 @@
 varying vec3 vViewPosition;
 varying vec3 vNormal;
 
+#include <uv_pars_vertex>
 #include <skinning_pars_vertex>
 
 void main() {
+	#include <uv_vertex>
+
 	#include <beginnormal_vertex>
 	#include <morphnormal_vertex>
 	#include <skinbase_vertex>

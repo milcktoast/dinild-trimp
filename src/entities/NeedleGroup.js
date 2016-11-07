@@ -7,6 +7,7 @@ import {
 import { inherit } from '../utils/ctor'
 import { Entity } from '../mixins/Entity'
 import { CrystalMaterial } from '../materials/CrystalMaterial'
+import { Needle } from './Needle'
 
 export function NeedleGroup (params) {
   this.instanceCount = 0
@@ -15,17 +16,19 @@ export function NeedleGroup (params) {
 
   this.castShadow = params.castShadow
   this.receiveShadow = params.receiveShadow
-  this.material = this.createMaterial()
-  this.renderMaterial = this.material.render.bind(this.material)
+  this.textureQuality = params.textureQuality
 }
 
 inherit(null, NeedleGroup, Entity, {
-  createMaterial () {
-    return new CrystalMaterial({
+  createMaterial (textures) {
+    const material = new CrystalMaterial({
       // color: 0xffffff,
+      normalMap: textures.normal,
       skinning: true,
       transparent: true
     })
+    this.renderMaterial = material.render.bind(material)
+    return material
   },
 
   createGeometry () {
@@ -49,17 +52,23 @@ inherit(null, NeedleGroup, Entity, {
   },
 
   createItem () {
-    const { castShadow, material, receiveShadow } = this
-    const geometry = this.createGeometry()
-    const item = new SkinnedMesh(geometry, material)
+    return Needle.load(this.textureQuality).then(({ textures }) => {
+      const { castShadow, receiveShadow } = this
+      const geometry = this.createGeometry()
+      const material = this.createMaterial(textures)
+      const item = new SkinnedMesh(geometry, material)
 
-    Object.assign(item, {
-      castShadow,
-      receiveShadow
+      Object.assign(item, {
+        castShadow,
+        receiveShadow
+      })
+
+      Object.assign(this, {
+        item, material
+      })
+
+      return this
     })
-
-    this.item = item
-    return Promise.resolve(this)
   },
 
   addInstanceFrom (entity) {

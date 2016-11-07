@@ -19,7 +19,7 @@ import { IndexPhraseState } from './scenes/IndexPhraseState'
 
 const container = createContainer()
 const tasks = createTaskManager(
-  'load', 'inject', 'populate',
+  'preload', 'inject', 'populate',
   'syncState', 'update', 'render', 'resize')
 const renderer = createRenderer()
 const scene = createScene()
@@ -114,7 +114,7 @@ tasks.defer(lights, 'populate').then(() => {
 // Entities
 
 const entities = IndexEntities.create()
-tasks.defer(entities, 'load')
+tasks.defer(entities, 'preload')
 tasks.defer(entities, 'populate').then(() => {
   tasks.add(entities, 'update')
   tasks.add(entities, 'render')
@@ -149,9 +149,9 @@ function inject () {
   })
 }
 
-function load () {
+function preload () {
   components.showLoader()
-  return tasks.flush('load')
+  return tasks.flush('preload')
     .then(delayResolution(50))
     .then(() => components.hideLoader())
 }
@@ -172,7 +172,7 @@ function populate (settings) {
 
 inject()
 start()
-setTimeout(load, 0)
+setTimeout(preload, 0)
 components.bindEnter((event) => {
   const settings = RENDER_SETTINGS[event.value]
   populate(settings)

@@ -5,6 +5,7 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
 import { inherit } from '../utils/ctor'
+import { memoizeAll } from '../utils/function'
 import { loadAudioSprite } from '../utils/audio-load'
 import { loadModel, loadSkin, loadTexture } from '../utils/model-load'
 import { parseModel, parseSkin } from '../utils/model-parse'
@@ -29,15 +30,22 @@ export function Dinild (params) {
   this.textureQuality = params.textureQuality
 }
 
-Object.assign(Dinild, {
-  load () {
-    if (!Dinild._load) {
-      Dinild._load = Promise.all([
-        Dinild.loadModel(),
-        Dinild.loadSkin()
-      ])
-    }
-    return Dinild._load
+Object.assign(Dinild, memoizeAll({
+  preload () {
+    return Promise.all([
+      Dinild.loadModel(),
+      Dinild.loadSkin()
+    ])
+  },
+
+  load (textureQuality) {
+    return Promise.all([
+      Dinild.loadModel(),
+      Dinild.loadSkin(),
+      Dinild.loadTextures(textureQuality)
+    ]).then(([model, skin, textures]) => ({
+      model, skin, textures
+    }))
   },
 
   loadModel () {
@@ -51,22 +59,18 @@ Object.assign(Dinild, {
   },
 
   loadTextures (quality) {
-    if (!Dinild._loadTextures) {
-      Dinild._loadTextures = Promise.all([
-        loadTexture(`${TEXTURE_ASSET_PATH}/diffuse_${quality}`),
-        loadTexture(`${TEXTURE_ASSET_PATH}/normal_${quality}`)
-      ])
-    }
-    return Dinild._loadTextures
+    return Promise.all([
+      loadTexture(`${TEXTURE_ASSET_PATH}/diffuse_${quality}`),
+      loadTexture(`${TEXTURE_ASSET_PATH}/normal_${quality}`)
+    ]).then(([diffuse, normal]) => ({
+      diffuse, normal
+    }))
   },
 
   loadAudio () {
-    if (!Dinild._loadAudio) {
-      Dinild._loadAudio = loadAudioSprite(WORDS_META)
-    }
-    return Dinild._loadAudio
+    return loadAudioSprite(WORDS_META)
   }
-})
+}))
 
 inherit(null, Dinild, Entity, {
   createMaterial (textures) {
@@ -74,8 +78,8 @@ inherit(null, Dinild, Entity, {
       ? SkinMaterial
       : MeshStandardMaterial
     const material = new MaterialCtor({
-      map: textures.map,
-      normalMap: textures.normalMap,
+      map: textures.diffuse,
+      normalMap: textures.normal,
       skinning: true
     })
     if (material.render) {
@@ -85,17 +89,7 @@ inherit(null, Dinild, Entity, {
   },
 
   createItem () {
-    return Promise.all([
-      Dinild.load(),
-      Dinild.loadTextures(this.textureQuality)
-    ]).then(([main, textures]) => ({
-      model: main[0],
-      skin: main[1],
-      textures: {
-        map: textures[0],
-        normalMap: textures[1]
-      }
-    })).then(({ model, skin, textures }) => {
+    return Dinild.load(this.textureQuality).then(({ model, skin, textures }) => {
       const { geometry } = model
       const { frames, skeleton } = skin
       const material = this.createMaterial(textures)
