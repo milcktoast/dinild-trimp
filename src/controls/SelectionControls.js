@@ -31,6 +31,7 @@ export function SelectionControls (camera) {
   this.targetCenter = new Vector3()
 
   this.size = new Vector2()
+  this.isLandscape = false
   this.raycaster = new Raycaster()
   this.context = {
     start: this.createEventContext(),
@@ -116,8 +117,11 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
 
   resize () {
     const { size } = this
-    size.x = window.innerWidth
-    size.y = window.innerHeight
+    const width = window.innerWidth
+    const height = window.innerHeight
+    size.x = width
+    size.y = height
+    this.isLandscape = width > height
   },
 
   updateContext (event, name, screenOnly) {
@@ -305,12 +309,18 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
 
   // Device
 
-  // TODO: Fix orientation in landscape
   deviceOrientation (event) {
+    const { isLandscape } = this
     const { move } = this.context
     const { screen } = move
-    screen.x = mapLinear(-40, 40, -1, 1, event.gamma)
-    screen.y = mapLinear(30, -15, -1, 1, event.beta)
+
+    if (isLandscape) {
+      screen.x = mapLinear(-40, 40, -1, 1, event.beta)
+      screen.y = mapLinear(-40, 10, -1, 1, event.gamma)
+    } else {
+      screen.x = mapLinear(-40, 40, -1, 1, event.gamma)
+      screen.y = mapLinear(40, -10, -1, 1, event.beta)
+    }
     this.orientCamera(screen)
     this.targetCamera(screen)
   },
