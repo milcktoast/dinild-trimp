@@ -14,4 +14,5 @@ create_sprite () {
 }
 
 create_sprite words
+create_sprite effects
 create_sprite background crowd

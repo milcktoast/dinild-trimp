@@ -66,6 +66,8 @@ inherit(null, IndexEntities, {
       controls.targetEntity = dinild
       controls.targetOptionUVs = WORD_LOCATIONS
       controls.addEventListener('add', this.onSelectionAdd.bind(this))
+      controls.addEventListener('cursorIn', this.onCursorIn.bind(this))
+      controls.addEventListener('cursorOut', this.onCursorOut.bind(this))
 
       tasks.add(dinild, 'update')
       tasks.add(dinild, 'render')
@@ -83,6 +85,14 @@ inherit(null, IndexEntities, {
   onSelectionAdd (event) {
     const { needles, needleCursor } = this
     needles.addInstanceFrom(needleCursor)
+  },
+
+  onCursorIn (event) {
+    this.dinild.playSoundEffect('wet_in')
+  },
+
+  onCursorOut (event) {
+    this.dinild.playSoundEffect('wet_out')
   },
 
   update (frame, state) {

@@ -51,7 +51,9 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
   _events: {
     start: { type: 'start' },
     end: { type: 'end' },
-    add: { type: 'add' }
+    add: { type: 'add' },
+    cursorIn: { type: 'cursorIn' },
+    cursorOut: { type: 'cursorOut' }
   },
 
   _elementEvents: [
@@ -491,18 +493,36 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     }
   },
 
+  dispatchCursorEvents (offsetPrev, offset) {
+    const { isPointerDragging } = this
+    if (!isPointerDragging) return
+
+    if (offsetPrev > 0 && offset < 0) {
+      const cursorIn = this._events.cursorIn
+      cursorIn.offset = offset
+      this.dispatchEvent(cursorIn)
+    } else if (offsetPrev < 0 && offset > 0) {
+      const cursorOut = this._events.cursorOut
+      cursorOut.offset = offset
+      this.dispatchEvent(cursorOut)
+    }
+  },
+
   updateCursor () {
     const { cursorEntity, cursorStateTarget } = this
     if (!cursorEntity) return
 
+    const offsetPrev = cursorEntity.offset
     const opacity = factorTween('opacity', cursorEntity.material, cursorStateTarget, 0.1)
-    factorTween('offset', cursorEntity, cursorStateTarget, 0.15)
+    const offset = factorTween('offset', cursorEntity, cursorStateTarget, 0.15)
     factorTweenAll(KEYS.Vector3, 'position', cursorEntity, cursorStateTarget, 0.4)
     factorTweenAll(KEYS.Vector3, 'normal', cursorEntity, cursorStateTarget, 0.1)
 
     const isVisible = opacity > 0.001
     cursorEntity.item.visible = isVisible
     if (!isVisible) return
+
+    this.dispatchCursorEvents(offsetPrev, offset)
 
     // position, offset
     scratchVec3A

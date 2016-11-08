@@ -22,6 +22,8 @@ const MODEL_META = JSON.parse(
   readFileSync(resolve(__dirname, '../../assets/models/dinild/meta.json'), 'utf8'))
 const WORDS_META = JSON.parse(
   readFileSync(resolve(__dirname, '../../assets/audio_sprite/words.json'), 'utf8'))
+const EFFECTS_META = JSON.parse(
+  readFileSync(resolve(__dirname, '../../assets/audio_sprite/effects.json'), 'utf8'))
 
 export function Dinild (params) {
   this.castShadow = params.castShadow
@@ -68,7 +70,12 @@ Object.assign(Dinild, memoizeAll({
   },
 
   loadAudio () {
-    return loadAudioSprite(WORDS_META)
+    return Promise.all([
+      loadAudioSprite(WORDS_META),
+      loadAudioSprite(EFFECTS_META)
+    ]).then(([words, effects]) => ({
+      words, effects
+    }))
   }
 }))
 
@@ -121,8 +128,10 @@ inherit(null, Dinild, Entity, {
   },
 
   createAudio () {
-    Dinild.loadAudio().then((words) => {
-      this.words = words
+    Dinild.loadAudio().then(({ effects, words }) => {
+      this.audio = { effects, words }
+      effects.volume(0.1)
+      words.volume(1)
       this.phrase.addEventListener('wordStart', this.onPhraseWordStart.bind(this))
       this.phrase.addEventListener('wordEnd', this.onPhraseWordEnd.bind(this))
     })
@@ -131,10 +140,16 @@ inherit(null, Dinild, Entity, {
   onPhraseWordStart (event) {
     const { word } = event
     if (word.name === 'spacer') return
-    this.words.play(word.name)
+    this.audio.words.play(word.name)
   },
 
   onPhraseWordEnd (event) {},
+
+  playSoundEffect (name) {
+    const { audio } = this
+    if (!audio) return
+    audio.effects.play(name)
+  },
 
   update () {
     const { phrase } = this
