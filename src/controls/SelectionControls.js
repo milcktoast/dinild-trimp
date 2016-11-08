@@ -250,7 +250,7 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     const thetaDir = Math.sign(orientation.theta)
     const theta = thetaDir * easeQuadraticOut(Math.abs(orientation.theta))
     const x = Math.sin(theta) * orientation.radius
-    const z = Math.cos(theta) * orientation.radius
+    const z = Math.cos(theta * 0.5) * orientation.radius
 
     const phiDir = Math.sin(orientation.phi)
     const phi = phiDir * easeQuadraticOut(Math.abs(orientation.phi))
