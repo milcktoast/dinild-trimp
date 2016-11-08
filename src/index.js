@@ -5,6 +5,7 @@ import {
   Scene,
   WebGLRenderer
 } from 'three'
+import attachFastClick from 'fastclick'
 
 import { RENDER_SETTINGS } from './constants/fidelity'
 import { createTaskManager } from './utils/task'
@@ -36,6 +37,7 @@ function createContainer () {
     height: '100%',
     overflow: 'hidden'
   })
+  attachFastClick(document.body)
   return element
 }
 
