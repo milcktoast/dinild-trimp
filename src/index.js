@@ -47,6 +47,7 @@ function createRenderer () {
   renderer.sortObjects = false
   renderer.shadowMap.type = PCFSoftShadowMap
   function resize () {
+    renderer.setPixelRatio(window.devicePixelRatio || 1)
     renderer.setSize(window.innerWidth, window.innerHeight)
   }
   tasks.defer((container) => {
