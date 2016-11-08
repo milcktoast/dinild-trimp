@@ -14,6 +14,7 @@ if [ $# -eq 0 ]
     rm -rf ./assets
     mkdir ./assets
     copy_asset_dir audio
+    copy_asset_dir images
     copy_asset_dir models
     copy_asset_dir textures
   else

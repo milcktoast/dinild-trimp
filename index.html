@@ -1,11 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Trimp</title>
+  <title>Dinild Trimp</title>
   <meta charset="utf-8">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
-  <meta name="description" content="">
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <meta name="description" content="">
+
+  <meta property="og:site_name" content="Dinild Trimp" />
+  <meta property="og:title" content="Dinild Trimp" />
+  <meta property="og:url" content="https://jayweeks.com/trimp/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:description" content="Dinild Trimp. #makeagainmake #wetsuckingnoise" />
+  <meta property="og:image" content="./assets/images/og-image.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <link rel="apple-touch-icon" href="./assets/images/apple-touch-icon.png">
+
   <link rel="shortcut icon" href="/favicon.ico">
   <link href="https://fonts.googleapis.com/css?family=Bungee+Hairline" rel="stylesheet">
   <link href="./styles/index.css" rel="stylesheet">
@@ -19,7 +30,7 @@
     <p class="hidden">"I'm so liquid"</p>
   </blockquote>
   <form id="intro-form" class="intro-form hidden">
-    <label>Graphics fidelity:
+    <label>Graphic fidelity:
       <select name="fidelity">
         <option value="LOW">low</option>
         <option value="MED" selected>mid</option>
@@ -35,9 +46,8 @@
 (function () {
   var quotes = document.querySelectorAll('.intro-quote > p')
   var quote = quotes[Math.round(Math.random() * (quotes.length - 1))]
-  setTimeout(function () {
-    quote.classList.remove('hidden')
-  }, 0)
+  function revealQuote () { quote.classList.remove('hidden') }
+  window.requestAnimationFrame(revealQuote)
 }())
 </script>
 <script src="./build/index.js"></script>
