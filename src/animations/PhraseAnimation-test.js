@@ -77,7 +77,8 @@ test('PhraseAnimation - parse phrase', (t) => {
 test('PhraseAnimation - inject spacer words', (t) => {
   const words = [WORDS[0], WORDS[0], WORDS[0]]
   const phrase = parsePhrase(words, true, SHAPE_MAP)
-  const spaced = spacePhrase(phrase)
+  const spaceParams = { min: 10, max: 20, start: 10, end: 10 }
+  const spaced = spacePhrase(spaceParams, phrase)
   t.plan(4)
   t.equal(spaced.loop, phrase.loop,
     'should copy loop prop')

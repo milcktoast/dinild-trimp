@@ -22,7 +22,13 @@ inherit(null, IndexPhraseState, {
       activePosition: null,
       selectedWords: [],
       selectedPositions: [],
-      phraseSequence: null
+      phraseSequence: null,
+      phraseSpacing: {
+        min: 10,
+        max: 60,
+        start: 20,
+        end: 40
+      }
     }
   },
 
@@ -49,7 +55,7 @@ inherit(null, IndexPhraseState, {
     const activePosition = { x: uv.x, y: 1 - uv.y }
     const selectedWords = state.selectedWords.concat(activeWord)
     const selectedPositions = state.selectedPositions.concat(activePosition)
-    const phraseSequence = spacePhrase(
+    const phraseSequence = spacePhrase(state.phraseSpacing,
       parsePhrase([activeWord], false, MOUTH_FRAMES_SHAPE_MAP))
 
     Object.assign(state, {
@@ -82,7 +88,7 @@ inherit(null, IndexPhraseState, {
 
   onSequenceActivate (event) {
     const { state } = this
-    const phraseSequence = spacePhrase(
+    const phraseSequence = spacePhrase(state.phraseSpacing,
       parsePhrase(state.selectedWords, true, MOUTH_FRAMES_SHAPE_MAP))
 
     Object.assign(state, {

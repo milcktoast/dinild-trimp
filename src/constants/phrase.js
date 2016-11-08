@@ -90,11 +90,11 @@ export const WORDS = [
     syllables: [{
       duration: 9,
       shape: 'G-R-OO',
-      weight: 0.9
+      weight: 0.7
     }, {
       duration: 10,
       shape: 'L-G',
-      weight: 0.6
+      weight: 0.5
     }]
   },
 
@@ -152,8 +152,8 @@ export const WORDS = [
       shape: 'M-S',
       weight: 0.5
     }, {
-      duration: 9,
-      shape: 'U-N-I',
+      duration: 8,
+      shape: 'U-N',
       weight: 0.5
     }, {
       duration: 15,
@@ -243,15 +243,15 @@ export const WORDS = [
     name: 'satisfying',
     syllables: [{
       duration: 12,
-      shape: 'S-A-T-S',
+      shape: 'S-T-S',
       weight: 0.5
     }, {
-      duration: 6,
+      duration: 8,
       shape: 'F-Y',
       weight: 0.7
     }, {
       duration: 12,
-      shape: 'I-N-G',
+      shape: 'N-G',
       weight: 0.6
     }]
   },

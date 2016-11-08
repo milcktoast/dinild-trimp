@@ -1,6 +1,6 @@
 import { EventDispatcher } from 'three'
 import { inherit } from '../utils/ctor'
-import { clamp } from '../utils/math'
+import { clamp, mapLinear } from '../utils/math'
 
 export function PhraseAnimation (sequence) {
   if (sequence) this.setSequence(sequence)
@@ -222,17 +222,20 @@ function createSpacerWord (duration, weight = 1) {
   }
 }
 
-export function spacePhrase (sequence) {
+export function spacePhrase (params, sequence) {
+  const { min, max, start, end } = params
   const { loop, words } = sequence
 
   let allWords = []
   for (let i = 0; i < words.length; i++) {
-    const duration = Math.round(Math.random() * 4 + 8)
+    const duration = i === 0
+      ? start
+      : Math.round(mapLinear(0, 1, min, max, Math.random()))
     allWords.push(
       createSpacerWord(duration),
       words[i])
   }
-  allWords.push(createSpacerWord(30))
+  allWords.push(createSpacerWord(end))
   allWords = allWords.map(mapStart)
 
   const duration = allWords
