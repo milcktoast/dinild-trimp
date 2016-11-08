@@ -59,18 +59,6 @@ p {
   transition: opacity 3s ease-in 0ms;
 }
 
-@media (min-width: 768px) {
-  .modal {
-    margin-top: -110px;
-    height: 220px;
-  }
-
-  .intro-quote {
-    height: 100px;
-    font-size: 52px;
-  }
-}
-
 .intro-form {
   transition: opacity 3s ease-in 200ms;
 }
@@ -100,13 +88,9 @@ p {
   text-align: center;
   text-transform: uppercase;
 
-  cursor: pointer;
   opacity: 0.6;
   transition: opacity 400ms;
-}
-
-.intro-form select {
-  -webkit-appearance: none;
+  cursor: pointer;
 }
 
 .intro-form select:hover,
@@ -114,12 +98,32 @@ p {
   opacity: 1;
 }
 
+.intro-form select {
+  -webkit-appearance: none;
+}
+
 .intro-form button {
   border-bottom: 1px solid #fff;
-  font-size: 18px;
+  font: 18px/1 Monaco, monospace;
 }
 
 .intro-form button:hover,
 .intro-form button:focus {
   opacity: 1;
+}
+
+@media (min-width: 768px) {
+  .modal {
+    margin-top: -110px;
+    height: 220px;
+  }
+
+  .intro-quote {
+    height: 100px;
+    font-size: 52px;
+  }
+
+  .intro-form button {
+    font-size: 20px;
+  }
 }
