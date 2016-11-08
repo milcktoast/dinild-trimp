@@ -21,11 +21,11 @@ inherit(null, IndexLights, {
     const { top, bottom, ambient } = this
     if (!top) return
     top.intensity = modulateIntensity(top.intensityBase,
-      0.65, frame * 0.0021)
+      0.05, frame * 0.003)
     bottom.intensity = modulateIntensity(bottom.intensityBase,
-      0.75, frame * 0.0022)
+      0.05, frame * 0.002)
     ambient.intensity = modulateIntensity(ambient.intensityBase,
-      0.85, frame * 0.0020)
+      0.85, frame * 0.001)
   }
 })
 
