@@ -11,7 +11,7 @@ import { Needle } from './Needle'
 
 export function NeedleGroup (params) {
   this.instanceCount = 0
-  this.maxInstances = 50
+  this.maxInstances = 100
   this.verticesPerInstance = 36
 
   this.castShadow = params.castShadow
