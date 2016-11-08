@@ -44,6 +44,7 @@ function createRenderer () {
     antialias: true
   })
   renderer.autoClear = false
+  renderer.sortObjects = false
   renderer.shadowMap.type = PCFSoftShadowMap
   function resize () {
     renderer.setSize(window.innerWidth, window.innerHeight)
