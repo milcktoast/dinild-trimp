@@ -22,6 +22,6 @@ optimize_image $DINILD/normal low 1024x1024
 optimize_image $DINILD/normal med 2048x2048
 optimize_image $DINILD/normal high 2048x2048
 
-optimize_image $NEEDLE/normal low 512x512
-optimize_image $NEEDLE/normal med 1024x1024
-optimize_image $NEEDLE/normal high 1024x1024
+optimize_image $NEEDLE/normal low 256x256
+optimize_image $NEEDLE/normal med 512x512
+optimize_image $NEEDLE/normal high 512x512
