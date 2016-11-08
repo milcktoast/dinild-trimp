@@ -79,6 +79,9 @@ void RE_Direct_Skin(
   #ifndef PHYSICALLY_CORRECT_LIGHTS
     irradiance *= PI;
   #endif
+  // FIXME
+  // reflectedLight.directDiffuse += irradiance *
+  //   BRDF_Diffuse_Lambert(material.diffuseColor);
   if (material.passID == 1) {
     reflectedLight.directDiffuse += irradiance *
       BRDF_Diffuse_Lambert(material.diffuseColor);

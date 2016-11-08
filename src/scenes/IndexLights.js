@@ -17,13 +17,14 @@ inherit(null, IndexLights, {
     return Promise.resolve(this)
   },
 
-  update (frame, state) {
-    if (!this.top) return
-    this.top.intensity = modulateIntensity(state.lightTop.intensity,
+  update (frame) {
+    const { top, bottom, ambient } = this
+    if (!top) return
+    top.intensity = modulateIntensity(top.intensityBase,
       0.65, frame * 0.0021)
-    this.bottom.intensity = modulateIntensity(state.lightBottom.intensity,
+    bottom.intensity = modulateIntensity(bottom.intensityBase,
       0.75, frame * 0.0022)
-    this.ambient.intensity = modulateIntensity(state.lightAmbient.intensity,
+    ambient.intensity = modulateIntensity(ambient.intensityBase,
       0.85, frame * 0.0020)
   }
 })

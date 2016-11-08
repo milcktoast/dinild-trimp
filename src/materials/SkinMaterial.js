@@ -30,7 +30,7 @@ export function SkinMaterial (params = {}) {
   this.normalScale = new Vector2(1, 1)
   this.roughness = 0.15
   this.specular = new Color(0xffffff)
-  this.specularBrightness = 0.75
+  this.specularBrightness = 1
 
   this.renderTargetSize = 512
   this.passID = 1

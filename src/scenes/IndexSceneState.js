@@ -78,19 +78,22 @@ inherit(SceneState, IndexSceneState, {
 
     skinBasic () {
       return {
-        roughness: 0.52,
-        metalness: 0.1,
+        color: createColor(0xffffff),
+        roughness: 0.35,
+        metalness: 0,
         normalScale: 1,
-        textureAnisotropy: 4
+        lightIntensity: 1.0
       }
     },
 
     skin () {
       return {
-        roughness: 0.24,
+        color: createColor(0xffffff),
+        roughness: 0.19,
         metalness: 0,
         normalScale: 1,
-        textureAnisotropy: 4
+        textureAnisotropy: 4,
+        lightIntensity: 20 // FIXME
       }
     },
 
@@ -119,11 +122,11 @@ inherit(SceneState, IndexSceneState, {
 
     lightBottom () {
       return {
-        position: createVector(2, -14, 24.5),
-        target: createVector(0, 5.5, 1),
+        position: createVector(2, -30, 33),
+        target: createVector(-6, 5.5, 1),
         color: createColor(0xD1F08A),
         intensity: 2.4,
-        distance: 40,
+        distance: 80,
         angle: 0.59,
         penumbra: 0.2,
         decay: 0.75,
@@ -133,15 +136,22 @@ inherit(SceneState, IndexSceneState, {
 
     lightAmbient () {
       return {
-        skyColor: createColor(0xB1FF29),
-        groundColor: createColor(0x58FFCC),
-        intensity: 0.4
+        skyColor: createColor(0xA7D9F0),
+        groundColor: createColor(0x413550),
+        intensity: 1.2
       }
     }
   },
 
   syncState () {
     this.updateState(this.state)
+  },
+
+  getSkinState (nextState) {
+    const { dinild } = this.context.entities
+    return dinild && dinild.material.type === 'SkinMaterial'
+      ? nextState.skin
+      : nextState.skinBasic
   },
 
   updateState (nextState) {
@@ -153,20 +163,18 @@ inherit(SceneState, IndexSceneState, {
 
   updateLights (nextState) {
     const { lights } = this.context
+    const skinState = this.getSkinState(nextState)
     if (!lights.top) return
-    this.updateSpotLight(lights.top, nextState.lightTop)
-    this.updateSpotLight(lights.bottom, nextState.lightBottom)
+    this.updateSpotLight(lights.top, nextState.lightTop, skinState.lightIntensity)
+    this.updateSpotLight(lights.bottom, nextState.lightBottom, skinState.lightIntensity)
     this.updateHemiLight(lights.ambient, nextState.lightAmbient)
   },
 
   updateDinild (nextState) {
     const { dinild } = this.context.entities
     if (!dinild) return
-    const { material } = dinild
-    const materialState = material.type === 'SkinMaterial'
-      ? nextState.skin
-      : nextState.skinBasic
+    const skinState = this.getSkinState(nextState)
     this.updatePose(dinild.pose, dinild.item, nextState.pose)
-    this.updateSkinMaterial(material, materialState)
+    this.updateSkinMaterial(dinild.material, skinState)
   }
 })

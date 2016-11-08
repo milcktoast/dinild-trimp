@@ -39,6 +39,7 @@ inherit(null, SceneState, {
   updateSkinMaterial (material, state) {
     if (!material) return
     const { map, normalMap } = material
+    material.color.copy(state.color)
     material.roughness = state.roughness
     material.metalness = state.metalness
     material.normalScale.set(state.normalScale, state.normalScale)
@@ -50,16 +51,16 @@ inherit(null, SceneState, {
     }
   },
 
-  updateLight (light, state) {
+  updateLight (light, state, intensity) {
     const { renderer } = this.context
     light.color.copy(state.color)
     light.position.copy(state.position)
-    light.intensity = state.intensity
+    light.intensityBase = state.intensity * intensity
     light.castShadow = renderer.shadowMap.enabled && state.castShadow
   },
 
-  updateSpotLight (light, state) {
-    this.updateLight(light, state)
+  updateSpotLight (light, state, intensity) {
+    this.updateLight(light, state, intensity)
     light.target.position.copy(state.target)
     light.target.updateMatrixWorld()
     light.distance = state.distance
@@ -73,7 +74,7 @@ inherit(null, SceneState, {
   updateHemiLight (light, state) {
     light.color.copy(state.skyColor)
     light.groundColor.copy(state.groundColor)
-    light.intensity = state.intensity
+    light.intensityBase = state.intensity
   },
 
   addSkeletonHelper (mesh) {

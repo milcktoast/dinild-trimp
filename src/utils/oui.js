@@ -50,7 +50,7 @@ function hasProps (state, keys) {
 const colorPicker = annotate({
   control: controls.ColorPicker
 })
-const lightIntensity = annotate({
+const lightIntensityRange = annotate({
   min: 0,
   max: 6,
   step: 0.1
@@ -92,14 +92,18 @@ function annotateFog ({
 }
 
 function annotateSkinMaterial ({
+  color, lightIntensity,
   roughness, metalness,
   normalScale, textureAnisotropy
 }) {
+  const lightIntensityRange = annotate({ min: 8, max: 24, step: 0.1 })
   const roughnessRange = annotate({ min: 0, max: 1, step: 0.01 })
   const metalnessRange = annotate({ min: 0, max: 1, step: 0.01 })
   const normalScaleRange = annotate({ min: 0, max: 2, step: 0.05 })
   const textureAnisotropyRange = annotate({ min: 1, max: 8, step: 1 })
   return {
+    @colorPicker color,
+    @lightIntensityRange lightIntensity,
     @roughnessRange roughness,
     @metalnessRange metalness,
     @normalScaleRange normalScale,
@@ -134,7 +138,7 @@ function annotatePointLight ({
   return {
     position: annotateVector(position),
     @colorPicker color,
-    @lightIntensity intensity,
+    @lightIntensityRange intensity,
     @distanceRange distance
   }
 }
@@ -154,7 +158,7 @@ function annotateSpotLight ({
     helper: helper || false,
     castShadow: castShadow || false,
     @colorPicker color,
-    @lightIntensity intensity,
+    @lightIntensityRange intensity,
     @distanceRange distance,
     @angleRange angle,
     @penumbraRange penumbra,
@@ -166,6 +170,6 @@ function annotateHemiLight ({ skyColor, groundColor, intensity }) {
   return {
     @colorPicker skyColor,
     @colorPicker groundColor,
-    @lightIntensity intensity
+    @lightIntensityRange intensity
   }
 }
