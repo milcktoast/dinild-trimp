@@ -8,7 +8,7 @@ import {
 
 import { inherit } from '../utils/ctor'
 import { throttle } from '../utils/function'
-import { clamp, lerp } from '../utils/math'
+import { clamp, lerp, mapLinear } from '../utils/math'
 import { pointOnLine } from '../utils/ray'
 import { copyAttributeToVector } from '../utils/vector'
 import {
@@ -54,17 +54,33 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     add: { type: 'add' }
   },
 
+  _elementEvents: [
+    'mouseDown', 'mouseMove', 'mouseUp',
+    'touchStart', 'touchMove', 'touchEnd',
+    'deviceOrientation'
+  ],
+
   _documentEvents: [
-    'mouseDown', 'mouseMove', 'mouseUp'
+    'mouseMove'
+  ],
+
+  _windowEvents: [
+    'deviceOrientation'
   ],
 
   bindElement (element) {
     this.element = element
-    this._documentEvents.forEach((name) => {
-      document.addEventListener(name.toLowerCase(),
+    this.bindEvents(element, this._elementEvents)
+    this.bindEvents(document, this._documentEvents)
+    this.bindEvents(window, this._windowEvents)
+    this.resize()
+  },
+
+  bindEvents (target, events) {
+    events.forEach((name) => {
+      target.addEventListener(name.toLowerCase(),
         throttle(50, false, this[name].bind(this)), false)
     })
-    this.resize()
   },
 
   createEventContext () {
@@ -163,9 +179,23 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     return closestIndex
   },
 
-  // Mouse
+  // Pointer
 
-  mouseDown (event) {
+  _pointerEvent: {
+    originalEvent: null,
+    clientX: null,
+    clientY: null
+  },
+
+  pointerEvent (event, originalEvent_) {
+    const pointerEvent = this._pointerEvent
+    pointerEvent.clientX = event.clientX
+    pointerEvent.clientY = event.clientY
+    pointerEvent.originalEvent = originalEvent_ || event
+    return pointerEvent
+  },
+
+  pointerDown (event) {
     const { start } = this.updateContext(event, 'start')
     const { intersection } = start
     const eventStart = this._events.start
@@ -173,19 +203,20 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     this.isPointerDown = true
     if (intersection) {
       this.isPointerDragging = true
+      event.originalEvent.preventDefault()
       this.offsetCursor(0.1)
       this.orientCursor(intersection)
       this.dispatchEvent(eventStart)
     }
   },
 
-  mouseMove (event) {
+  pointerMove (event) {
     const { isPointerDown, isPointerDragging } = this
 
     if (isPointerDown && isPointerDragging) {
       const { start, drag } = this.updateContext(event, 'drag')
       this.dragCursorOffset(event, start, drag)
-      event.preventDefault()
+      event.originalEvent.preventDefault()
     } else if (!isPointerDown) {
       const { move } = this.updateContext(event, 'move', true)
       const { screen } = move
@@ -194,7 +225,7 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
     }
   },
 
-  mouseUp (event) {
+  pointerUp (event) {
     const { cursorStateTarget, isPointerDragging } = this
     const eventEnd = this._events.end
 
@@ -213,8 +244,73 @@ inherit(null, SelectionControls, EventDispatcher.prototype, {
 
     if (isPointerDragging) {
       this.dispatchEvent(eventEnd)
-      event.preventDefault()
+      event.originalEvent.preventDefault()
     }
+  },
+
+  // Mouse
+
+  mouseDown (event) {
+    const pointerEvent = this.pointerEvent(event)
+    this.pointerDown(pointerEvent)
+  },
+
+  mouseMove (event) {
+    const pointerEvent = this.pointerEvent(event)
+    this.pointerMove(pointerEvent)
+  },
+
+  mouseUp (event) {
+    const pointerEvent = this.pointerEvent(event)
+    this.pointerUp(pointerEvent)
+  },
+
+  // Touch
+
+  touchStart (event) {
+    if (this.touchId != null) return
+    const touch = event.changedTouches[0]
+    const pointerEvent = this.pointerEvent(touch, event)
+    this.touchId = touch.identifier
+    this.pointerDown(pointerEvent)
+  },
+
+  touchMove (event) {
+    const touch = this.findActiveTouch(event)
+    if (touch) {
+      const pointerEvent = this.pointerEvent(touch, event)
+      this.pointerMove(pointerEvent)
+    }
+  },
+
+  touchEnd (event) {
+    const touch = this.findActiveTouch(event)
+    if (touch) {
+      const pointerEvent = this.pointerEvent(touch, event)
+      this.touchId = null
+      this.pointerUp(pointerEvent)
+    }
+  },
+
+  findActiveTouch (event) {
+    const { touchId } = this
+    const { changedTouches } = event
+    for (let i = 0; i < changedTouches.length; i++) {
+      const touch = changedTouches[i]
+      if (touch.identifier === touchId) return touch
+    }
+  },
+
+  // Device
+
+  // TODO: Fix orientation in landscape
+  deviceOrientation (event) {
+    const { move } = this.context
+    const { screen } = move
+    screen.x = mapLinear(-40, 40, -1, 1, event.gamma)
+    screen.y = mapLinear(30, -15, -1, 1, event.beta)
+    this.orientCamera(screen)
+    this.targetCamera(screen)
   },
 
   // Camera Orientation

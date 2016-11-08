@@ -12,6 +12,7 @@ export function createDebug ({
   state,
   updateState
 }) {
+  if (window.innerWidth < 768) return
   const oui = createStateControls({label: 'Settings'})
   annotateState(state)
   oui(state, updateState)
