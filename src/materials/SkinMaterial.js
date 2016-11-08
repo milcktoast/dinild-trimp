@@ -133,6 +133,9 @@ extendShaderMaterial(SkinMaterial, {
   },
 
   render (renderer, scene, camera) {
+    const currentShadowMapEnabled = renderer.shadowMap.enabled
+    renderer.shadowMap.enabled = false
+
     if (!this.renderTargets) {
       this.materialUV = this.createMaterialUV({
         color: this.color,
@@ -145,16 +148,21 @@ extendShaderMaterial(SkinMaterial, {
       })
       this.renderTargets = this.createRenderTargets(renderer, scene, camera)
     }
+
     // TODO: Better way to refresh uniforms?
     this.refreshUniforms()
     this.materialUV.refreshUniforms()
+
     if (!this.hasRenderedBeckmann) {
       this.renderTargets.beckmann.render()
       this.hasRenderedBeckmann = true
     }
+
     this.renderTargets.material.render()
     this.renderTargets.blur2.render()
     this.renderTargets.blur3.render()
     this.renderTargets.blur4.render()
+
+    renderer.shadowMap.enabled = currentShadowMapEnabled
   }
 })

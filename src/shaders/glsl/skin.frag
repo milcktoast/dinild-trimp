@@ -79,9 +79,9 @@ void RE_Direct_Skin(
   #ifndef PHYSICALLY_CORRECT_LIGHTS
     irradiance *= PI;
   #endif
-  reflectedLight.directDiffuse += irradiance *
-    BRDF_Diffuse_Lambert(material.diffuseColor);
   if (material.passID == 1) {
+    reflectedLight.directDiffuse += irradiance *
+      BRDF_Diffuse_Lambert(material.diffuseColor);
     reflectedLight.directSpecular += irradiance * material.specularBrightness *
       BRDF_Specular_Skin(directLight, geometry, material);
   }
@@ -152,7 +152,7 @@ void main() {
     outgoingLight += ambientLightColor * color * colDiffuse.xyz;
 
     #ifndef VERSION1
-      outgoingLight = sqrt(outgoingLight + nonblurColor * 0.5); // FIXME
+      outgoingLight = sqrt(outgoingLight);
     #endif
   }
 
