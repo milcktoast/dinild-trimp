@@ -13,6 +13,7 @@ export function IntroModal () {
   this.bindEvents(element, form)
   setTimeout(() => {
     this.animateIn()
+    this.fidelityInput.focus()
   }, 0)
 }
 
