@@ -10,6 +10,7 @@
 * [Crystal Material][crystal-source-url]
 * [Phrase Animation][phrase-source-url] System
 * [Pose Animation][pose-source-url] System
+* [Needle Group][needle-group-source-url] (Needle instancing)
 * [Selection Controller][selection-source-url]
 * Model [loader][model-load-source-url] and [parser][model-parse-source-url]
 
@@ -39,6 +40,7 @@ Therefore, this project will not run and is simply provided as reference for any
 [crystal-source-url]: https://github.com/jpweeks/dinild-trimp/blob/master/src/materials/CrystalMaterial.js
 [phrase-source-url]: https://github.com/jpweeks/dinild-trimp/blob/master/src/animations/PhraseAnimation.js
 [pose-source-url]: https://github.com/jpweeks/dinild-trimp/blob/master/src/animations/PoseAnimation.js
+[needle-group-source-url]: https://github.com/jpweeks/dinild-trimp/blob/master/src/entities/NeedleGroup.js
 [selection-source-url]: https://github.com/jpweeks/dinild-trimp/blob/master/src/controls/SelectionControls.js
 [model-load-source-url]: https://github.com/jpweeks/dinild-trimp/blob/master/src/utils/model-load.js
 [model-parse-source-url]: https://github.com/jpweeks/dinild-trimp/blob/master/src/utils/model-parse.js
